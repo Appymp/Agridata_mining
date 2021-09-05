@@ -3,7 +3,9 @@
 
 # # Instagram vector space semantics research
 
-## ver 3.2 thu sept 2nd
+## ver 3.2 
+
+#Sunday Sept 5th
 
 # In[1]:
 import json
@@ -276,38 +278,8 @@ df_updated[view3][df_updated['det_lang']=='error'].head(10)
 #Wordcloud for English stopwords
 """
 
-# In[11]:
-#Wordcloud on preprocessed text - English stopwords
-word_string = ""
-
-for ind,row in df_updated.iterrows():
-    word_string += (row['caption_processed_4']+" ")
-
-#size of plot
-fig_dims = (8, 8)
-fig, ax = plt.subplots(figsize=fig_dims)
-
-wordcloud = WordCloud(max_words=100,    
-                      stopwords= STOPWORDS,
-                      collocations=False,
-                      color_func=lambda *args, **kwargs: "orange",
-                      background_color='white',
-                      width=1200,     
-                      height=1000).generate(word_string)
-plt.title("#Organic english stopwords")
-plt.imshow(wordcloud, interpolation='bilinear')
-plt.axis('off')
-plt.show()
-wordcloud.to_file("static/images/eng_sw_wc.png")
-
-#Check example cases of the top words
-#  "u", "de", "la", "e", 
-# In[12]:
-##Add some more stopwords
-#Define stop words. Observed that french stop words may also need to be removed
-#Add custom stopwords to the default "STOPWORDS" list in interface
-
-
+# In[13]:
+##Wordcloud with English and French stopwords
 type(STOPWORDS) #set
 len(STOPWORDS) #192
 
@@ -317,19 +289,21 @@ len(STOPWORDS) #192
 stop_words_fr= set(stopwords.words("french"))
 len(stop_words_fr) #157
 
-combined_stopwords=STOPWORDS.union(stop_words_fr)
 
-# In[13]:
-##Wordcloud with English and French stopwords
 word_string = ""
 for ind,row in df_updated.iterrows():
-    word_string += (row['caption_processed_4']+" ")
+    word_string += (row['web_links']+" ")
     
 #size of plot
 fig_dims = (8, 8)
 fig, ax = plt.subplots(figsize=fig_dims)
 
-combined_stopwords = stopwords.words('english') + stopwords.words('french')
+#Define stopwords
+en_stopwords = stopwords.words('english')
+fr_stopwords = stopwords.words('french')
+web_links_sw = ['www','http','https','com']
+
+combined_stopwords = en_stopwords + fr_stopwords 
 
 wordcloud = WordCloud(max_words=100,    
                       stopwords= combined_stopwords,
@@ -338,14 +312,17 @@ wordcloud = WordCloud(max_words=100,
                       background_color='white',
                       width=1200,     
                       height=1000).generate(word_string)
-plt.title("#Organic en_fr stopwords")
+plt.title("#Test word cloud")
 plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
 plt.show()
-wordcloud.to_file("static/images/en_fr_sw_wc.png")
+#wordcloud.to_file("static/images/en_fr_sw_wc.png")
 
-
-#string still has has :
+#With only EN stopwords:
+    #  "u", "de", "la", "e", 
+    
+    
+# With EN and FR :
 # 'u', 'e', 'o'
 
 """ Notes
@@ -408,34 +385,7 @@ app.layout = html.Div([
     
     
 ################################### ROW2-Dropdown and Render Button ########################### 
-#     col_sels=[]
- 
-    # dcc.Dropdown(id='my-dropdown', multi=True,
-    #                   options=[{'label': x, 'value': x} for x in col_sels],
-    #                   value=["caption_processed_4" #initial values to pass
-    #                         ], className = 'six columns'),
 
-    
-    # html.Div([
-    #     html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
-    #             # className = 'six-columns text-center',
-    #             # style={'verticalAlign': 'middle', 'width': '200px', 'display': 'inline-block'}
-    #             ),
-    
-    # dbc.Row([
-    #     dbc.Col([
-    #         html.Div([
-    #         dcc.Dropdown(id='my-dropdown', multi=True,
-    #                  options=[{'label': x, 'value': x} for x in col_sels],
-    #                  value=["caption_processed_4"] #initial values to pass
-    #                     ),
-    #             ])]),
-    
-    #     dbc.Col([
-    #         html.Button(id='my-button', n_clicks=0, children="Render wordcloud"),
-    #             ])
-    #         ]),
-    
     
     dbc.Row([
         dbc.Col([
@@ -451,7 +401,10 @@ app.layout = html.Div([
             width={'size': 2, "offset": 2, 'order': 2})
             ]),
     
+    
 ################################### ROW3 ###########################    
+
+
     html.Div([
         html.Div([
             dash_table.DataTable(
@@ -516,13 +469,6 @@ app.layout = html.Div([
 ])
 
 
-
-
-
-
-
-
-
 ################################ Render button callback ################################
 @app.callback(
     Output('wordcloud','figure'),
@@ -554,20 +500,24 @@ def ren_wordcloud(chosen_rows, chosen_cols):
         lambda x: ' '.join(x.dropna().astype(str)),        
         axis=1)
 
-    combined_stopwords = stopwords.words('english') + stopwords.words('french')    
+    en_stopwords = stopwords.words('english')
+    fr_stopwords = stopwords.words('french')
+    web_links_sw = ['www','http','https','com']
+    
+    combined_stopwords = en_stopwords + fr_stopwords + web_links_sw   
 
     wordcloud = WordCloud(max_words=100,    
                           stopwords= combined_stopwords,
                           collocations=False,
                           color_func=lambda *args, **kwargs: "orange",
                           background_color='white',
-                          width=1200,     
+                          width=1600, #1200     
                           height=1000).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
 
 
 
     fig_wordcloud = px.imshow(wordcloud, template='ggplot2',
-                              title="test wordcloud of eng and fr stopwords")
+                              ) #title="test wordcloud of eng and fr stopwords"
 
     fig_wordcloud.update_layout(margin=dict(l=20, r=20, t=30, b=20))
     fig_wordcloud.update_xaxes(visible=False)
