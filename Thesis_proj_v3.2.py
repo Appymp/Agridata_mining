@@ -385,7 +385,10 @@ import dash_bootstrap_components as dbc
 disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select columns to display in the dashtable
 df_disp_1 = df_updated[disp1]
 
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_stylesheets=[
+    "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap-grid.min.css"
+])
+#the rows and columns from dbc worl only with an external stylesheet
 
 #---------------------------------------------------------------
 
@@ -399,9 +402,8 @@ app.layout = html.Div([
     
     html.Div([
         dbc.Col(html.H3("Instagram data"), className = 'eight columns'),
-        dbc.Col(html.H3("Wordcloud"), className = 'four columns'),
-        
-    ], className = 'row'),
+        dbc.Col(html.H3("Wordcloud"), style={'text-align' : "center"})],        
+        className = 'row'),
     
     
     
@@ -409,31 +411,44 @@ app.layout = html.Div([
 #     col_sels=[]
  
     # dcc.Dropdown(id='my-dropdown', multi=True,
-    #                  options=[{'label': x, 'value': x} for x in col_sels],
-    #                  value=["caption_processed_4" #initial values to pass
-    #                        ], className = 'six columns'),
+    #                   options=[{'label': x, 'value': x} for x in col_sels],
+    #                   value=["caption_processed_4" #initial values to pass
+    #                         ], className = 'six columns'),
 
     
     # html.Div([
     #     html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
     #             # className = 'six-columns text-center',
-    #             style={'verticalAlign': 'middle', 'width': '200px', 'display': 'inline-block'}
+    #             # style={'verticalAlign': 'middle', 'width': '200px', 'display': 'inline-block'}
     #             ),
     
+    # dbc.Row([
+    #     dbc.Col([
+    #         html.Div([
+    #         dcc.Dropdown(id='my-dropdown', multi=True,
+    #                  options=[{'label': x, 'value': x} for x in col_sels],
+    #                  value=["caption_processed_4"] #initial values to pass
+    #                     ),
+    #             ])]),
+    
+    #     dbc.Col([
+    #         html.Button(id='my-button', n_clicks=0, children="Render wordcloud"),
+    #             ])
+    #         ]),
+    
+    
     dbc.Row([
-        dbc.Col(
-            html.Div([
+        dbc.Col([
             dcc.Dropdown(id='my-dropdown', multi=True,
-                     options=[{'label': x, 'value': x} for x in col_sels],
-                     value=["caption_processed_4" #initial values to pass
-                           ]),
-                ]),  width=6, align="center",
+                      options=[{'label': x, 'value': x} for x in col_sels],
+                      value=["caption_processed_4"] #initial values to pass
+                        )],
+            width={'size': 6, 'order': 1}
             ),
     
-        dbc.Col(
-            html.Button(id='my-button', n_clicks=0, children="Render wordcloud"),
-            style={'verticalAlign': 'middle', 'width': '200px', 'display': 'inline-block'}
-                ),   
+        dbc.Col([
+            html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
+            width={'size': 2, "offset": 2, 'order': 2})
             ]),
     
 ################################### ROW3 ###########################    
@@ -577,10 +592,7 @@ def update_styles(selected_columns):
 if __name__ == '__main__':
     app.run_server(debug=False)
 
-
-
-
-# In[16 ]:
+    # In[16 ]:
 
 
 
