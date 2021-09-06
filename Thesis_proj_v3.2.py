@@ -5,7 +5,11 @@
 
 ## ver 3.2 
 
-#Sunday Sept 5th
+#Monday Sept 6th-Morn
+## Identified the language detection model as the slowest part of the program.
+## Used print statements to follow the progress of the program on the console.
+## Following the “complete guide” YT video on plotly dash.
+
 
 # In[1]:
 import json
@@ -33,6 +37,7 @@ pd.set_option('display.max_colwidth', None) #for indivdual cell full display
 
 organic=pd.read_csv('Organic_6_aug.csv')
 organic.head()
+print("Dataset loaded")
 
 
 # In[3]:
@@ -44,6 +49,8 @@ organic.reset_index(inplace= True)
 organic.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
 organic['ix']=organic['ix'].astype(str) #convert to string type
 organic.head(2)
+
+print("Redundant rows removed")
 
 
 # In[4]:
@@ -100,6 +107,7 @@ def new_cols(df): ##wrapped for all above functions
 # In[5]:
 ##New columns dataset "df_updated"
 df_updated=new_cols(organic)
+print("New columns created from splitting func")
 #df_updated.tail(1) #to check last line of the dataset.
 
 # In[6]:
@@ -138,8 +146,8 @@ view1=['description','new_desc','clean_captions' ]
 # pd.set_option('display.max_columns', 500)
 # pd.set_option('expand_frame_repr', False)
 
-print(pd.DataFrame(df_updated[view1].loc[[11]])) #indexing template example
-print(type(pd.DataFrame(df_updated[view1].loc[[11]])))
+# print(pd.DataFrame(df_updated[view1].loc[[11]])) #indexing template example
+# print(type(pd.DataFrame(df_updated[view1].loc[[11]])))
 
 # In[7]:
 ##Text preprocessing
@@ -173,6 +181,7 @@ df_updated['caption_processed_2']=df_updated['caption_processed'].apply(lambda x
 df_updated['caption_processed_3']=df_updated['caption_processed_2'].apply(lambda x: remove_punctuation(x))
 df_updated['caption_processed_4']=df_updated['caption_processed_3'].apply(lambda x: diff_encodings(x))
 
+print("Text preprocessing done")
 # In[8]:
 ##Define view frame to view previous processing steps with exemplars
 view2=[]
@@ -187,7 +196,7 @@ ex_row_list=[11,13,23,106] #subtract 2 because index is reset.
 #df_updated[view2].head(30)
 
 # In[9]:
-#Visualise how many languages are there:
+#Visualise how many languages are there:    
 def lang_det(st):
     try:
         lang=detect(st)
@@ -200,19 +209,22 @@ def lang_det(st):
 view3=['det_lang']
 view3= view2+view3
 
+print("Running language detection..")
 df_updated['det_lang']= df_updated['caption_processed_2'].apply(lambda x: lang_det(x))
+print("Language detection complete")
 
 ##visualise the new transformations
 plt.figure(figsize=(16,6))
 ax= sns.countplot(x= 'det_lang', data=df_updated, order = df_updated['det_lang'].value_counts(ascending=False).index)
 ax.set_title('Language distribution')
 ax.set_xlabel('Languages')
-
 #ax.set_xticklabels(ax.get_xticklabels(),rotation=90)
 #plt.xticks(rotation=90) #outputs array before the graph
 
 for tick in ax.get_xticklabels():
     tick.set_rotation(90)
+
+print("Language countplot graph loaded")
 
 # In[10]:
 ##View the table with languages included
@@ -226,7 +238,7 @@ df_updated[view_extracts].head(100)
 ex_row_list.append(3) #add exemplar accents in differnt language
 
 
-df_updated[view3][df_updated['det_lang']=='error'].head(10) 
+#df_updated[view3][df_updated['det_lang']=='error'].head(10) 
 #Language
 #Errors for descriptions which do not have readable text. Either blank or emojis. 
 #Fonts normalised but not much improvement.
@@ -280,6 +292,8 @@ df_updated[view3][df_updated['det_lang']=='error'].head(10)
 
 # In[13]:
 ##Wordcloud with English and French stopwords
+print("Loading test Word Cloud")
+
 type(STOPWORDS) #set
 len(STOPWORDS) #192
 
@@ -317,6 +331,7 @@ plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
 plt.show()
 #wordcloud.to_file("static/images/en_fr_sw_wc.png")
+print("Test Word Cloud displayed")
 
 #With only EN stopwords:
     #  "u", "de", "la", "e", 
@@ -343,6 +358,7 @@ plt.show()
 """
 # In[14]:
 ##Dashboard application Test shift to dbc.Container
+print("Starting dashboard app")
 
 #Import libraries and dataset
 import pandas as pd     #(version 1.0.0)
@@ -361,6 +377,7 @@ import dash_bootstrap_components as dbc
 
 disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select columns to display in the dashtable
 df_disp_1 = df_updated[disp1]
+df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
 app = dash.Dash(__name__, external_stylesheets=[
     "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap-grid.min.css"
@@ -369,19 +386,34 @@ app = dash.Dash(__name__, external_stylesheets=[
 
 #---------------------------------------------------------------
 
-col_sels = ['caption_processed_4','hashtags','cap_mentions','web_links']   #values for dropdown
+col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown
 
 
 #---------------------------------------------------------------
-app.layout = html.Div([ 
+# app.layout = html.Div([ 
+
+app.layout = dbc.Container([
     
 ################################### ROW1-Headers ########################### 
     
-    html.Div([
-        dbc.Col(html.H3("Instagram data"), className = 'eight columns'),
-        dbc.Col(html.H3("Wordcloud"), style={'text-align' : "center"})],        
-        className = 'row'),
+    # html.Div([
+    #     dbc.Col(html.H3("Instagram data"), className = 'eight columns'),
+    #     dbc.Col(html.H3("Wordcloud"), style={'text-align' : "center"})], #one way to align        
+    #     className = 'row'),
     
+    # html.Div([
+    dbc.Row([
+        dbc.Col(html.H3("Instagram data"), width={'size':4}),
+        dbc.Col(
+            html.Button(id='sel-button', n_clicks=0, children="Sel_all"),
+            width={'size': 1}, style={'textAlign':"center"}), #another way to align
+        dbc.Col(
+            html.Button(id='desel-button', n_clicks=0, children="Des_all"),
+            width={'size': 1}, style={'textAlign':"center"}),
+        
+        
+        dbc.Col(html.H3("Wordcloud"), style={'size':6,'textAlign' : "center"}) #one way to align        
+        ]),
     
     
 ################################### ROW2-Dropdown and Render Button ########################### 
@@ -391,14 +423,14 @@ app.layout = html.Div([
         dbc.Col([
             dcc.Dropdown(id='my-dropdown', multi=True,
                       options=[{'label': x, 'value': x} for x in col_sels],
-                      value=["caption_processed_4"] #initial values to pass
+                      value=["description"] #initial values to pass
                         )],
             width={'size': 6, 'order': 1}
             ),
     
         dbc.Col([
             html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
-            width={'size': 2, "offset": 2, 'order': 2})
+            width={'size': 2, "offset": 2, 'order': 2}) #another way to align
             ]),
     
     
@@ -447,7 +479,7 @@ app.layout = html.Div([
                     {'if': {'column_id': 'ix'},
                      'width': '50px', 'textAlign': 'left'}, #Setting the px values 1400px seems to cover the width of the screen. 
 
-                    {'if': {'column_id': 'caption_processed_4'},
+                    {'if': {'column_id': 'description'},
                      'width': '200px', 'textAlign': 'left'},
 
                     {'if': {'column_id': 'hashtags'},
@@ -473,11 +505,14 @@ app.layout = html.Div([
 @app.callback(
     Output('wordcloud','figure'),
     [Input(component_id='datatable_id',component_property='selected_rows'),
-    Input(component_id='my-dropdown', component_property='value')],
+    # Input(component_id='my-dropdown', component_property='value')],
+    Input(component_id='my-button', component_property='n_clicks')],
+    [State(component_id='my-dropdown', component_property='value')],
+    prevent_initial_call=False
 )
 
 
-def ren_wordcloud(chosen_rows, chosen_cols):
+def ren_wordcloud(chosen_rows, n, chosen_cols):
     if len(chosen_cols) > 0: #atleast 1 col to be selected
         if len(chosen_rows)==0:                    
             df_filtered = df_disp_1[chosen_cols]
@@ -541,6 +576,8 @@ def update_styles(selected_columns):
 
 if __name__ == '__main__':
     app.run_server(debug=False)
+    
+print("Dashboard app running in background")
 
     # In[16 ]:
 
