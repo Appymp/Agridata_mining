@@ -5,10 +5,10 @@
 
 ## ver 3.2 
 
-#Monday Sept 6th-Morn
-## Identified the language detection model as the slowest part of the program.
-## Used print statements to follow the progress of the program on the console.
-## Following the “complete guide” YT video on plotly dash.
+#Monday Sept 6th-Night
+## Select and Deselect buttons operational
+## Column highlighting active
+## Wordcloud placement must be pushed to the top.
 
 
 # In[1]:
@@ -379,9 +379,7 @@ disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
-app = dash.Dash(__name__, external_stylesheets=[
-    "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap-grid.min.css"
-])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 #the rows and columns from dbc worl only with an external stylesheet
 
 #---------------------------------------------------------------
@@ -392,31 +390,27 @@ col_sels = ['description','hashtags','cap_mentions','web_links']   #values for d
 #---------------------------------------------------------------
 # app.layout = html.Div([ 
 
-app.layout = dbc.Container([
-    
+app.layout = dbc.Container([    
 ################################### ROW1-Headers ########################### 
     
-    # html.Div([
-    #     dbc.Col(html.H3("Instagram data"), className = 'eight columns'),
-    #     dbc.Col(html.H3("Wordcloud"), style={'text-align' : "center"})], #one way to align        
-    #     className = 'row'),
-    
-    # html.Div([
     dbc.Row([
-        dbc.Col(html.H3("Instagram data"), width={'size':4}),
+        dbc.Col(html.H3("Instagram data"), width={'size':3}),
         dbc.Col(
-            html.Button(id='sel-button', n_clicks=0, children="Sel_all"),
-            width={'size': 1}, style={'textAlign':"center"}), #another way to align
+            # html.Button(id='sel-button', n_clicks=0, children="Sel_all"),
+            dbc.Button(id='sel-button', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
+            width={'size': 0.5}, style={'textAlign': "left"}), #another way to align
         dbc.Col(
-            html.Button(id='desel-button', n_clicks=0, children="Des_all"),
-            width={'size': 1}, style={'textAlign':"center"}),
+            dbc.Button(id='desel-button', n_clicks=0, children="Des_all", className="mt-5"),
+            width={'size': 0.5}, style={'textAlign':"left"}),
         
-        
-        dbc.Col(html.H3("Wordcloud"), style={'size':6,'textAlign' : "center"}) #one way to align        
-        ]),
+        dbc.Col(html.H3("Wordcloud"), width={'size':5, 'offset':2}, style={'textAlign' : "center"}),         
+        # dbc.Col([
+        #     html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
+        #     width={'size': 3}, style = {'textAlign' : "left"})
+        ], no_gutters=False),
     
     
-################################### ROW2-Dropdown and Render Button ########################### 
+################################### ROW2-Dropdown ########################### 
 
     
     dbc.Row([
@@ -425,20 +419,18 @@ app.layout = dbc.Container([
                       options=[{'label': x, 'value': x} for x in col_sels],
                       value=["description"] #initial values to pass
                         )],
-            width={'size': 6, 'order': 1}
-            ),
-    
-        dbc.Col([
-            html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
-            width={'size': 2, "offset": 2, 'order': 2}) #another way to align
+            width={'size': 6}),
+        
+        # dbc.Col(
+        #   dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': False}),
+        #   width={'size': 5,'offset':2}, style={'verticalAlign':'top'})
             ]),
     
     
 ################################### ROW3 ###########################    
 
-
-    html.Div([
-        html.Div([
+    dbc.Row([        
+        dbc.Col(
             dash_table.DataTable(
                 id='datatable_id',
                 data=df_disp_1.to_dict('records'),
@@ -470,7 +462,7 @@ app.layout = dbc.Container([
                     },
 
                 style_table={ #For parameters of the table container
-                    'height': '400px',
+                    'height': '300px',
                     'width': '700px',
                     'overflowY': 'auto'
                 },
@@ -491,39 +483,84 @@ app.layout = dbc.Container([
                     {'if': {'column_id': 'web_links'},
                      'width': '125px', 'textAlign': 'left'},
                 ],
-            ),
-        ],className='six columns'),
+            ),            
+            width={'size': 6}),
         
-        html.Div([
-            dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': False}),
-            ], className = 'six columns')
+        dbc.Col(
+            dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': True}),
+            # width={'size': 6}, style={'height': '300px'}
+            )
     ]),
-])
+], fluid=True) #use fluid to strecth to the sides of the webpage
+
+################################ Select all button ################################
+
+@app.callback(
+    [Output('datatable_id', 'selected_rows')],
+    [Input('sel-button', 'n_clicks'),
+    Input('desel-button', 'n_clicks')],
+    [State('datatable_id', 'derived_virtual_selected_rows'), #virtual selected row is what is selected.
+     State('datatable_id', 'derived_virtual_data')] #virtual_data is full table after filtering. 
+)
+
+def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
+    ctx = dash.callback_context
+    if ctx.triggered:
+        print(ctx.triggered)
+        trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
+        if trigger == 'sel-button':
+            if selected_rows is None:
+                print("\n Sel button clicked and NO rows selected")
+                print("\n Selected rows has:", len(selected_rows), 'rows')
+                print("\n Selected rows are of the form", selected_rows[0])
+                return [[]]
+            
+            else: # wc_list= [[i for i in range(len(selected_rows))]]
+                print("\n Selected rows are of the form", selected_rows)
+                wc_list= []
+                # for row in selected_rows:  #selected_rows is a list of row dicts
+                #     wc_list.append(row['ix'])
+                wc_list=[[row['ix'] for row in filtered_table]]
+                
+                wc_list = [[int(i) for i in wc_list[0]]] #convert to int for index reference
+                wc_list
+                
+                # wc_list=selected_rows
+                print("\n Sel button clicked and rows are selected")
+                print("\n Selected rows has:", len(selected_rows), 'rows')
+                print("\n Filtered table has:", len(filtered_table), 'rows')
+                print("\n Filtered table is of the form:", filtered_table)                
+                print("\n Wordcloud list contains:", len(wc_list[0]), "elements")
+                print("\n Wordcloud list is of the form:", wc_list)                
+                return wc_list
+        else:
+            return [[]]
 
 
-################################ Render button callback ################################
+################################ Wordcloud callback ################################
+
 @app.callback(
     Output('wordcloud','figure'),
     [Input(component_id='datatable_id',component_property='selected_rows'),
-    # Input(component_id='my-dropdown', component_property='value')],
-    Input(component_id='my-button', component_property='n_clicks')],
-    [State(component_id='my-dropdown', component_property='value')],
+    Input(component_id='my-dropdown', component_property='value')],
+    # Input(component_id='my-button', component_property='n_clicks')],
+    # [State(component_id='my-dropdown', component_property='value')],
     prevent_initial_call=False
 )
 
 
-def ren_wordcloud(chosen_rows, n, chosen_cols):
+def ren_wordcloud(chosen_rows, chosen_cols):
     if len(chosen_cols) > 0: #atleast 1 col to be selected
         if len(chosen_rows)==0:                    
             df_filtered = df_disp_1[chosen_cols]
             # df_filtered = df_disp_1.iloc[:, [chosen_cols]]
-            print("Atleast 1 col chosen but no rows. Dataype of df_filtered is", type(df_filtered))
+            #print("Atleast 1 col chosen but no rows. Dataype of df_filtered is", type(df_filtered))
 
         elif len(chosen_rows) > 0 :
             # df_filtered = df_disp_1.iloc[chosen_rows,[chosen_cols]] #filter by selected rows
             df_filtered = df_disp_1[chosen_cols]
             df_filtered=df_filtered[df_filtered.index.isin(chosen_rows)]
-            print("Atleast 1 col chosen and multiple rows selected type. Dataype of df_filtered is", type(df_filtered))
+            #print("Atleast 1 col chosen and multiple rows selected type. Dataype of df_filtered is", type(df_filtered))
             
     elif len(chosen_cols) == 0:
         raise dash.exceptions.PreventUpdate
@@ -547,14 +584,15 @@ def ren_wordcloud(chosen_rows, n, chosen_cols):
                           color_func=lambda *args, **kwargs: "orange",
                           background_color='white',
                           width=1600, #1200     
-                          height=1000).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
+                          height=1000, #1000
+                          random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
 
 
 
     fig_wordcloud = px.imshow(wordcloud, template='ggplot2',
                               ) #title="test wordcloud of eng and fr stopwords"
 
-    fig_wordcloud.update_layout(margin=dict(l=20, r=20, t=30, b=20))
+    fig_wordcloud.update_layout(margin=dict(l=20, r=20, t=0, b=20))
     fig_wordcloud.update_xaxes(visible=False)
     fig_wordcloud.update_yaxes(visible=False)
 
@@ -565,7 +603,8 @@ def ren_wordcloud(chosen_rows, n, chosen_cols):
 
 @app.callback(
     Output('datatable_id', 'style_data_conditional'),
-    Input('datatable_id', 'selected_columns')
+    # Input('datatable_id', 'selected_columns')
+    Input(component_id='my-dropdown', component_property='value')
 )
 
 def update_styles(selected_columns):
@@ -575,11 +614,12 @@ def update_styles(selected_columns):
     } for i in selected_columns]
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
-    
-print("Dashboard app running in background")
+    app.run_server(debug=False, use_reloader = False)
 
-    # In[16 ]:
+# app.run_server(debug=True)    
+# print("Dashboard app running in background")
+
+     # In[16 ]:
 
 
 
