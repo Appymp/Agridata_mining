@@ -6,8 +6,10 @@
 ## ver 3.2 
 
 ##Tuesday Sept 7th-Morning
-##Alignment of WC within Col.Concerns are that I am unable to right align
-##Removing the large debug print comments within the select-all button callback.
+##Made the dropdown box width fixed instead of dynamic.
+
+##To continue:
+    # Dataframe cleaning steps: Only English;remove duplicate hashtags?
 
 
 # In[1]:
@@ -416,15 +418,12 @@ app.layout = dbc.Container([
         dbc.Col([
             dcc.Dropdown(id='my-dropdown', multi=True,
                       options=[{'label': x, 'value': x} for x in col_sels],
-                      value=["description"] #initial values to pass
-                        )],
-            width={'size': 6}),
-        
-        # dbc.Col(
-        #   dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': False}),
-        #   width={'size': 5,'offset':2}, style={'verticalAlign':'top'})
+                      value=["description"], #initial values to pass
+                      style={'width':'690px'}
+                        )])
             ]),
-    
+    # width={'size': 6}), #this was in dbc.Col.This is fluid width while resizing
+    # But since DashTable is fixed width, width is specified(acts fixed) in dcc.Dropdown
     
 ################################### ROW3 ###########################    
 
@@ -486,7 +485,7 @@ app.layout = dbc.Container([
             width={'size': 6}),
         
         dbc.Col(
-            dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': False},
+            dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': True},
                        style={'width':'600px' ,'height':'350px'}),
                 )
         #,width={'size': 6},  width = {'size': 5, 'offset':1}
