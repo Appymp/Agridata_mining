@@ -5,10 +5,9 @@
 
 ## ver 3.2 
 
-#Monday Sept 6th-Night
-## Select and Deselect buttons operational
-## Column highlighting active
-## Wordcloud placement must be pushed to the top.
+##Tuesday Sept 7th-Morning
+##Alignment of WC within Col.Concerns are that I am unable to right align
+##Removing the large debug print comments within the select-all button callback.
 
 
 # In[1]:
@@ -463,7 +462,7 @@ app.layout = dbc.Container([
 
                 style_table={ #For parameters of the table container
                     'height': '300px',
-                    'width': '700px',
+                    'width': '690px',
                     'overflowY': 'auto'
                 },
 
@@ -487,11 +486,14 @@ app.layout = dbc.Container([
             width={'size': 6}),
         
         dbc.Col(
-            dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': True}),
-            # width={'size': 6}, style={'height': '300px'}
-            )
-    ]),
-], fluid=True) #use fluid to strecth to the sides of the webpage
+            dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': False},
+                       style={'width':'600px' ,'height':'350px'}),
+                )
+        #,width={'size': 6},  width = {'size': 5, 'offset':1}
+            ],no_gutters=False)
+        ],fluid=True) #use fluid to strecth to the sides of the webpage
+#'layout': {'height': '100px'}
+
 
 ################################ Select all button ################################
 
@@ -512,7 +514,6 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
             if selected_rows is None:
                 print("\n Sel button clicked and NO rows selected")
                 print("\n Selected rows has:", len(selected_rows), 'rows')
-                print("\n Selected rows are of the form", selected_rows[0])
                 return [[]]
             
             else: # wc_list= [[i for i in range(len(selected_rows))]]
@@ -528,8 +529,7 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
                 # wc_list=selected_rows
                 print("\n Sel button clicked and rows are selected")
                 print("\n Selected rows has:", len(selected_rows), 'rows')
-                print("\n Filtered table has:", len(filtered_table), 'rows')
-                print("\n Filtered table is of the form:", filtered_table)                
+                print("\n Filtered table has:", len(filtered_table), 'rows')                
                 print("\n Wordcloud list contains:", len(wc_list[0]), "elements")
                 print("\n Wordcloud list is of the form:", wc_list)                
                 return wc_list
@@ -583,7 +583,7 @@ def ren_wordcloud(chosen_rows, chosen_cols):
                           collocations=False,
                           color_func=lambda *args, **kwargs: "orange",
                           background_color='white',
-                          width=1600, #1200     
+                          width=1700, #1200,1700    
                           height=1000, #1000
                           random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
 
@@ -592,7 +592,7 @@ def ren_wordcloud(chosen_rows, chosen_cols):
     fig_wordcloud = px.imshow(wordcloud, template='ggplot2',
                               ) #title="test wordcloud of eng and fr stopwords"
 
-    fig_wordcloud.update_layout(margin=dict(l=20, r=20, t=0, b=20))
+    fig_wordcloud.update_layout(margin=dict(l=0, r=0, t=0, b=0))
     fig_wordcloud.update_xaxes(visible=False)
     fig_wordcloud.update_yaxes(visible=False)
 
