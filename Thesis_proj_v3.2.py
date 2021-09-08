@@ -5,8 +5,9 @@
 
 ## ver 3.2 
 
-##Tuesday Sept 7th-Morning
-##Made the dropdown box width fixed instead of dynamic.
+##Tuesday Sept 8th-evening
+##Code to combine multiple dataframes:
+    # Recursive dataframe combining code almost ready
 
 ##To continue:
     # Dataframe cleaning steps: Only English;remove duplicate hashtags?
@@ -29,16 +30,58 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import os
-
+import os.path 
 
 # In[2]:
 ##Load dataset
 pd.set_option('display.max_columns', None) #display all columns.pass none to the max_col parameter
 pd.set_option('display.max_colwidth', None) #for indivdual cell full display
 
-organic=pd.read_csv('Organic_6_aug.csv')
-organic.head()
-print("Dataset loaded")
+# organic=pd.read_csv('Organic_6_aug.csv')
+# organic.head()
+# print("Dataset loaded")
+
+# In[2]:
+##Stack multiple datasets
+
+
+# organic=pd.read_csv('Organic_6_aug.csv')
+# df1=pd.read_csv("datasets/Organic_6_aug.csv")
+# df2=pd.read_csv("datasets/organic/just_organic.csv")
+
+working_dir = "datasets"
+
+for root, dirs, files in os.walk(working_dir):
+    file_list = []
+    for filename in files:
+        if filename.endswith('.csv'):
+            print(filename)
+            file_list.append(os.path.join(root, filename)) 
+    print(file_list)
+
+# for filename in os.listdir(directory):
+#     if filename.endswith(".asm") or filename.endswith(".py"): 
+#           # print(os.path.join(directory, filename))
+#         continue
+#     else:
+#         continue
+
+# listd=os.listdir()
+# print(listd)
+            
+    # df_list = [pd.read_table(file) for file in file_list]
+    # if df_list:
+    #     final_df = pd.concat(df_list) 
+    #     final_df.to_csv(os.path.join(root, "Final.csv"))
+
+
+# dire=os.path.isfile
+# print(dire) #<function isfile at 0x7fb22c9d5160>
+
+
+# print("Dataset loaded")
+
+
 
 
 # In[3]:
