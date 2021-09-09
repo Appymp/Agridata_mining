@@ -7,10 +7,11 @@
 
 ##Tuesday Sept 8th-evening
 ##Code to combine multiple dataframes:
-    # Recursive dataframe combining code almost ready
+    # Recursively combine into a single dataframe.Done.
 
 ##To continue:
     # Dataframe cleaning steps: Only English;remove duplicate hashtags?
+    # Missing data visualization and drop.
 
 
 # In[1]:
@@ -42,47 +43,34 @@ pd.set_option('display.max_colwidth', None) #for indivdual cell full display
 # print("Dataset loaded")
 
 # In[2]:
-##Stack multiple datasets
+##Stack multiple datasets saved in "datasets" folder
 
-
-# organic=pd.read_csv('Organic_6_aug.csv')
-# df1=pd.read_csv("datasets/Organic_6_aug.csv")
-# df2=pd.read_csv("datasets/organic/just_organic.csv")
-
-working_dir = "datasets"
-
+working_dir = "datasets" #folder where the datasets exist
+all_files=[]
 for root, dirs, files in os.walk(working_dir):
     file_list = []
     for filename in files:
         if filename.endswith('.csv'):
             print(filename)
             file_list.append(os.path.join(root, filename)) 
-    print(file_list)
+    # print(file_list)
+    # all_files.append(file_list)
+    all_files+=file_list
+print("Number of datasets considered:", len(all_files))
+df_list = [pd.read_csv(file) for file in all_files]
+# df_list[1].shape #To get shape of the dataframe
 
-# for filename in os.listdir(directory):
-#     if filename.endswith(".asm") or filename.endswith(".py"): 
-#           # print(os.path.join(directory, filename))
-#         continue
-#     else:
-#         continue
+if df_list:
+        final_df = pd.concat(df_list,ignore_index=False) 
+        # final_df.to_csv(os.path.join(root, "Final.csv"))
+        final_df.to_csv("Final.csv")
 
-# listd=os.listdir()
-# print(listd)
-            
-    # df_list = [pd.read_table(file) for file in file_list]
-    # if df_list:
-    #     final_df = pd.concat(df_list) 
-    #     final_df.to_csv(os.path.join(root, "Final.csv"))
+print("Combined dataset created")
 
-
-# dire=os.path.isfile
-# print(dire) #<function isfile at 0x7fb22c9d5160>
-
-
-# print("Dataset loaded")
-
-
-
+# In[3]:
+##Drop empty rows and create an SI number column
+comb_df=pd.read_csv('Final.csv')
+print(comb_df.shape)
 
 # In[3]:
 ##Drop empty rows and create an SI number column
