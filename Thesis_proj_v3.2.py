@@ -38,13 +38,8 @@ import os.path
 pd.set_option('display.max_columns', None) #display all columns.pass none to the max_col parameter
 pd.set_option('display.max_colwidth', None) #for indivdual cell full display
 
-# organic=pd.read_csv('Organic_6_aug.csv')
-# organic.head()
-# print("Dataset loaded")
-
 # In[2]:
 ##Stack multiple datasets saved in "datasets" folder
-
 working_dir = "datasets" #folder where the datasets exist
 all_files=[]
 for root, dirs, files in os.walk(working_dir):
@@ -61,7 +56,7 @@ df_list = [pd.read_csv(file) for file in all_files]
 # df_list[1].shape #To get shape of the dataframe
 
 if df_list:
-        final_df = pd.concat(df_list,ignore_index=False) 
+        final_df = pd.concat(df_list,ignore_index=True) 
         # final_df.to_csv(os.path.join(root, "Final.csv"))
         final_df.to_csv("Final.csv")
 
@@ -71,18 +66,28 @@ print("Combined dataset created")
 ##Drop empty rows and create an SI number column
 comb_df=pd.read_csv('Final.csv')
 print(comb_df.shape)
+comb_df.info()
+comb_df = comb_df.dropna(axis=0, subset=['description']) #Drop empty rows in description
+comb_df.info()
+print("Redundant rows removed")
+
+#Hardcode index values
+comb_df.reset_index(inplace= True,drop=True)
+comb_df.reset_index(inplace= True)
+comb_df.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
+comb_df['ix']=comb_df['ix'].astype(str) #convert to string type
 
 # In[3]:
 ##Drop empty rows and create an SI number column
-organic=pd.read_csv('Organic_6_aug.csv')
-organic.drop(list(range(0,2)),inplace=True) #Drop first 2 entries since Nan failed attempts
-organic.reset_index(inplace= True,drop=True)
-organic.reset_index(inplace= True)
-organic.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
-organic['ix']=organic['ix'].astype(str) #convert to string type
-organic.head(2)
+# organic=pd.read_csv('Organic_6_aug.csv')
+# organic.drop(list(range(0,2)),inplace=True) #Drop first 2 entries since Nan failed attempts
+# organic.reset_index(inplace= True,drop=True)
+# organic.reset_index(inplace= True)
+# organic.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
+# organic['ix']=organic['ix'].astype(str) #convert to string type
+# organic.head(2)
 
-print("Redundant rows removed")
+# print("Redundant rows removed")
 
 
 # In[4]:
@@ -138,7 +143,7 @@ def new_cols(df): ##wrapped for all above functions
 
 # In[5]:
 ##New columns dataset "df_updated"
-df_updated=new_cols(organic)
+df_updated=new_cols(comb_df)
 print("New columns created from splitting func")
 #df_updated.tail(1) #to check last line of the dataset.
 
@@ -373,6 +378,8 @@ print("Test Word Cloud displayed")
 # 'u', 'e', 'o'
 
 """ Notes
+
+
 #     Punctutations removed and hence ('s ) used for plurals appears to dominate the wordcloud
 
 #     Construct the dahsboard as you move along. It is useful to use a dashboard view to compare charts and build a story as you move through it.
@@ -388,6 +395,20 @@ print("Test Word Cloud displayed")
 #     - First the layout is defined. A parent Div feeds its value to the child Divs. So the dropdown value updates both graphs.
 #     - Then for each graph, it has its own "callback" function. This has the input and output components defined, and an associated function which accepts the input and returns the output. The component property which is mentioned in the callback specifies the action type which trigger the value to be passed to the relevant graph.
 """
+
+
+# In[14]
+#Hardcode index values
+df_updated.reset_index(inplace= True,drop=True)
+df_updated.reset_index(inplace= True)
+df_updated.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
+df_updated['ix']=df_updated['ix'].astype(str) #convert to string type
+
+# In[14]
+#Create a dataframe which contains the treated dataframe
+
+df_updated.to_csv("App_dataframe.csv")
+
 # In[14]:
 ##Dashboard application Test shift to dbc.Container
 print("Starting dashboard app")
@@ -408,6 +429,10 @@ import dash_bootstrap_components as dbc
 # dff=df_updated[view_extracts]
 
 disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select columns to display in the dashtable
+
+print("Loading the dataframe..")
+
+df_updated=pd.read_csv("App_dataframe.csv")
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
