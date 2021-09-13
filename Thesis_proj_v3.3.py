@@ -7,7 +7,7 @@
 
 ##Monday Sept 13th-evening
 ##Code to combine multiple dataframes:
-    #Shape check to see if updated dataframes are included in big dataframe    
+    #Done.Shape check to see if updated dataframes are included in big dataframe    
     
 
 ##To continue:
@@ -107,11 +107,13 @@ print("Execution time ", s[:-5])
 
 # In[3]:
 ##Drop empty rows and create an SI number column
+print("\nDrop empty rows and add SI number column:")
+start=datetime.now()
 comb_df=pd.read_csv('Final.csv')
 print(comb_df.shape)
-comb_df.info()
+# comb_df.info()
 comb_df = comb_df.dropna(axis=0, subset=['description']) #Drop empty rows in description
-comb_df.info()
+#comb_df.info()
 print("Redundant rows removed")
 
 #Hardcode index values
@@ -120,21 +122,15 @@ comb_df.reset_index(inplace= True)
 comb_df.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
 comb_df['ix']=comb_df['ix'].astype(str) #convert to string type
 
-# In[3]:
-##Drop empty rows and create an SI number column
-# organic=pd.read_csv('Organic_6_aug.csv')
-# organic.drop(list(range(0,2)),inplace=True) #Drop first 2 entries since Nan failed attempts
-# organic.reset_index(inplace= True,drop=True)
-# organic.reset_index(inplace= True)
-# organic.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
-# organic['ix']=organic['ix'].astype(str) #convert to string type
-# organic.head(2)
-
-# print("Redundant rows removed")
+t=datetime.now() - start 
+s=str(t) 
+print("Execution time ", s[:-5])
 
 
 # In[4]:
 ##Functions for splitting into new columns
+print("\nLoading column splitting functions")
+
 def desc_cleaning(org_str): #some hashtags are not separated by a space. This affects dash table display.
   orig_str=str(org_str)
   new_str = orig_str.replace('#'," #") 
@@ -177,13 +173,15 @@ def desc_splitting(df):
   
   return df_upd
 
+print("Loaded")
+print("\nApplying splitting functions")
 
 def new_cols(df): ##wrapped for all above functions
   df['new_desc'] = df['description'].apply(lambda x : desc_cleaning(x))
   df_updated=desc_splitting(df)
   return df_updated
 
-
+print("\nSplitting functions applied")
 # In[5]:
 ##New columns dataset "df_updated"
 df_updated=new_cols(comb_df)
@@ -193,7 +191,7 @@ print("New columns created from splitting func")
 # In[6]:
 ##Column display template
 cols = df_updated.columns.tolist()
-print(cols)
+#print(cols)
 
 # df_updated=df_updated[['query',
 #  'timestamp',
@@ -234,6 +232,8 @@ view1=['description','new_desc','clean_captions' ]
 #Tried to make granular transformations for specificity of processing.
 #Inorprate num2words if necessary. 
 
+print("\nLoading text preprocessing functions")
+
 def font_uniformity(x):
     return unicodedata.normalize('NFKC', x)
 
@@ -254,7 +254,7 @@ def diff_encodings(s):
     s = np.char.replace(s, "’", "")
     return s
 
-
+print("Applying text preprocessing")
 #Change to reference 'clean_captions' bypass step 1
 df_updated['caption_processed']=df_updated['clean_captions'].apply(lambda x: font_uniformity(x))
 df_updated['caption_processed_2']=df_updated['caption_processed'].apply(lambda x: convert_lower_case(x))
@@ -277,6 +277,9 @@ ex_row_list=[11,13,23,106] #subtract 2 because index is reset.
 
 # In[9]:
 #Visualise how many languages are there:    
+print("\nLoading language detection function")    
+start=datetime.now()
+    
 def lang_det(st):
     try:
         lang=detect(st)
@@ -292,6 +295,9 @@ view3= view2+view3
 print("Running language detection..")
 df_updated['det_lang']= df_updated['caption_processed_2'].apply(lambda x: lang_det(x))
 print("Language detection complete")
+t=datetime.now() - start #datetime object
+s=str(t) #string object
+print("Execution time ", s[:-5])
 
 ##visualise the new transformations
 plt.figure(figsize=(16,6))
