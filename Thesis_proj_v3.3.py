@@ -470,8 +470,15 @@ import dash_bootstrap_components as dbc
 disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select columns to display in the dashtable
 
 print("Loading the dataframe..")
+start = datetime.now()
 
 df_updated=pd.read_csv("App_dataframe.csv")
+
+print("Dataframe loaded")
+t=datetime.now() - start 
+s=str(t) 
+print("Execution time: ", s[:-5], "\n\n")
+
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
@@ -708,7 +715,7 @@ def update_styles(selected_columns):
     } for i in selected_columns]
 
 if __name__ == '__main__':
-    app.run_server(debug=False, use_reloader = False)
+    app.run_server(debug=True, use_reloader = True)
 
 # app.run_server(debug=True)    
 # print("Dashboard app running in background")
