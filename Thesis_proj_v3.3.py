@@ -5,7 +5,7 @@
 
 ## ver 3.3
 
-##Monday Sept 13th-evening
+##Tuesday Sept 14th-morning
 ##Code to combine multiple dataframes:
     #Done.Shape check to see if updated dataframes are included in big dataframe    
     
@@ -14,10 +14,12 @@
     # Dataframe cleaning steps: Only English;remove duplicate hashtags?
     # Missing data visualization and drop.
     # Done! Check folder to see if the final dataframe is the same size as available ind files
+    # Consider conditional to only apply language and other transformations only on the newly added datasets. Low priority.
 
 
 # In[1]:
-# import json
+
+print("Starting program..")    
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -36,19 +38,14 @@ import os
 import os.path 
 
 from datetime import datetime
-start = datetime.now()
-# some kind of code
-print(datetime.now() - start)
-
-# In[2]:
-##Load dataset
-pd.set_option('display.max_columns', None) #display all columns.pass none to the max_col parameter
-pd.set_option('display.max_colwidth', None) #for indivdual cell full display
 
 # In[2]:
 ##Stack multiple datasets saved in "datasets" folder
 #Initiate combining the datasets 
-print("Combining multiple datasets :")
+pd.set_option('display.max_columns', None) #display all columns.pass none to the max_col parameter
+pd.set_option('display.max_colwidth', None) #for indivdual cell full display
+
+print("\nReading datasets in the folder :")
 start=datetime.now()
 working_dir = "datasets" #folder where the datasets exist
 all_files=[]
@@ -83,7 +80,7 @@ existing_comb_df_rows=existing_comb_df.shape[0]
 print("Sum of rows of existing combined dataset", existing_comb_df_rows)
 
 if existing_comb_df_rows<df_shape_sum:
-    print("New dataframe exists in the dataset folder")
+    print("\nNew dataframe exists in the dataset folder..")
     print("Create new combined dataframe")
     
 
@@ -107,7 +104,7 @@ print("Execution time ", s[:-5])
 
 # In[3]:
 ##Drop empty rows and create an SI number column
-print("\nDrop empty rows and add SI number column:")
+print("\nDrop empty rows and add SI number column..")
 start=datetime.now()
 comb_df=pd.read_csv('Final.csv')
 print(comb_df.shape)
@@ -129,7 +126,7 @@ print("Execution time ", s[:-5])
 
 # In[4]:
 ##Functions for splitting into new columns
-print("\nLoading column splitting functions")
+print("\nLoading column splitting functions..")
 
 def desc_cleaning(org_str): #some hashtags are not separated by a space. This affects dash table display.
   orig_str=str(org_str)
@@ -173,17 +170,19 @@ def desc_splitting(df):
   
   return df_upd
 
-print("Loaded")
-print("\nApplying splitting functions")
 
 def new_cols(df): ##wrapped for all above functions
   df['new_desc'] = df['description'].apply(lambda x : desc_cleaning(x))
   df_updated=desc_splitting(df)
   return df_updated
 
-print("\nSplitting functions applied")
+print("Loaded")
+
+
 # In[5]:
 ##New columns dataset "df_updated"
+
+print("\nApplying splitting functions...")
 df_updated=new_cols(comb_df)
 print("New columns created from splitting func")
 #df_updated.tail(1) #to check last line of the dataset.
@@ -232,7 +231,7 @@ view1=['description','new_desc','clean_captions' ]
 #Tried to make granular transformations for specificity of processing.
 #Inorprate num2words if necessary. 
 
-print("\nLoading text preprocessing functions")
+print("\nLoading text preprocessing functions..")
 
 def font_uniformity(x):
     return unicodedata.normalize('NFKC', x)
@@ -254,7 +253,7 @@ def diff_encodings(s):
     s = np.char.replace(s, "’", "")
     return s
 
-print("Applying text preprocessing")
+print("\nApplying text preprocessing...")
 #Change to reference 'clean_captions' bypass step 1
 df_updated['caption_processed']=df_updated['clean_captions'].apply(lambda x: font_uniformity(x))
 df_updated['caption_processed_2']=df_updated['caption_processed'].apply(lambda x: convert_lower_case(x))
@@ -277,7 +276,7 @@ ex_row_list=[11,13,23,106] #subtract 2 because index is reset.
 
 # In[9]:
 #Visualise how many languages are there:    
-print("\nLoading language detection function")    
+print("\nLoading language detection function..")    
 start=datetime.now()
     
 def lang_det(st):
@@ -292,7 +291,7 @@ def lang_det(st):
 view3=['det_lang']
 view3= view2+view3
 
-print("Running language detection..")
+print("Running language detection...")
 df_updated['det_lang']= df_updated['caption_processed_2'].apply(lambda x: lang_det(x))
 print("Language detection complete")
 t=datetime.now() - start #datetime object
@@ -300,6 +299,7 @@ s=str(t) #string object
 print("Execution time ", s[:-5])
 
 ##visualise the new transformations
+print("Making countplot..")
 plt.figure(figsize=(16,6))
 ax= sns.countplot(x= 'det_lang', data=df_updated, order = df_updated['det_lang'].value_counts(ascending=False).index)
 ax.set_title('Language distribution')
@@ -376,9 +376,9 @@ ex_row_list.append(3) #add exemplar accents in differnt language
 #Wordcloud for English stopwords
 """
 
-# In[13]:
+# In[11]:
 ##Wordcloud with English and French stopwords
-print("Loading test Word Cloud")
+print("\nLoading test Word Cloud..")
 
 type(STOPWORDS) #set
 len(STOPWORDS) #192
@@ -417,7 +417,7 @@ plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
 plt.show()
 #wordcloud.to_file("static/images/en_fr_sw_wc.png")
-print("Test Word Cloud displayed")
+print("Test Word Cloud loaded")
 
 #With only EN stopwords:
     #  "u", "de", "la", "e", 
@@ -452,7 +452,7 @@ print("Test Word Cloud displayed")
 #df_updated.to_csv("App_dataframe.csv")
 
 
-# In[14]:
+# In[12]:
 ##Dashboard application Test shift to dbc.Container
 print("Starting dashboard app")
 
@@ -717,12 +717,12 @@ if __name__ == '__main__':
 # app.run_server(debug=True)    
 # print("Dashboard app running in background")
 
-     # In[16 ]:
+     # In[13]:
 
 
 
 
-# In[16 ]:
+# In[14]:
 
 
 
