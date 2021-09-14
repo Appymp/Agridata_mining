@@ -5,15 +5,16 @@
 
 ## ver 3.3
 
-##Tuesday Sept 14th-morning
-##Code to combine multiple dataframes:
-    #Done.Shape check to see if updated dataframes are included in big dataframe    
+##Tuesday Sept 14th-evening:
+    # Add visualization- co-occ/word2vec/gloveembeddings
+    # Cleaned up console comments
+
+  
     
 
 ##To continue:
-    # Dataframe cleaning steps: Only English;remove duplicate hashtags?
+    # Dataframe cleaning steps: Only English;remove duplicate posts?
     # Missing data visualization and drop.
-    # Done! Check folder to see if the final dataframe is the same size as available ind files
     # Consider conditional to only apply language and other transformations only on the newly added datasets. Low priority.
 
 
@@ -182,9 +183,18 @@ print("Loaded")
 # In[5]:
 ##New columns dataset "df_updated"
 
-print("\nApplying splitting functions...")
+print("Applying splitting functions...")
+
+start=datetime.now()
+
 df_updated=new_cols(comb_df)
 print("New columns created from splitting func")
+
+t=datetime.now() - start 
+s=str(t) 
+print("Execution time ", s[:-5])
+
+
 #df_updated.tail(1) #to check last line of the dataset.
 
 # In[6]:
@@ -253,14 +263,19 @@ def diff_encodings(s):
     s = np.char.replace(s, "’", "")
     return s
 
-print("\nApplying text preprocessing...")
-#Change to reference 'clean_captions' bypass step 1
+print("Loaded")
+print("Applying text preprocessing...")
+start=datetime.now()
+
 df_updated['caption_processed']=df_updated['clean_captions'].apply(lambda x: font_uniformity(x))
 df_updated['caption_processed_2']=df_updated['caption_processed'].apply(lambda x: convert_lower_case(x))
 df_updated['caption_processed_3']=df_updated['caption_processed_2'].apply(lambda x: remove_punctuation(x))
 df_updated['caption_processed_4']=df_updated['caption_processed_3'].apply(lambda x: diff_encodings(x))
 
 print("Text preprocessing done")
+t=datetime.now() - start 
+s=str(t) 
+print("Execution time ", s[:-5])
 # In[8]:
 ##Define view frame to view previous processing steps with exemplars
 view2=[]
@@ -277,40 +292,40 @@ ex_row_list=[11,13,23,106] #subtract 2 because index is reset.
 # In[9]:
 #Visualise how many languages are there:    
 print("\nLoading language detection function..")    
-start=datetime.now()
+# start=datetime.now()
     
-def lang_det(st):
-    try:
-        lang=detect(st)
-        return lang
+# def lang_det(st):
+#     try:
+#         lang=detect(st)
+#         return lang
     
-    except:
-        lang="error"
-        return lang
+#     except:
+#         lang="error"
+#         return lang
 
-view3=['det_lang']
-view3= view2+view3
+# view3=['det_lang']
+# view3= view2+view3
 
-print("Running language detection...")
-df_updated['det_lang']= df_updated['caption_processed_2'].apply(lambda x: lang_det(x))
-print("Language detection complete")
-t=datetime.now() - start #datetime object
-s=str(t) #string object
-print("Execution time ", s[:-5])
+# print("Running language detection...")
+# df_updated['det_lang']= df_updated['caption_processed_2'].apply(lambda x: lang_det(x))
+# print("Language detection complete")
+# t=datetime.now() - start #datetime object
+# s=str(t) #string object
+# print("Execution time ", s[:-5])
 
-##visualise the new transformations
-print("Making countplot..")
-plt.figure(figsize=(16,6))
-ax= sns.countplot(x= 'det_lang', data=df_updated, order = df_updated['det_lang'].value_counts(ascending=False).index)
-ax.set_title('Language distribution')
-ax.set_xlabel('Languages')
-#ax.set_xticklabels(ax.get_xticklabels(),rotation=90)
-#plt.xticks(rotation=90) #outputs array before the graph
+# ##visualise the new transformations
+# print("Making countplot..")
+# plt.figure(figsize=(16,6))
+# ax= sns.countplot(x= 'det_lang', data=df_updated, order = df_updated['det_lang'].value_counts(ascending=False).index)
+# ax.set_title('Language distribution')
+# ax.set_xlabel('Languages')
+# #ax.set_xticklabels(ax.get_xticklabels(),rotation=90)
+# #plt.xticks(rotation=90) #outputs array before the graph
 
-for tick in ax.get_xticklabels():
-    tick.set_rotation(90)
+# for tick in ax.get_xticklabels():
+#     tick.set_rotation(90)
 
-print("Language countplot graph loaded")
+# print("Language countplot graph loaded")
 
 # In[10]:
 ##View the table with languages included
@@ -318,7 +333,7 @@ print("Language countplot graph loaded")
 view_extracts=['new_desc','det_lang','clean_captions','caption_processed_4','hashtags','cap_mentions','web_links' ]
 #df_updated[view_extracts].loc[ex_row_list]
 
-df_updated[view_extracts].head(100)
+#df_updated[view_extracts].head(100)
 
 #add new elemnts to exemplar list
 ex_row_list.append(3) #add exemplar accents in differnt language
@@ -329,7 +344,63 @@ ex_row_list.append(3) #add exemplar accents in differnt language
 #Errors for descriptions which do not have readable text. Either blank or emojis. 
 #Fonts normalised but not much improvement.
 
-# In[15]:
+
+# In[11]:
+##Wordcloud with English and French stopwords
+print("\nLoading test Word Cloud..")
+start=datetime.now()
+
+type(STOPWORDS) #set
+len(STOPWORDS) #192
+
+#stop_words = set(stopwords.words("english"))
+#len(stop_words)#179
+
+stop_words_fr= set(stopwords.words("french"))
+len(stop_words_fr) #157
+
+
+word_string = ""
+for ind,row in df_updated.iterrows():
+    word_string += (row['web_links']+" ")
+    
+#size of plot
+fig_dims = (8, 8)
+fig, ax = plt.subplots(figsize=fig_dims)
+
+#Define stopwords
+en_stopwords = stopwords.words('english')
+fr_stopwords = stopwords.words('french')
+web_links_sw = ['www','http','https','com']
+
+combined_stopwords = en_stopwords + fr_stopwords 
+
+wordcloud = WordCloud(max_words=100,    
+                      stopwords= combined_stopwords,
+                      collocations=False,
+                      color_func=lambda *args, **kwargs: "orange",
+                      background_color='white',
+                      width=1200,     
+                      height=1000).generate(word_string)
+plt.title("#Test word cloud")
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.show()
+#wordcloud.to_file("static/images/en_fr_sw_wc.png")
+print("Test Word Cloud loaded")
+t=datetime.now() - start 
+s=str(t) 
+print("Execution time ", s[:-5])
+#With only EN stopwords:
+    #  "u", "de", "la", "e", 
+    
+    
+# With EN and FR :
+# 'u', 'e', 'o'
+
+
+# In[14]
+
 """ Co-occurence matrix
 # 
 # Consider using a co-occurence matrix from the 3_Mar NLP notebook. In this matrix, it summarises the total extent of coccurence of any 2 unique words.
@@ -376,85 +447,10 @@ ex_row_list.append(3) #add exemplar accents in differnt language
 #Wordcloud for English stopwords
 """
 
-# In[11]:
-##Wordcloud with English and French stopwords
-print("\nLoading test Word Cloud..")
-
-type(STOPWORDS) #set
-len(STOPWORDS) #192
-
-#stop_words = set(stopwords.words("english"))
-#len(stop_words)#179
-
-stop_words_fr= set(stopwords.words("french"))
-len(stop_words_fr) #157
-
-
-word_string = ""
-for ind,row in df_updated.iterrows():
-    word_string += (row['web_links']+" ")
-    
-#size of plot
-fig_dims = (8, 8)
-fig, ax = plt.subplots(figsize=fig_dims)
-
-#Define stopwords
-en_stopwords = stopwords.words('english')
-fr_stopwords = stopwords.words('french')
-web_links_sw = ['www','http','https','com']
-
-combined_stopwords = en_stopwords + fr_stopwords 
-
-wordcloud = WordCloud(max_words=100,    
-                      stopwords= combined_stopwords,
-                      collocations=False,
-                      color_func=lambda *args, **kwargs: "orange",
-                      background_color='white',
-                      width=1200,     
-                      height=1000).generate(word_string)
-plt.title("#Test word cloud")
-plt.imshow(wordcloud, interpolation='bilinear')
-plt.axis('off')
-plt.show()
-#wordcloud.to_file("static/images/en_fr_sw_wc.png")
-print("Test Word Cloud loaded")
-
-#With only EN stopwords:
-    #  "u", "de", "la", "e", 
-    
-    
-# With EN and FR :
-# 'u', 'e', 'o'
-
-""" Notes
-
-
-#     Punctutations removed and hence ('s ) used for plurals appears to dominate the wordcloud
-
-#     Construct the dahsboard as you move along. It is useful to use a dashboard view to compare charts and build a story as you move through it.
-
-# ## Build a dashboard for the live view
-# 
-#     Have the graph objects in program buffer.
-#     Have a template which accepts the name of the graph objects. So just pass the graph objects into the template and render it.
-#     
-#     Use plotly dash. All these apps work well with a standalone .py file as obtained from a spyder env.
-
-# #### Notes about plotly wiht dash from the example code: https://www.youtube.com/watch?v=lVYRhHREkGo
-#     - First the layout is defined. A parent Div feeds its value to the child Divs. So the dropdown value updates both graphs.
-#     - Then for each graph, it has its own "callback" function. This has the input and output components defined, and an associated function which accepts the input and returns the output. The component property which is mentioned in the callback specifies the action type which trigger the value to be passed to the relevant graph.
-"""
-
-
-
-# In[14]
-#Export dataframe which contains the treated dataframe
-#df_updated.to_csv("App_dataframe.csv")
-
 
 # In[12]:
 ##Dashboard application Test shift to dbc.Container
-print("Starting dashboard app")
+print("\nStarting dashboard app...")
 
 #Import libraries and dataset
 import pandas as pd     #(version 1.0.0)
