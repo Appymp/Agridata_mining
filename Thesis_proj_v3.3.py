@@ -606,7 +606,8 @@ app.layout = dbc.Container([
     [Input('sel-button', 'n_clicks'),
     Input('desel-button', 'n_clicks')],
     [State('datatable_id', 'derived_virtual_selected_rows'), #virtual selected row is what is selected.
-     State('datatable_id', 'derived_virtual_data')] #virtual_data is full table after filtering. 
+     State('datatable_id', 'derived_virtual_data')], #virtual_data is full table after filtering. 
+    prevent_initial_call=True
 )
 
 def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
@@ -616,12 +617,12 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
         trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
         if trigger == 'sel-button':
             if selected_rows is None:
-                print("\n Sel button clicked and NO rows selected")
-                print("\n Selected rows has:", len(selected_rows), 'rows')
+                print("\n Sel button clicked. 0 rows selected")
+                print("\n Selected_rows has:", len(selected_rows), 'rows')
                 return [[]]
             
             else: # wc_list= [[i for i in range(len(selected_rows))]]
-                print("\n Selected rows are of the form", selected_rows)
+                # print("\n Selected rows are of the form", selected_rows)
                 wc_list= []
                 # for row in selected_rows:  #selected_rows is a list of row dicts
                 #     wc_list.append(row['ix'])
@@ -631,11 +632,10 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
                 wc_list
                 
                 # wc_list=selected_rows
-                print("\n Sel button clicked and rows are selected")
-                print("\n Selected rows has:", len(selected_rows), 'rows')
+                print("\n Sel button clicked. N rows selected")
+                print("\n Selected_rows has:", len(selected_rows), 'rows')
                 print("\n Filtered table has:", len(filtered_table), 'rows')                
                 print("\n Wordcloud list contains:", len(wc_list[0]), "elements")
-                print("\n Wordcloud list is of the form:", wc_list)                
                 return wc_list
         else:
             return [[]]
@@ -656,7 +656,7 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
 def ren_wordcloud(chosen_rows, chosen_cols):
     if len(chosen_cols) > 0: #atleast 1 col to be selected
         if len(chosen_rows)==0:                    
-            df_filtered = df_disp_1[chosen_cols]
+            df_filtered = df_disp_1[chosen_cols] #if no rows selected consider all rows
             # df_filtered = df_disp_1.iloc[:, [chosen_cols]]
             #print("Atleast 1 col chosen but no rows. Dataype of df_filtered is", type(df_filtered))
 
