@@ -6,15 +6,13 @@
 ## ver 3.3
 
 ##Tuesday Sept 15th-evening:
-    # Pushing stable code before removing if block.
-    # Relevant dataframe filtering as mentioned below Done.
+    # Logic tested. App console comments updated.
 
   
     
 
 ##To continue:
-    # Done.Dataframe cleaning steps: Only English;remove duplicate posts?
-    # Done.Missing data visualization and drop.
+    # Speed up update if scope contains less elements. Seems tricky. Abandon.
     # Consider conditional code to apply language and other transformations only on the newly added datasets. Low priority.
 
 
@@ -636,16 +634,19 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
         print(ctx.triggered)
         trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
         if trigger == 'sel-button':
-            print("\n\nSelected_rows is: ", selected_rows)
+            print("\n\nSelect button clicked")
+            print("Length of Selected_rows is: ", len(selected_rows))
             wc_list= []            
             wc_list=[[row['ix'] for row in filtered_table]] 
             wc_list = [[int(i) for i in wc_list[0]]] #convert to int for index reference
            
             print("Displayed table has:", len(filtered_table), 'rows')                
-            print("Wordcloud list contains:", len(wc_list[0]), "elements\n\n")
+            print("Wordcloud list contains:", len(wc_list[0]), "elements")
 
             return wc_list
         else:
+            print("\n\nDeselect button clicked")
+            print("Length of Selected_rows is: ", len(selected_rows))
             return [[]]
 
 
@@ -655,6 +656,8 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
     Output('wordcloud','figure'),
     [Input(component_id='datatable_id',component_property='selected_rows'),
     Input(component_id='my-dropdown', component_property='value')],
+    # Input('sel-button', 'n_clicks'),
+    # Input('desel-button', 'n_clicks')],
     # Input(component_id='my-button', component_property='n_clicks')],
     # [State(component_id='my-dropdown', component_property='value')],
     prevent_initial_call=False
@@ -688,8 +691,9 @@ def ren_wordcloud(chosen_rows, chosen_cols):
     fr_stopwords = stopwords.words('french')
     web_links_sw = ['www','http','https','com']
     
-    combined_stopwords = en_stopwords + fr_stopwords + web_links_sw   
-
+    combined_stopwords = en_stopwords + fr_stopwords + web_links_sw
+    
+    print("\nNo of rows in WC are: ",len(df_filtered))
     wordcloud = WordCloud(max_words=100,    
                           stopwords= combined_stopwords,
                           collocations=False,
