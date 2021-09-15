@@ -5,16 +5,17 @@
 
 ## ver 3.3
 
-##Tuesday Sept 15th-morning:
-    # Cleaned up dataframe naming and some console comments
+##Tuesday Sept 15th-evening:
+    # Pushing stable code before removing if block.
+    # Relevant dataframe filtering as mentioned below Done.
 
   
     
 
 ##To continue:
-    # Dataframe cleaning steps: Only English;remove duplicate posts?
-    # Missing data visualization and drop.
-    # Consider conditional to only apply language and other transformations only on the newly added datasets. Low priority.
+    # Done.Dataframe cleaning steps: Only English;remove duplicate posts?
+    # Done.Missing data visualization and drop.
+    # Consider conditional code to apply language and other transformations only on the newly added datasets. Low priority.
 
 
 # In[1]:
@@ -451,6 +452,25 @@ print("Execution time ", s[:-5])
 pd.read_csv("combined_df.csv").shape
 pd.read_csv("App_dataframe.csv").shape
 
+# In[15]
+#Filter the dataframe to English, #organic, and remove duplicate posts
+
+ad_1=pd.read_csv("App_dataframe.csv")
+ad_1.shape
+ad_2=ad_1[ad_1['det_lang']=='en'] #filter only english, removes appr 33%
+ad_3=ad_2[ad_2['query']=='#organic'] #filter only #organic scrape query, removes 33%
+ad_4=ad_3.drop_duplicates(subset=['postId']) #remove dupl posts, removes 12.5% 
+
+ad_4.drop(['Unnamed: 0','ix','Unnamed: 0.1'],axis =1,inplace=True)
+
+#Create new index for proper selection of the filtered table in app
+ad_4.reset_index(inplace= True,drop=True)
+ad_4.reset_index(inplace= True)
+ad_4.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
+ad_4['ix']=comb_df['ix'].astype(str) #convert to string type
+
+ad_4.to_csv("App_dataframe_2.csv")
+
 # In[12]:
 ##Dashboard application Test shift to dbc.Container
 print("\nStarting dashboard app...")
@@ -475,7 +495,7 @@ disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select
 print("Loading the dataframe..")
 start = datetime.now()
 
-df_updated=pd.read_csv("App_dataframe.csv")
+df_updated=pd.read_csv("App_dataframe_2.csv")
 
 print("Dataframe loaded")
 t=datetime.now() - start 
@@ -602,7 +622,7 @@ app.layout = dbc.Container([
 ################################ Select all button ################################
 
 @app.callback(
-    [Output('datatable_id', 'selected_rows')],
+    [Output('datatable_id', 'selected_rows')], #references ordered 0 to n index of larger table irrespective of actual index value.
     [Input('sel-button', 'n_clicks'),
     Input('desel-button', 'n_clicks')],
     [State('datatable_id', 'derived_virtual_selected_rows'), #virtual selected row is what is selected.
@@ -616,26 +636,31 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
         print(ctx.triggered)
         trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
         if trigger == 'sel-button':
+            print("selected_rows is: ", selected_rows)
+            
             if selected_rows is None:
-                print("\n Sel button clicked. 0 rows selected")
-                print("\n Selected_rows has:", len(selected_rows), 'rows')
+                # print("\n Sel button clicked. 0 rows selected")
+                # print("\n Selected_rows has:", len(selected_rows), 'rows')
+                # print("\n Selected_rows list is: ", selected_rows)
+                print("Passes through IF block")
                 return [[]]
             
             else: # wc_list= [[i for i in range(len(selected_rows))]]
                 # print("\n Selected rows are of the form", selected_rows)
+                print("Passes through ELSE block")
                 wc_list= []
                 # for row in selected_rows:  #selected_rows is a list of row dicts
                 #     wc_list.append(row['ix'])
+                
                 wc_list=[[row['ix'] for row in filtered_table]]
+                # print(filtered_table)
+                # wc_list=[[ind for ind,val in enumerate(filtered_table)]]
                 
                 wc_list = [[int(i) for i in wc_list[0]]] #convert to int for index reference
-                wc_list
-                
-                # wc_list=selected_rows
-                print("\n Sel button clicked. N rows selected")
-                print("\n Selected_rows has:", len(selected_rows), 'rows')
+               
                 print("\n Filtered table has:", len(filtered_table), 'rows')                
                 print("\n Wordcloud list contains:", len(wc_list[0]), "elements")
+                # print("\n Wordcloud list is:", wc_list[0], "\n\n")
                 return wc_list
         else:
             return [[]]
