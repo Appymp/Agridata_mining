@@ -5,9 +5,8 @@
 
 ## ver 3.3
 
-##Tuesday Sept 14th-evening:
-    # Add visualization- co-occ/word2vec/gloveembeddings
-    # Cleaned up console comments
+##Tuesday Sept 15th-morning:
+    # Cleaned up dataframe naming and some console comments
 
   
     
@@ -76,7 +75,7 @@ df_shape_sum=sum(i for i, j in read_df_sh)
 print("\nSum of rows of multiple datasets", df_shape_sum)
 
 #Check if the exisitng dataframe already includes all sub datasets
-existing_comb_df=pd.read_csv('Final.csv')
+existing_comb_df=pd.read_csv('combined_df.csv')
 existing_comb_df_rows=existing_comb_df.shape[0]
 print("Sum of rows of existing combined dataset", existing_comb_df_rows)
 
@@ -87,16 +86,11 @@ if existing_comb_df_rows<df_shape_sum:
 
     if df_list:
             final_df = pd.concat(df_list,ignore_index=True) 
-            # final_df.to_csv(os.path.join(root, "Final.csv"))
-            final_df.to_csv("Final.csv")
+            # final_df.to_csv(os.path.join(root, "combined_df.csv"))
+            final_df.to_csv("combined_df.csv")
    
 else:
     print("\nAll datasets already included in combined dataset")
-
-# if df_list:
-#             final_df = pd.concat(df_list,ignore_index=True) 
-#             # final_df.to_csv(os.path.join(root, "Final.csv"))
-#             final_df.to_csv("Final.csv")
 
 
 t=datetime.now() - start #datetime object
@@ -107,12 +101,12 @@ print("Execution time ", s[:-5])
 ##Drop empty rows and create an SI number column
 print("\nDrop empty rows and add SI number column..")
 start=datetime.now()
-comb_df=pd.read_csv('Final.csv')
+comb_df=pd.read_csv('combined_df.csv')
 print(comb_df.shape)
-# comb_df.info()
+# comb_df.info() #Check where the empty rows are
 comb_df = comb_df.dropna(axis=0, subset=['description']) #Drop empty rows in description
-#comb_df.info()
 print("Redundant rows removed")
+print(comb_df.shape)
 
 #Hardcode index values
 comb_df.reset_index(inplace= True,drop=True)
@@ -291,7 +285,7 @@ ex_row_list=[11,13,23,106] #subtract 2 because index is reset.
 
 # In[9]:
 #Visualise how many languages are there:    
-print("\nLoading language detection function..")    
+print("\nLoading language detection function..") #Takes 11:30 mins to execute
 # start=datetime.now()
     
 # def lang_det(st):
@@ -313,6 +307,12 @@ print("\nLoading language detection function..")
 # s=str(t) #string object
 # print("Execution time ", s[:-5])
 
+
+##Export to app referenced df after this last transformation:
+##df_updated.to_csv("App_dataframe.csv")
+
+
+# In[9]:
 # ##visualise the new transformations
 # print("Making countplot..")
 # plt.figure(figsize=(16,6))
@@ -447,6 +447,9 @@ print("Execution time ", s[:-5])
 #Wordcloud for English stopwords
 """
 
+# In[14]
+pd.read_csv("combined_df.csv").shape
+pd.read_csv("App_dataframe.csv").shape
 
 # In[12]:
 ##Dashboard application Test shift to dbc.Container
@@ -715,7 +718,7 @@ def update_styles(selected_columns):
     } for i in selected_columns]
 
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader = True)
+    app.run_server(debug=False)
 
 # app.run_server(debug=True)    
 # print("Dashboard app running in background")
