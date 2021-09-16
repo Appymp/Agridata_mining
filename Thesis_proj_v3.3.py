@@ -5,8 +5,8 @@
 
 ## ver 3.3
 
-##Tuesday Sept 15th-evening:
-    # Logic tested. App console comments updated.
+##Tuesday Sept 16th-evening:
+    # Added total app launch timing. Takes 1:31 mins to be up and running.
 
   
     
@@ -17,7 +17,6 @@
 
 
 # In[1]:
-
 print("Starting program..")    
 import numpy as np
 import pandas as pd
@@ -37,7 +36,7 @@ import os
 import os.path 
 
 from datetime import datetime
-
+app_launch_start=datetime.now() #Set start time for program start
 # In[2]:
 ##Stack multiple datasets saved in "datasets" folder
 #Initiate combining the datasets 
@@ -447,12 +446,12 @@ print("Execution time ", s[:-5])
 """
 
 # In[14]
-pd.read_csv("combined_df.csv").shape
-pd.read_csv("App_dataframe.csv").shape
+# pd.read_csv("combined_df.csv").shape
+# pd.read_csv("App_dataframe.csv").shape
 
 # In[15]
 #Filter the dataframe to English, #organic, and remove duplicate posts
-
+print("Reading in dataframe for app with filters and duplicate removal..")
 ad_1=pd.read_csv("App_dataframe.csv")
 ad_1.shape
 ad_2=ad_1[ad_1['det_lang']=='en'] #filter only english, removes appr 33%
@@ -505,6 +504,10 @@ df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 #the rows and columns from dbc worl only with an external stylesheet
+
+al=datetime.now() - app_launch_start #start time logged at start of program code
+sal=str(al) #string object
+print("Total time taken to launch app", sal[:-5])
 
 #---------------------------------------------------------------
 
