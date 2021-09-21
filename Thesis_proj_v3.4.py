@@ -476,6 +476,7 @@ ad_4['ix']=comb_df['ix'].astype(str) #convert to string type
 #Tokenize the processed description
 
 import ast
+import preprocessor as p
 
 ad_4= pd.read_csv("App_dataframe_2.csv")
 
@@ -496,10 +497,18 @@ def addi_treatment(s): #Move this to the main preprocessing block if required
     return s
 
 
+def preprocess_tweet(row):
+    text = p.clean(row) # removes hashtags,emojis,urls, mentions, smileys
+    return text
+
+
+
 start= datetime.now() 
+
+#Create new columns
 ad_4['caption_processed_4'] = ad_4['caption_processed_4'].apply(lambda x : addi_treatment(x))
-#Create new column
-ad_4['cp4_rm_sw'] = ad_4['caption_processed_4'].apply(remove_stop_words) 
+ad_4['cp4_no_emojis']=ad_4['caption_processed_4'].apply(lambda x: preprocess_tweet(x))
+ad_4['cp4_rm_sw'] = ad_4['cp4_no_emojis'].apply(remove_stop_words) 
 ad_4['cp4_rm_sw'] = ad_4['cp4_rm_sw'].astype(str) #convert to string for literal eval
 ad_4['cp4_rm_sw'] = ad_4['cp4_rm_sw'].apply(lambda x : ast.literal_eval(x)) #preserve lists.
 al=datetime.now() - start #start time logged at start
@@ -514,7 +523,8 @@ view=ad_4[['caption_processed_4', 'cp4_rm_sw']] #index 35129
 ad_4['cp4_rm_sw'][32000]
 
 ad_4.to_csv("App_dataframe_3.csv", index_label=False) #After filtering for stopwords.
-#App_dataframe_3 now has words minus stopwords and treated for "addi_treatment
+ad_4.to_pickle("App_dataframe_3.pkl", protocol=0) #preserves the list datatypes. protocol 0 so that it reads back properly in google colab
+#App_dataframe_3 now has words minus stopwords and treated for "addi_treatment,and removed emojis
 
 
 
@@ -592,19 +602,23 @@ class CooccEmbedding:
 # al=datetime.now() - start #start time logged at start of program code
 # sal=str(al) #string object
 # print("Execution time of Coocc matrix : ", sal[:-5]) #for first 100 it takes 2 mins.
-ad_4=pd.read_csv("App_dataframe_3.csv")
-type(ad_4['cp4_rm_sw'][0])
 
-words=[row_list for row_list in ad_4['cp4_rm_sw']] #BOW list of lists to be passed into coocc class
+
+ad_5=pd.read_pickle('App_dataframe_3.pkl')
+type(ad_5['cp4_rm_sw'][0]) #after importing the previously exported df, it is str again
+#Need to use pickle format to preserve the datatypes
+
+
+
+# In[12]:
+ad_5=pd.read_pickle('App_dataframe_3.pkl')
+    
+words=[row_list for row_list in ad_5['cp4_rm_sw']] #BOW list of lists to be passed into coocc class
 print(words[:6])
 ###issue detected. Format of BOW appears to represent the internal lists as strings
 
-type(ad_4['cp4_rm_sw'][0])
-ad_4['cp4_rm_sw'][0]
-
-
 inst = CooccEmbedding(words[:100]) #100 posts. Gets passed to class as 'corpus'
-print("Number of unique words in first 100 rows",len(inst.vocabulary())) #1482 words vs 151 words in colab??
+print("Number of unique words in first 100 rows",len(inst.vocabulary())) #1482 words with emojis. 1309 after tweet preprocessor 
 
 inst.vocabulary()  #Make sure this is run so that self.vocab variable is loaded
 
@@ -613,7 +627,7 @@ start=datetime.now()
 co_occ=inst.coocc_matrix() # takes a while.time it. Use collab?
 al=datetime.now() - start #start time logged at start of program code
 sal=str(al) #string object
-print("Execution time of Coocc matrix for 100 rows: ", sal[:-5]) #for first 100 it takes about 4 secs
+print("Execution time of Coocc matrix for 100 rows: ", sal[:-5]) #for first 100 it takes 1:36mins  vs 2:00 with emojis 
 
 co_occ.shape
 
