@@ -5,9 +5,8 @@
 
 ## ver 3.4
 
-##Monday Sept 20th-Afternoon. Coffee company
-    # Created stopwords filtered description column 
-    # Testing the cooccurence matrix. Time is long. Plan execution of large frame.
+##Monday Sept 21st-Morning. Coffee company
+    # New column with stopwords removed and lists created. App_dataframe_3
     
 
   
@@ -246,7 +245,7 @@ def convert_lower_case(s):
 def remove_punctuation(data):
     symbols = "!\"#$%&()*+-.•/:;<=>?@[\]^_`{|}~\n"
     for i in range(len(symbols)):
-        data = np.char.replace(data, symbols[i], ' ')
+        data = np.char.replace(data, symbols[i], ' ') 
     
     data = np.char.replace(data, "  ", " ")
     data = np.char.replace(data, ',', '')
@@ -453,6 +452,7 @@ print("Execution time ", s[:-5])
 
 # In[15]
 #Filter the dataframe to English, #organic, and remove duplicate posts
+##Export to a new dataframe
 print("Reading in dataframe for app with filters and duplicate removal..")
 ad_1=pd.read_csv("App_dataframe.csv")
 ad_1.shape
@@ -468,54 +468,59 @@ ad_4.reset_index(inplace= True)
 ad_4.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
 ad_4['ix']=comb_df['ix'].astype(str) #convert to string type
 
-#ad_4.to_csv("App_dataframe_2.csv")
+#ad_4.to_csv("App_dataframe_2.csv", index_label = False)
 
 
-# In[15]
-#Implement Word2Vec
-#Tokenize the description:
-    
-#Slice the dataframe to test the performance of the algo.
-# ad_5=ad_4.head(100)    
-    
+# In[15] Co-occurrence matrix
+#Implement Vecotrization.
+#Tokenize the processed description
+
+import ast
+
+ad_4= pd.read_csv("App_dataframe_2.csv")
+
 def remove_stop_words(data): #takes 5:25 mins for the full dataset
     """
     Split/tokenize the words first. Create a list of tokens for each.
     Iterate each token removing stop words from text. 
     """
     row_tokens = data.split()
-    
     return [word for word in row_tokens if not word in stopwords.words("english")] # 25 s for 100return the word only if not in the stop words list
     # return [word for word in row_tokens if not word in set(stopwords.words("english"))] 
 
-start= datetime.now()   
-ad_4['cp4_rm_sw'] = ad_4['caption_processed_4'].apply(remove_stop_words) #takes too long. Remove stop words first.
+#define function to remove newly identified punctuations/encodings
+def addi_treatment(s): #Move this to the main preprocessing block if required
+    s = np.char.replace(s, "”", "")
+    s = np.char.replace(s, "“", "")
+    s = np.char.replace(s, "'", "")
+    return s
 
-al=datetime.now() - start #start time logged at start of program code
+
+start= datetime.now() 
+ad_4['caption_processed_4'] = ad_4['caption_processed_4'].apply(lambda x : addi_treatment(x))
+#Create new column
+ad_4['cp4_rm_sw'] = ad_4['caption_processed_4'].apply(remove_stop_words) 
+ad_4['cp4_rm_sw'] = ad_4['cp4_rm_sw'].astype(str) #convert to string for literal eval
+ad_4['cp4_rm_sw'] = ad_4['cp4_rm_sw'].apply(lambda x : ast.literal_eval(x)) #preserve lists.
+al=datetime.now() - start #start time logged at start
 sal=str(al) #string object
-print("Execution time for 1ros : ", sal)
+print("Execution time for all rows : ", sal[:-5])
 
-ad_4.to_csv("App_dataframe_3.csv") #After filtering for stopwords.
+print("Type of rows in cp4_rm_sw are ", type(ad_4['cp4_rm_sw'][32000]))
+ch_list=['caption_processed_4', 'cp4_rm_sw']
+view=ad_4[['caption_processed_4', 'cp4_rm_sw']] #index 35129
+# print(view)
 
-    
-# print(len(ad_5['desc_rm_sw'][0]))
-# print(len(ad_5['caption_processed_4'][0].split()))
+ad_4['cp4_rm_sw'][32000]
 
-# len(stopwords.words()) #6800 words from all languages
-# len(stopwords.words("english")) # 179 english worsd
-# print(stopwords.words("english"))
+ad_4.to_csv("App_dataframe_3.csv", index_label=False) #After filtering for stopwords.
+#App_dataframe_3 now has words minus stopwords and treated for "addi_treatment
 
 
-# In[15]
 
-from sklearn.decomposition import TruncatedSVD
-ad_4['cp4_rm_sw'][0]
-
-words=[row_list for row_list in ad_4['cp4_rm_sw']] #BOW list of lists to be passed into coocc class
-
-words
 # In[15]
 # Create class of cooccurence embeddings
+from sklearn.decomposition import TruncatedSVD
 
 class CooccEmbedding:
     def __init__(self, corpus):
@@ -570,29 +575,47 @@ class CooccEmbedding:
 
 
 # In[12]:
-inst = CooccEmbedding(words[:100]) #200 posts. Gets passed to class as 'corpus'
-len(inst.vocabulary()) #1482 in first 100 words
+# inst = CooccEmbedding(words[:100]) #100 posts. Gets passed to class as 'corpus'
+# len(inst.vocabulary()) #1482 in first 100 words
 #number of unique words in the corpus 73593 in full dataset without rmoving stopwords
 
 # inst = CooccEmbedding(words) 
 # len(inst.vocabulary()) #Running the len command takes too long. Just reference the variable in the explorer
-#54200 words in vocab. Compared to grand total about 25% of the words are Stop words
+#54200 words in vocab. Compared to grand total, about 25% of the words are Stop words
 
+# inst.vocabulary()  #Make sure this is run so that self.vocab variable is loaded
+
+# type(inst)
+
+# start=datetime.now()
+# inst.coocc_matrix() # takes a while.time it. Use collab?
+# al=datetime.now() - start #start time logged at start of program code
+# sal=str(al) #string object
+# print("Execution time of Coocc matrix : ", sal[:-5]) #for first 100 it takes 2 mins.
+ad_4=pd.read_csv("App_dataframe_3.csv")
+type(ad_4['cp4_rm_sw'][0])
+
+words=[row_list for row_list in ad_4['cp4_rm_sw']] #BOW list of lists to be passed into coocc class
+print(words[:6])
+###issue detected. Format of BOW appears to represent the internal lists as strings
+
+type(ad_4['cp4_rm_sw'][0])
+ad_4['cp4_rm_sw'][0]
+
+
+inst = CooccEmbedding(words[:100]) #100 posts. Gets passed to class as 'corpus'
+print("Number of unique words in first 100 rows",len(inst.vocabulary())) #1482 words vs 151 words in colab??
 
 inst.vocabulary()  #Make sure this is run so that self.vocab variable is loaded
 
-type(inst)
-
-start=datetime.start()
-inst.coocc_matrix() # takes a while.time it. Use collab?
+#Time running of first 100 posts
+start=datetime.now()
+co_occ=inst.coocc_matrix() # takes a while.time it. Use collab?
 al=datetime.now() - start #start time logged at start of program code
 sal=str(al) #string object
-print("Execution time of Coocc matrix : ", sal[:-5])
+print("Execution time of Coocc matrix for 100 rows: ", sal[:-5]) #for first 100 it takes about 4 secs
 
-
-
-
-# svd_matrix = inst.svd_reduction()
+co_occ.shape
 
 
 # In[12]:
