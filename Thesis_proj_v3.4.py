@@ -5,17 +5,18 @@
 
 ## ver 3.4
 
-##Monday Sept 21st-Morning. Coffee company
+##Wednesday Sept 22nd-Morning. Coffee company
     # New column with stopwords removed and lists created. App_dataframe_3
+    # Need to use pickle format to preserve the datatypes
+    # 73593 words in vocab full dataset without rmoving stopwords
+    # 54200 words in vocab after removing stopwords before emojis. Compared to grand total, about 25% of the words are Stop words.
+    # Cleaned up the code for trmming the bag of words.
     
-
-  
+#Next :
+    # Lemmatization, Stemming.
+    # Attempt creating a co-occurence matrix on hopefully much smaller bag of words
+    # If still not possible, use moving window concept to create a cooccurence matrix
     
-
-##To continue:
-    # Speed up update if scope contains less elements. Seems tricky. Abandon.
-    # Consider conditional code to apply language and other transformations only on the newly added datasets. Low priority.
-
 
 # In[1]:
 print("Starting program..")    
@@ -494,6 +495,7 @@ def addi_treatment(s): #Move this to the main preprocessing block if required
     s = np.char.replace(s, "”", "")
     s = np.char.replace(s, "“", "")
     s = np.char.replace(s, "'", "")
+    s = np.char.replace(s,"-","") #from viewing bag of wrods in first 100 of cp4
     return s
 
 
@@ -524,7 +526,10 @@ ad_4['cp4_rm_sw'][32000]
 
 ad_4.to_csv("App_dataframe_3.csv", index_label=False) #After filtering for stopwords.
 ad_4.to_pickle("App_dataframe_3.pkl", protocol=0) #preserves the list datatypes. protocol 0 so that it reads back properly in google colab
-#App_dataframe_3 now has words minus stopwords and treated for "addi_treatment,and removed emojis
+#App_dataframe_3 now has 
+##words minus stopwords 
+##treated for "addi_treatment
+## tweet preprocessor removed emojis
 
 
 
@@ -585,28 +590,66 @@ class CooccEmbedding:
 
 
 # In[12]:
-# inst = CooccEmbedding(words[:100]) #100 posts. Gets passed to class as 'corpus'
-# len(inst.vocabulary()) #1482 in first 100 words
-#number of unique words in the corpus 73593 in full dataset without rmoving stopwords
+#Trim the vocab so that cooccurnce matrix can be computed.
+ad_5=pd.read_pickle('App_dataframe_3.pkl')
+
+def list_of_words(data): #takes 5:25 mins for the full dataset
+    row_tokens = data.split()
+    return [word for word in row_tokens] # 25 s for 100return the word only if not in the stop words list
+
+#Prepare the list of lists for the bag of words input in Coocc class:
+ad_5['caption_processed_4'] = ad_5['caption_processed_4'].apply(list_of_words)
+words_cp4=[row_list for row_list in ad_5['caption_processed_4']] 
+words_cp4[0:3]
+
+ad_5['cp4_no_emojis'] = ad_5['cp4_no_emojis'].apply(list_of_words)
+words_cp4_no_emojis=[row_list for row_list in ad_5['cp4_no_emojis']] 
+
+words_cp4_rm_sw=[row_list for row_list in ad_5['cp4_rm_sw']] # List of lists
+
+##Tests on the first 100 rows
+inst = CooccEmbedding(words_cp4[:100]) 
+print("Number of unique words: ",len(inst.vocabulary())) #1587 words in cp4
+
+inst = CooccEmbedding(words_cp4_no_emojis[:100]) 
+print("Number of unique words: ",len(inst.vocabulary())) #1418 words in words_cp4_no_emojis
+
+inst = CooccEmbedding(words_cp4_rm_sw[:100]) 
+print("Number of unique words: ",len(inst.vocabulary())) #1309 words in words_cp4_rm_sw
+
+
+#For full dataframe:
+inst_1 = CooccEmbedding(words_cp4) 
+inst_2 = CooccEmbedding(words_cp4_no_emojis)
+inst_3 = CooccEmbedding(words_cp4_rm_sw) 
+
+#Takes time so time it
+time_vocab=datetime.now()
+
+print("cp4 unique words: ",len(inst_1.vocabulary())) #71616 words
+t=datetime.now() - time_vocab 
+s=str(t) 
+print("cp4 counting time: ", s[:-5])
+
+print("cp4_no_emojis unique words: ",len(inst_2.vocabulary())) #46066 words
+t=datetime.now() - time_vocab 
+s=str(t) 
+print("cp4_no_emojis counting time: ", s[:-5])
+
+print("cp4_rm_sw unique words: ",len(inst_3.vocabulary())) #45925 words
+t=datetime.now() - time_vocab 
+s=str(t) 
+print("cp4_rm_sw counting time: ", s[:-5])
+
+
 
 # inst = CooccEmbedding(words) 
 # len(inst.vocabulary()) #Running the len command takes too long. Just reference the variable in the explorer
-#54200 words in vocab. Compared to grand total, about 25% of the words are Stop words
 
-# inst.vocabulary()  #Make sure this is run so that self.vocab variable is loaded
+#On full dataset:
 
-# type(inst)
-
-# start=datetime.now()
-# inst.coocc_matrix() # takes a while.time it. Use collab?
-# al=datetime.now() - start #start time logged at start of program code
-# sal=str(al) #string object
-# print("Execution time of Coocc matrix : ", sal[:-5]) #for first 100 it takes 2 mins.
-
-
-ad_5=pd.read_pickle('App_dataframe_3.pkl')
-type(ad_5['cp4_rm_sw'][0]) #after importing the previously exported df, it is str again
-#Need to use pickle format to preserve the datatypes
+#73593 words in vocab full dataset without rmoving stopwords
+#54200 words in vocab after removing stopwords before emojis. Compared to grand total, about 25% of the words are Stop words.
 
 
 
