@@ -11,6 +11,8 @@
         #71616 words in cp4 (with additional string removing,
         #46066 words after tweet preprocessor which removed emojis,
         #45925 words after further removing stopwords
+    #observed duplicate posts. Contain different postId but same time stamp
+    #many posts can have the same time stamp because resolution does not offer separation.
     # Window based cooccurence matrix is ready. Display on the dashboard.
     
 #Next :
@@ -645,14 +647,6 @@ print("cp4_rm_sw counting time: ", s[:-5])
 
 
 # In[12]: #Moving window size to create the cooccurence matrix
-# def coocc_matrix_wind(self): #Note that this is not looking at window size for cooccurence. Considers all words in the tweet.
-#         self.len_vocab = len(self.vocab)
-#         coocc_list = [sum([1 if (self.vocab[i] in tweet and self.vocab[j] in tweet and i != j) else 0 for tweet in self.corpus]) #checks condition each tweet, and sums all tweets.
-#                       for i in range(self.len_vocab) for j in range(self.len_vocab)] #1st word at 'i' compared with other words at 'j' in unqiue words list.
-#         coocc_list = np.array(coocc_list)
-#         # transform the coocc_list into a matrix
-#         self.coocc_mat = coocc_list.reshape([self.len_vocab, self.len_vocab])
-#         return self.coocc_mat
   
 from collections import defaultdict
 
