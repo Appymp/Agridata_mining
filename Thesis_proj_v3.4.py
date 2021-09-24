@@ -662,7 +662,7 @@ print("rm_sw_lemt counting time: ", t[:-5]) #1:48 mins
 
 
 
-
+ad_5.to_pickle("App_dataframe_4.pkl", protocol=0) #with 2 new columns stemming and lemmatization
 #make sure to export the new dataframe with the stemming and lemmatization
 
 
@@ -671,7 +671,11 @@ print("rm_sw_lemt counting time: ", t[:-5]) #1:48 mins
 
 from collections import defaultdict
 
-text=words_cp4_rm_sw #full dataset around 11 mins?. window 2 [shape 45925]
+ad_6=pd.read_pickle('App_dataframe_4.pkl')
+
+words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
+
+text=words_rm_sw_lemt #full dataset around 11 mins?. window 2 [shape 45925]
   
 def co_occ_windows(sentences, window_size):
     d = defaultdict(int)
@@ -710,15 +714,12 @@ co_occ_df = co_occ_windows(text, 2)
 print("shape of co_occ matrix is: ",co_occ_df.shape)
 t=str(datetime.now() - start)
 print("Time for execution: ", t[:-5])
-    
-co_occ_df.to_csv("cooc_w2_rm_sw.csv", index_label=False)
+   
+#Time for execution 10:43 mins  for rm_sw_lemt
 
-# ad_5['postId'][1]
-# ad_5['timestamp'][1]
 
-# ad_5['postId'][2]
-# ad_5['timestamp'][2]
-# ad_5['timestamp'][4]
+co_occ_df.to_csv("Coocc_rm_sw_lemt.csv", index_label=False)#Takes too long. consider SVD to eliminate redundant 0 co-occurence terms.
+
 
 # In[12]:
 ad_5=pd.read_pickle('App_dataframe_3.pkl')
