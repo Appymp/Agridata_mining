@@ -716,9 +716,18 @@ t=str(datetime.now() - start)
 print("Time for execution: ", t[:-5])
    
 #Time for execution 10:43 mins  for rm_sw_lemt
+co_occ_arr =co_occ_df.to_numpy() #convert to an array
+co_occ_arr 
 
 
-co_occ_df.to_csv("Coocc_rm_sw_lemt.csv", index_label=False)#Takes too long. consider SVD to eliminate redundant 0 co-occurence terms.
+svd = TruncatedSVD(n_components = 2, n_iter = 10)
+Coocc_svd_matrix = svd.fit_transform(co_occ_arr) #Takes too long. Create a funcion to remove occurences which are sparse.
+
+
+
+
+
+# co_occ_df.to_csv("Coocc_rm_sw_lemt.csv", index_label=False)#Takes too long. consider SVD to eliminate redundant 0 co-occurence terms.
 
 
 # In[12]:
