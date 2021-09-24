@@ -6,14 +6,10 @@
 ## ver 3.4
 
 ##Wednesday Sept 22nd-Morning. Coffee company
-    # 73593 words in vocab full dataset without rmoving stopwords
-    # 54200 words in vocab after removing stopwords before emojis. Compared to grand total, about 25% of the words are Stop words.
-        #71616 words in cp4 (with additional string removing,
-        #46066 words after tweet preprocessor which removed emojis,
-        #45925 words after further removing stopwords
-    #observed duplicate posts. Contain different postId but same time stamp
-    #many posts can have the same time stamp because resolution does not offer separation.
-    # Window based cooccurence matrix is ready. Display on the dashboard.
+    # porterStemmer makes the word "organic" as "organ"
+    # after porter stemming there are #34051 unique words
+    # after lemmatizing the are 41526 unique words.
+    # Both stemming and lemmatizing are done on the most propcessed column.
     
 #Next :
     # Lemmatization, Stemming.
@@ -404,52 +400,6 @@ print("Execution time ", s[:-5])
 
 # In[14]
 
-""" Co-occurence matrix
-# 
-# Consider using a co-occurence matrix from the 3_Mar NLP notebook. In this matrix, it summarises the total extent of coccurence of any 2 unique words.
-# So each tweet (or caption text) is a matri with either '1' or '0'.
-# 
-# EAch iteration of the for loop (at lowest nested level), 1 unique word is tested for co-occurence with other words.
-# 
-# - for loop of tweets
-#     - for loop of 1st unique word in range of all unique
-#         - for loop of 1st vs {2nd, 3rd..nth word}
-#             - lowest level iteration adds a '1' or '0' to a list L1
-#         - At end of 1 full cycle of lowest level loop we have list of co-occ of first word with all other words L1:[1,0,0,1,..n]
-#     - At end of 2nd level loop, we have a co-occ matrix for a single tweet made of only 1's or 0's
-#     - [1st:[0,0,0,1,..n]  
-#          2nd:[1,0,1,1,..n]  
-#          nth:[0,1,1,0,..n]]  
-#          
-#          n*n matrix for each tweet.
-#          
-# - At the end of highest level loop (3rd level) sum of co-occ arrays of all tweets. So a single n*n matrix
-#             
-# ## Use case of Co-occ matrixes:
-# ### To make categories of types of businesses based on co-occuring hashtags
-#     - Get co-occurences by different categories. pharma, skincare, etc. Or causally interpret the categories based on the co-occurences. 
-#     - In this case, source the full list of co-occurences and just manually classify these into categories.
-#     
-# ### Define a scale of business-likeness
-#     - A higher score may indicate more influence on things like(look for correlation):
-#         - choice of hashtags
-#         - frequency of posting 
-#         - co-occs with "trending" hashtags or terminology
-#         - count of hashtags
-#         - website :T or F
-#         - 
-#         
-# ### Account for unrelated "#organic" posts
-#     - That is think about the usage where they just throw in the term to do some "virtue signalling".
-#     - If so what is the context of their signalling. exemplar index '80'. 
-#         - It is a vegan food item. But here maybe they are trying to signal "healthy" to eat? 
-#         
-#     
-#     
-#     
-#Wordcloud for English stopwords
-"""
-
 # In[14]
 # pd.read_csv("combined_df.csv").shape
 # pd.read_csv("App_dataframe.csv").shape
@@ -527,8 +477,8 @@ view=ad_4[['caption_processed_4', 'cp4_rm_sw']] #index 35129
 
 ad_4['cp4_rm_sw'][32000]
 
-ad_4.to_csv("App_dataframe_3.csv", index_label=False) #After filtering for stopwords.
-ad_4.to_pickle("App_dataframe_3.pkl", protocol=0) #preserves the list datatypes. protocol 0 so that it reads back properly in google colab
+#ad_4.to_csv("App_dataframe_3.csv", index_label=False) #After filtering for stopwords.
+#ad_4.to_pickle("App_dataframe_3.pkl", protocol=0) #preserves the list datatypes. protocol 0 so that it reads back properly in google colab
 #App_dataframe_3 now has 
 ##words minus stopwords 
 ##treated for "addi_treatment
@@ -592,7 +542,7 @@ class CooccEmbedding:
 
 
 
-# In[12]:
+# In[12]: #Test bag of words sizes
 #Trim the vocab so that cooccurnce matrix can be computed.
 ad_5=pd.read_pickle('App_dataframe_3.pkl')
 
@@ -646,22 +596,82 @@ print("cp4_rm_sw counting time: ", s[:-5])
 
 
 
+# In[12]: #Lemmatization and stemming
+
+ad_5=pd.read_pickle('App_dataframe_3.pkl')
+
+#Porter Stemming
+from nltk.stem import PorterStemmer
+porter = PorterStemmer()
+
+def porter_stemming(row_list):
+    new_word_list=[porter.stem(word) for word in row_list]    
+    return new_word_list
+
+start = datetime.now()
+ad_5['rm_sw_stem']=ad_5['cp4_rm_sw'].apply(porter_stemming)
+t=str(datetime.now()-start)
+print("Time for stemming full dataframe: ", t[:-5]) #27.2 seconds for full dataframe
+
+words_rm_sw_stem=[row_list for row_list in ad_5['rm_sw_stem']]
+
+print(words_cp4_rm_sw[:2])
+print("\n",words_rm_sw_stem[:2])
+
+inst_4=CooccEmbedding(words_rm_sw_stem) 
+
+start=datetime.now()
+print("rm_sw_stem unique words: ",len(inst_4.vocabulary())) #34051 unique words
+t=str(datetime.now() - start)
+print("rm_sw_stem counting time: ", t[:-5]) #1:26 mins
+
+
+#Lemmatization 
+from nltk.stem import WordNetLemmatizer
+wordnet_lemmatizer = WordNetLemmatizer()
+
+def wordnet_lemmatizer_func(row_list):
+    new_word_list=[wordnet_lemmatizer.lemmatize(word) for word in row_list]    
+    return new_word_list
+
+ad_5['cp4_rm_sw'][3:5]
+
+#For testing the functions
+test_series= ad_5['cp4_rm_sw'][3:5].apply(wordnet_lemmatizer_func)
+print(ad_5['cp4_rm_sw'][3:5])
+print("\n Stemmed",ad_5['rm_sw_stem'][3:5])
+print("\nLemmatized",test_series)
+
+##Repeat as in previous step for stemming
+
+start = datetime.now()
+ad_5['rm_sw_lemt']=ad_5['cp4_rm_sw'].apply(wordnet_lemmatizer_func)
+t=str(datetime.now()-start)
+print("Time for lemmatizing full dataframe: ", t[:-5]) #5.5 seconds for full dataframe
+
+words_rm_sw_lemt=[row_list for row_list in ad_5['rm_sw_lemt']]
+
+inst_5=CooccEmbedding(words_rm_sw_lemt) 
+
+start=datetime.now()
+print("rm_sw_lemt unique words: ",len(inst_5.vocabulary())) #41526 unique words
+t=str(datetime.now() - start)
+print("rm_sw_lemt counting time: ", t[:-5]) #1:48 mins
+
+
+
+
+
+
+#make sure to export the new dataframe with the stemming and lemmatization
+
+
+
 # In[12]: #Moving window size to create the cooccurence matrix
-  
+
 from collections import defaultdict
 
-# print("input text is: ",words_cp4_rm_sw[1:3])
-text=words_cp4_rm_sw[:1000] #25 secs for 1000 posts and window size 2 (shape 7067)
-text=words_cp4_rm_sw[:2000] #55 secs. Linear. window 2 [shape 11061]
 text=words_cp4_rm_sw #full dataset around 11 mins?. window 2 [shape 45925]
-
-# len(words_cp4_rm_sw[0])
-# range(len(words_cp4_rm_sw[0]))  
-#observed duplicate posts. Contain different postId but same time stamp
-#many posts can have the same time stamp because resolution does not offer separation.
-  
-#Try full dataframe and time it
-
   
 def co_occ_windows(sentences, window_size):
     d = defaultdict(int)
@@ -701,6 +711,8 @@ print("shape of co_occ matrix is: ",co_occ_df.shape)
 t=str(datetime.now() - start)
 print("Time for execution: ", t[:-5])
     
+co_occ_df.to_csv("cooc_w2_rm_sw.csv", index_label=False)
+
 # ad_5['postId'][1]
 # ad_5['timestamp'][1]
 
@@ -711,23 +723,7 @@ print("Time for execution: ", t[:-5])
 # In[12]:
 ad_5=pd.read_pickle('App_dataframe_3.pkl')
     
-words=[row_list for row_list in ad_5['cp4_rm_sw']] #BOW list of lists to be passed into coocc class
-print(words[:6])
-###issue detected. Format of BOW appears to represent the internal lists as strings
 
-inst = CooccEmbedding(words[:100]) #100 posts. Gets passed to class as 'corpus'
-print("Number of unique words in first 100 rows",len(inst.vocabulary())) #1482 words with emojis. 1309 after tweet preprocessor 
-
-inst.vocabulary()  #Make sure this is run so that self.vocab variable is loaded
-
-#Time running of first 100 posts
-start=datetime.now()
-co_occ=inst.coocc_matrix() # takes a while.time it. Use collab?
-al=datetime.now() - start #start time logged at start of program code
-sal=str(al) #string object
-print("Execution time of Coocc matrix for 100 rows: ", sal[:-5]) #for first 100 it takes 1:36mins  vs 2:00 with emojis 
-
-co_occ.shape
 
 
 # In[12]:
