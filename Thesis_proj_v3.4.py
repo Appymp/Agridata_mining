@@ -6,16 +6,17 @@
 ## ver 3.4
 
 ##Wednesday Sept 22nd-Morning. Coffee company
-    # New column with stopwords removed and lists created. App_dataframe_3
-    # Need to use pickle format to preserve the datatypes
     # 73593 words in vocab full dataset without rmoving stopwords
     # 54200 words in vocab after removing stopwords before emojis. Compared to grand total, about 25% of the words are Stop words.
-    # Cleaned up the code for trmming the bag of words.
+        #71616 words in cp4 (with additional string removing,
+        #46066 words after tweet preprocessor which removed emojis,
+        #45925 words after further removing stopwords
+    # Window based cooccurence matrix is ready. Display on the dashboard.
     
 #Next :
     # Lemmatization, Stemming.
     # Attempt creating a co-occurence matrix on hopefully much smaller bag of words
-    # If still not possible, use moving window concept to create a cooccurence matrix
+    # Done. If still not possible, use moving window concept to create a cooccurence matrix
     
 
 # In[1]:
@@ -626,7 +627,7 @@ inst_3 = CooccEmbedding(words_cp4_rm_sw)
 #Takes time so time it
 time_vocab=datetime.now()
 
-print("cp4 unique words: ",len(inst_1.vocabulary())) #71616 words
+print("cp4 unique words: ",len(inst_1.vocabulary())) #71616 words,#46066 words,#45925 words
 t=datetime.now() - time_vocab 
 s=str(t) 
 print("cp4 counting time: ", s[:-5])
@@ -643,15 +644,75 @@ print("cp4_rm_sw counting time: ", s[:-5])
 
 
 
-# inst = CooccEmbedding(words) 
-# len(inst.vocabulary()) #Running the len command takes too long. Just reference the variable in the explorer
+# In[12]: #Moving window size to create the cooccurence matrix
+# def coocc_matrix_wind(self): #Note that this is not looking at window size for cooccurence. Considers all words in the tweet.
+#         self.len_vocab = len(self.vocab)
+#         coocc_list = [sum([1 if (self.vocab[i] in tweet and self.vocab[j] in tweet and i != j) else 0 for tweet in self.corpus]) #checks condition each tweet, and sums all tweets.
+#                       for i in range(self.len_vocab) for j in range(self.len_vocab)] #1st word at 'i' compared with other words at 'j' in unqiue words list.
+#         coocc_list = np.array(coocc_list)
+#         # transform the coocc_list into a matrix
+#         self.coocc_mat = coocc_list.reshape([self.len_vocab, self.len_vocab])
+#         return self.coocc_mat
+  
+from collections import defaultdict
 
-#On full dataset:
+# print("input text is: ",words_cp4_rm_sw[1:3])
+text=words_cp4_rm_sw[:1000] #25 secs for 1000 posts and window size 2 (shape 7067)
+text=words_cp4_rm_sw[:2000] #55 secs. Linear. window 2 [shape 11061]
+text=words_cp4_rm_sw #full dataset around 11 mins?. window 2 [shape 45925]
 
-#73593 words in vocab full dataset without rmoving stopwords
-#54200 words in vocab after removing stopwords before emojis. Compared to grand total, about 25% of the words are Stop words.
+# len(words_cp4_rm_sw[0])
+# range(len(words_cp4_rm_sw[0]))  
+#observed duplicate posts. Contain different postId but same time stamp
+#many posts can have the same time stamp because resolution does not offer separation.
+  
+#Try full dataframe and time it
 
+  
+def co_occ_windows(sentences, window_size):
+    d = defaultdict(int)
+    vocab = set()
+    for text in sentences: #text is a list of lists
+        # preprocessing (use tokenizer instead)
+        # text = text.lower().split()
+        # iterate over sentences
+        for i in range(len(text)):
+            token = text[i]
+            # print("\ntoken is: ",token)
+            vocab.add(token)  # add to vocab
+            # print("vocab set now contains: ",vocab)
+            next_token = text[i+1 : i+1+window_size] #Only forward co-occurence?
+            # print("next token is: ",next_token) #test
+            for t in next_token:
+                key = tuple( sorted([t, token]) )
+                # print("key is: ",key)
+                d[key] += 1
+                print("default dict value at key is: ",d[key]) #Each key is a tuple and is unique. added with 1. And these will sum over themselves for other posts. 
+    
+    
+    # formulate the dictionary into dataframe
+    vocab = sorted(vocab) # sort vocab
+    df = pd.DataFrame(data=np.zeros((len(vocab), len(vocab)), dtype=np.int16),
+                      index=vocab,
+                      columns=vocab) #Initialise a dataframe of zeroes
+    for key, value in d.items():
+        df.at[key[0], key[1]] = value
+        df.at[key[1], key[0]] = value
+    return df
+    
+#Test out the function
+start=datetime.now()
+co_occ_df = co_occ_windows(text, 2)
+print("shape of co_occ matrix is: ",co_occ_df.shape)
+t=str(datetime.now() - start)
+print("Time for execution: ", t[:-5])
+    
+# ad_5['postId'][1]
+# ad_5['timestamp'][1]
 
+# ad_5['postId'][2]
+# ad_5['timestamp'][2]
+# ad_5['timestamp'][4]
 
 # In[12]:
 ad_5=pd.read_pickle('App_dataframe_3.pkl')
