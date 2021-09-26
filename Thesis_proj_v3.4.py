@@ -5,11 +5,9 @@
 
 ## ver 3.4
 
-##Wednesday Sept 22nd-Morning. Coffee company
-    # porterStemmer makes the word "organic" as "organ"
-    # after porter stemming there are #34051 unique words
-    # after lemmatizing the are 41526 unique words.
-    # Both stemming and lemmatizing are done on the most propcessed column.
+##Sunday Sept 26th-Morning. 
+    # Saving the co_occ matrix directly from df to csv takes too long. Pickle also not good.
+    # So convert co_occ df to array and then save the file as .npy binary. Big file but quick save.
     
 #Next :
     # Lemmatization, Stemming.
@@ -662,66 +660,85 @@ print("rm_sw_lemt counting time: ", t[:-5]) #1:48 mins
 
 
 
-ad_5.to_pickle("App_dataframe_4.pkl", protocol=0) #with 2 new columns stemming and lemmatization
+#ad_5.to_pickle("App_dataframe_4.pkl", protocol=0) #with 2 new columns stemming and lemmatization
 #make sure to export the new dataframe with the stemming and lemmatization
 
 
 
 # In[12]: #Moving window size to create the cooccurence matrix
+#Takes a long time. Run this only for new datasets.
 
-from collections import defaultdict
+# from collections import defaultdict
+
+# ad_6=pd.read_pickle('App_dataframe_4.pkl')
+
+# words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
+
+# text=words_rm_sw_lemt #full dataset around 11 mins?. window 2 [shape 45925]
+  
+# def co_occ_windows(sentences, window_size):
+#     d = defaultdict(int)
+#     vocab = set()
+#     for text in sentences: #text is a list of lists
+#         # preprocessing (use tokenizer instead)
+#         # text = text.lower().split()
+#         # iterate over sentences
+#         for i in range(len(text)):
+#             token = text[i]
+#             # print("\ntoken is: ",token)
+#             vocab.add(token)  # add to vocab
+#             # print("vocab set now contains: ",vocab)
+#             next_token = text[i+1 : i+1+window_size] #Only forward co-occurence?
+#             # print("next token is: ",next_token) #test
+#             for t in next_token:
+#                 key = tuple( sorted([t, token]) )
+#                 # print("key is: ",key)
+#                 d[key] += 1
+#                 print("default dict value at key is: ",d[key]) #Each key is a tuple and is unique. added with 1. And these will sum over themselves for other posts. 
+    
+    
+#     # formulate the dictionary into dataframe
+#     vocab = sorted(vocab) # sort vocab
+#     df = pd.DataFrame(data=np.zeros((len(vocab), len(vocab)), dtype=np.int16),
+#                       index=vocab,
+#                       columns=vocab) #Initialise a dataframe of zeroes
+#     for key, value in d.items():
+#         df.at[key[0], key[1]] = value
+#         df.at[key[1], key[0]] = value
+#     return df
+    
+# #Test out the function
+# start=datetime.now()
+# co_occ_df = co_occ_windows(text, 2)
+# print("shape of co_occ matrix is: ",co_occ_df.shape)
+# t=str(datetime.now() - start)
+# print("Time for execution: ", t[:-5])
+   
+# #Time for execution 10:43 mins  for rm_sw_lemt
+# co_occ_arr =co_occ_df.to_numpy() #convert to an array
+# co_occ_arr 
+
+###SVD seems to be useful but takes too long to execute.
+## start = datetime.now()
+## svd = TruncatedSVD(n_components = 2, n_iter = 10)
+## Coocc_svd_matrix = svd.fit_transform(co_occ_arr) #Takes too long. Create a funcion to remove occurences which are sparse.
+## t = str(datetime.now()-start)
+## print("Time taken for svd: ",t[:-5])
+
+
+
+# In[12]: #Import relevant files without to avoid all the preproessing of previous steps
+# save to npy file
+#from numpy import save #Have to import explicitly to save array as binary
+#save('co_occ_arr.npy', co_occ_arr)
+
+# load npy from local
+from numpy import load
+co_occ_arr = load('co_occ_arr.npy')
 
 ad_6=pd.read_pickle('App_dataframe_4.pkl')
 
-words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
 
-text=words_rm_sw_lemt #full dataset around 11 mins?. window 2 [shape 45925]
-  
-def co_occ_windows(sentences, window_size):
-    d = defaultdict(int)
-    vocab = set()
-    for text in sentences: #text is a list of lists
-        # preprocessing (use tokenizer instead)
-        # text = text.lower().split()
-        # iterate over sentences
-        for i in range(len(text)):
-            token = text[i]
-            # print("\ntoken is: ",token)
-            vocab.add(token)  # add to vocab
-            # print("vocab set now contains: ",vocab)
-            next_token = text[i+1 : i+1+window_size] #Only forward co-occurence?
-            # print("next token is: ",next_token) #test
-            for t in next_token:
-                key = tuple( sorted([t, token]) )
-                # print("key is: ",key)
-                d[key] += 1
-                print("default dict value at key is: ",d[key]) #Each key is a tuple and is unique. added with 1. And these will sum over themselves for other posts. 
-    
-    
-    # formulate the dictionary into dataframe
-    vocab = sorted(vocab) # sort vocab
-    df = pd.DataFrame(data=np.zeros((len(vocab), len(vocab)), dtype=np.int16),
-                      index=vocab,
-                      columns=vocab) #Initialise a dataframe of zeroes
-    for key, value in d.items():
-        df.at[key[0], key[1]] = value
-        df.at[key[1], key[0]] = value
-    return df
-    
-#Test out the function
-start=datetime.now()
-co_occ_df = co_occ_windows(text, 2)
-print("shape of co_occ matrix is: ",co_occ_df.shape)
-t=str(datetime.now() - start)
-print("Time for execution: ", t[:-5])
-   
-#Time for execution 10:43 mins  for rm_sw_lemt
-co_occ_arr =co_occ_df.to_numpy() #convert to an array
-co_occ_arr 
-
-
-svd = TruncatedSVD(n_components = 2, n_iter = 10)
-Coocc_svd_matrix = svd.fit_transform(co_occ_arr) #Takes too long. Create a funcion to remove occurences which are sparse.
 
 
 
@@ -731,7 +748,7 @@ Coocc_svd_matrix = svd.fit_transform(co_occ_arr) #Takes too long. Create a funci
 
 
 # In[12]:
-ad_5=pd.read_pickle('App_dataframe_3.pkl')
+
     
 
 
