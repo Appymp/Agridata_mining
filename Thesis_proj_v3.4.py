@@ -5,14 +5,15 @@
 
 ## ver 3.4
 
-##Sunday Sept 26th-Morning. 
-    # Saving the co_occ matrix directly from df to csv takes too long. Pickle also not good.
-    # So convert co_occ df to array and then save the file as .npy binary. Big file but quick save.
+##Monday Sept 27th-evening Volkshotel coworking 
+    # Truncated SVD does not work. Even on Colab, it runs out of ram.
+    # Trying to learn more about SVD with other numpy method where we can specify full-matrix : False
+    # If it does not work then try to use regex to remove noise words from the corpus
+    # Crashes the computer. RAM overload
+    
     
 #Next :
-    # Lemmatization, Stemming.
-    # Attempt creating a co-occurence matrix on hopefully much smaller bag of words
-    # Done. If still not possible, use moving window concept to create a cooccurence matrix
+    #
     
 
 # In[1]:
@@ -742,14 +743,22 @@ ad_6=pd.read_pickle('App_dataframe_4.pkl')
 
 
 
+# In[12]:
 
+from sklearn.decomposition import TruncatedSVD    
 
-# co_occ_df.to_csv("Coocc_rm_sw_lemt.csv", index_label=False)#Takes too long. consider SVD to eliminate redundant 0 co-occurence terms.
-
+start = datetime.now()
+svd = TruncatedSVD(n_components = 2, n_iter = 10)
+Coocc_svd_matrix = svd.fit_transform(co_occ_arr) #Takes too long. Create a funcion to remove occurences which are sparse.
+t = str(datetime.now()-start)
+print("Time taken for svd: ",t[:-5])
 
 # In[12]:
 
     
+
+#S = np.linalg.svd(co_occ_arr,compute_uv=False, full_matrices=False) #Crashes the computer. RAM overload
+
 
 
 
