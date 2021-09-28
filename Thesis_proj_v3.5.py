@@ -6,30 +6,15 @@
 ## ver 3.5
 
 ##Tuesday Sept 28th-afternoon Van der kunstraat.
-  # Vector space plot ready.
-      
-    # Both randomised and arpack algorithms have same svd.    
-        
-    #When the dash table is filtered, create the bag of words from only the filtered rows.
-    # The intution is that thre will be fewer words (and hence the context)
-    # Language structures is likely driven by its intuitively higher influence by describing 
-    ##Lang sructures might assume precedence for separation from what the post is "signifying"
-    # different things.
-    
-    # Try to keep a window which is full tweet/post long. So update the coocc tuple based on this.
-    # Each word co-occurs with itself. So if a word is intentionally blasted out in the description
-    # it would affect the count. This should have minimal signifance. low eigen score.
-    
-    # There is post level influence which might indicate the semantic differences and 
-    # hence categroisation by posts. Similar types of posts should group similarly in
-    # the vector space.
-  # Window size of full post will take too long to create a coocc matrix
-      #text=words_rm_sw_lemt[:200] # is it linear? yes 3:10 mins shape 2230; 8.5 to 9hr for full. 3:10 mins on colab too
-      
-
+    #Rolling window bidrectional is useless because anyway the co-occurence 
+    #has been logged within the first pass. Redundant calculation step.
+    ##1000 rows w4 takes 1:30 mins; w3 1:12 mins ; w2 is 0:51 mins ;same shapes
     
 #Try :
     # Define a window size.To justify visualise a histogram of the sentence lengths.
+        ## better not because other cols like "hashtags" is not defined by this.
+        ## 
+    # Actually hashtags column will need its own coocc matrix. Window size can be set as full for this.
     
     
 #Wishlist:
@@ -58,7 +43,7 @@ import os.path
 
 from datetime import datetime
 app_launch_start=datetime.now() #Set start time for program start
-# In[2]:
+# In[2]: Combine datasets; final_df.to_csv("combined_df.csv")
 ##Stack multiple datasets saved in "datasets" folder
 #Initiate combining the datasets 
 pd.set_option('display.max_columns', None) #display all columns.pass none to the max_col parameter
@@ -130,7 +115,7 @@ print(comb_df.shape)
 #Hardcode index values
 comb_df.reset_index(inplace= True,drop=True)
 comb_df.reset_index(inplace= True)
-comb_df.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
+comb_df.rename(columns={"index": "ix"},inplace=True) #create col out of index so that can keep proper ref after dropping rows
 comb_df['ix']=comb_df['ix'].astype(str) #convert to string type
 
 t=datetime.now() - start 
@@ -674,11 +659,15 @@ from collections import defaultdict
 ad_6=pd.read_pickle('App_dataframe_4.pkl')
 
 words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']] #row_list represents each words in each row
+print("Bag of words created..")
 words_rm_sw_lemt
-# text=words_rm_sw_lemt #full dataset around 11 mins?. window 2 [shape 45925]
+text=words_rm_sw_lemt #full dataset around 11 mins?. window 2 [shape 45925]
 # text=words_rm_sw_lemt[:100] #1:20 mins for coocc output shape 1920
-text=words_rm_sw_lemt[:200] # is it linear? yes 3:10 mins shape 2230; 8.5 to 9hr for full. 3:10 mins on colab too
+# text=words_rm_sw_lemt[:200] # is it linear? yes 3:10 mins shape 2230; 8.5 to 9hr for full. 3:10 mins on colab too
+# text=words_rm_sw_lemt[:1000]
 
+# text = words_rm_sw_lemt[5:6]
+text
 def co_occ_windows(sentences, window_size):
     d = defaultdict(int)
     vocab = set()
@@ -686,17 +675,19 @@ def co_occ_windows(sentences, window_size):
         print(text)
         for i in range(len(text)):
             token = text[i]
-            print("\ntoken is: ",token)
+            # print("\ntoken is: ",token)
             vocab.add(token)  # add to vocab
-            print("vocab set now contains: ",vocab)
+            # print("vocab set now contains: ",vocab)
             
-            # coocc_window = text[i+1 : i+1+window_size] #Rolling window scope; sparse
-            coocc_window = text # full post scope; dense
+            coocc_window = text[i+1 : i+1+window_size] #Rolling window scope; sparse
+            # coocc_window = text # full post scope; dense; takes too long
+            # coocc_window = text[i-1-window_size : i+1+window_size] #Rolling bidirectional window
+            # print("coocc_window is: ",coocc_window) #test
             
-            # print("next token is: ",coocc_window) #test
+                        
             for t in coocc_window:
                 key = tuple( sorted([t, token]) )
-                print("key is: ",key)
+                # print("key is: ",key)
                 d[key] += 1 #at the tuple key, increase the value by 1
                 print("default dict value at key is: ",d[key]) #Each key is a tuple and is unique. added with 1. And these will sum over themselves for other posts. 
     
@@ -713,21 +704,23 @@ def co_occ_windows(sentences, window_size):
     
 #Test out the function
 start=datetime.now()
-co_occ_df = co_occ_windows(text, 2)
+co_occ_df = co_occ_windows(text,3) #1000 rows w4 takes 1:30 mins; w3 1:12 mins ; w2 is 0:51 mins 
 print("shape of co_occ matrix is: ",co_occ_df.shape)
 t=str(datetime.now() - start)
 print("Time for execution: ", t[:-5])
    
-# co_occ_arr =co_occ_df.to_numpy() #convert to an array
-# co_occ_arr 
-# from numpy import save #Have to import explicitly to save array as binary
-# save('co_occ_arr_w2.npy', co_occ_arr)
+co_occ_arr =co_occ_df.to_numpy() #convert to an array
+co_occ_arr 
+from numpy import save #Have to import explicitly to save array as binary
+save('co_occ_arr_w3.npy', co_occ_arr)
 
 
 # In[12]Perform Singular Value Decomposition on the array. SVD_matrix.npy
 
 from numpy import load
-co_occ_arr = load('co_occ_arr_w2.npy')
+# co_occ_arr = load('co_occ_arr_w2.npy')
+co_occ_arr = load('co_occ_arr_w3.npy')
+
 ad_6=pd.read_pickle('App_dataframe_4.pkl')
 
 
@@ -754,7 +747,7 @@ print(type(Coocc_svd_matrix))
 
 from numpy import save 
 # save('svd_rand_w2.npy', Coocc_svd_matrix) #Randomised svd done here
-save('svd_arpack_w2.npy', Coocc_svd_matrix) #arpack algo used
+save('svd_arpack_w3.npy', Coocc_svd_matrix) #arpack algo used
 
 
 # In[12]: Visualise the words in a vector space
@@ -796,9 +789,15 @@ for word, ind in dict_to_plot.items():
     plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
     plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
     # plt.title("For window size 2 cocurence svd_randomised")
-    plt.title("For window size 2 cocurence svd_arpack")
+    plt.title("For window size 2 coocurence svd_arpack")
 
-# In[12]:
+# In[12]: Clean_captions_2 for sentences preserving the full stop. 
+
+    
+
+
+
+
 
 
 # In[12]:
