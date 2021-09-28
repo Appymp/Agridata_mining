@@ -5,26 +5,8 @@
 
 ## ver 3.5
 
-##Tuesday Sept 28th-evening Van der kunstraat.
-    # Truncated SVD does not work. Even on Colab, it runs out of ram.
-    # Trying to learn more about SVD with other numpy method where we can specify full-matrix : False
-    # If it does not work then try to use regex to remove noise words from the corpus
-    # Crashes the computer. RAM overload
-    # While running SVD, it is very fast for 100 to 1000 * 1000 arrays. But exponential.
-        #When attempting the full dataframe, noticed python takes up to 16.69 GB of memory and then falls back to 7.05 GB.
-        # For 10k it does not spike so high. stays below 5GB RAM
-        ## Takes 33 seconds for SVD of 10k element. 1 second for 1000. algo=randomized
-        ## For 20k shape array: Too long. Didnt wait
-        ## For full array, there is a spike in RAM usage and system crashes. Both on colab and spyder.
-        
-        #Solution:
-        #Use arpack algorithm instead of default in TruncatedSVD.
-        ##Have to convert to coo format. Permits fast vector operations.
-        ##Truncated SVD for full scope 41526 shape matrix done in 26 seconds
-        ## After converting to coo format checked that output of both algorithms are very fast.
-        ## Can do full array with radomised too? -Yes! No memory spike issues. Happens fast.
-        ### arpack full array takes 28.4 secs; randomised is 18.3 secs. Same output.
-            
+##Tuesday Sept 28th-afternoon Van der kunstraat.
+  # Code cleanup. Comments, spaces, redundancies.
     
 #Next :
     #
@@ -203,7 +185,7 @@ print("Execution time ", s[:-5])
 
 #df_updated.tail(1) #to check last line of the dataset.
 
-# In[6]:
+# In[6]: Table column names
 ##Column display template
 cols = df_updated.columns.tolist()
 #print(cols)
@@ -239,11 +221,8 @@ view1=['description','new_desc','clean_captions' ]
 # pd.set_option('display.max_columns', 500)
 # pd.set_option('expand_frame_repr', False)
 
-# print(pd.DataFrame(df_updated[view1].loc[[11]])) #indexing template example
-# print(type(pd.DataFrame(df_updated[view1].loc[[11]])))
 
-# In[7]:
-##Text preprocessing
+# In[7]: Text preprocessing; fonts, lower, punct, char_encodings
 #Tried to make granular transformations for specificity of processing.
 #Inorprate num2words if necessary. 
 
@@ -282,7 +261,7 @@ print("Text preprocessing done")
 t=datetime.now() - start 
 s=str(t) 
 print("Execution time ", s[:-5])
-# In[8]:
+In[8]: "views" and "exemplars"
 ##Define view frame to view previous processing steps with exemplars
 view2=[]
 view2=['clean_captions','caption_processed','caption_processed_2', 'caption_processed_3', 'caption_processed_4']
@@ -295,51 +274,51 @@ ex_row_list=[11,13,23,106] #subtract 2 because index is reset.
 
 #df_updated[view2].head(30)
 
-# In[9]:
-#Visualise how many languages are there:    
+# In[9]: Language detection to_csv("App_dataframe.csv")
+# Visualise how many languages are there:    
 print("\nLoading language detection function..") #Takes 11:30 mins to execute
-# start=datetime.now()
+start=datetime.now()
     
-# def lang_det(st):
-#     try:
-#         lang=detect(st)
-#         return lang
+def lang_det(st):
+    try:
+        lang=detect(st)
+        return lang
     
-#     except:
-#         lang="error"
-#         return lang
+    except:
+        lang="error"
+        return lang
 
-# view3=['det_lang']
-# view3= view2+view3
+view3=['det_lang']
+view3= view2+view3
 
-# print("Running language detection...")
-# df_updated['det_lang']= df_updated['caption_processed_2'].apply(lambda x: lang_det(x))
-# print("Language detection complete")
-# t=datetime.now() - start #datetime object
-# s=str(t) #string object
-# print("Execution time ", s[:-5])
-
-
-##Export to app referenced df after this last transformation:
-##df_updated.to_csv("App_dataframe.csv")
+print("Running language detection...")
+df_updated['det_lang']= df_updated['caption_processed_2'].apply(lambda x: lang_det(x))
+print("Language detection complete")
+t=datetime.now() - start #datetime object
+s=str(t) #string object
+print("Execution time ", s[:-5])
 
 
-# In[9]:
-# ##visualise the new transformations
-# print("Making countplot..")
-# plt.figure(figsize=(16,6))
-# ax= sns.countplot(x= 'det_lang', data=df_updated, order = df_updated['det_lang'].value_counts(ascending=False).index)
-# ax.set_title('Language distribution')
-# ax.set_xlabel('Languages')
-# #ax.set_xticklabels(ax.get_xticklabels(),rotation=90)
-# #plt.xticks(rotation=90) #outputs array before the graph
+#Export to app referenced df after this last transformation:
+#df_updated.to_csv("App_dataframe.csv")
 
-# for tick in ax.get_xticklabels():
-#     tick.set_rotation(90)
 
-# print("Language countplot graph loaded")
+# In[9]: Language countplot
+##visualise the new transformations
+print("Making countplot..")
+plt.figure(figsize=(16,6))
+ax= sns.countplot(x= 'det_lang', data=df_updated, order = df_updated['det_lang'].value_counts(ascending=False).index)
+ax.set_title('Language distribution')
+ax.set_xlabel('Languages')
+#ax.set_xticklabels(ax.get_xticklabels(),rotation=90)
+#plt.xticks(rotation=90) #outputs array before the graph
 
-# In[10]:
+for tick in ax.get_xticklabels():
+    tick.set_rotation(90)
+
+print("Language countplot graph loaded")
+
+In[10]: Selective viewing of dataframe with "views" and "exmplars"
 ##View the table with languages included
 #Ipython.OutputArea.auto_scroll_threshold = 10 #Tried to set the scroll display threshold. unsuccesful.
 view_extracts=['new_desc','det_lang','clean_captions','caption_processed_4','hashtags','cap_mentions','web_links' ]
@@ -362,27 +341,15 @@ ex_row_list.append(3) #add exemplar accents in differnt language
 print("\nLoading test Word Cloud..")
 start=datetime.now()
 
-type(STOPWORDS) #set
-len(STOPWORDS) #192
-
-#stop_words = set(stopwords.words("english"))
-#len(stop_words)#179
-
-stop_words_fr= set(stopwords.words("french"))
-len(stop_words_fr) #157
-
-
 word_string = ""
 for ind,row in df_updated.iterrows():
     word_string += (row['web_links']+" ")
     
-#size of plot
-fig_dims = (8, 8)
-fig, ax = plt.subplots(figsize=fig_dims)
-
 #Define stopwords
-en_stopwords = stopwords.words('english')
-fr_stopwords = stopwords.words('french')
+# type(STOPWORDS) #set
+# len(STOPWORDS) #192
+en_stopwords = stopwords.words('english') #179
+fr_stopwords = stopwords.words('french') #157
 web_links_sw = ['www','http','https','com']
 
 combined_stopwords = en_stopwords + fr_stopwords 
@@ -394,6 +361,9 @@ wordcloud = WordCloud(max_words=100,
                       background_color='white',
                       width=1200,     
                       height=1000).generate(word_string)
+
+fig_dims = (8, 8) #size of plot
+fig, ax = plt.subplots(figsize=fig_dims)
 plt.title("#Test word cloud")
 plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
@@ -403,21 +373,16 @@ print("Test Word Cloud loaded")
 t=datetime.now() - start 
 s=str(t) 
 print("Execution time ", s[:-5])
-#With only EN stopwords:
-    #  "u", "de", "la", "e", 
-    
-    
-# With EN and FR :
-# 'u', 'e', 'o'
+
+#With only EN stopwords:  "u", "de", "la", "e", still present 
+#With EN and FR : 'u', 'e', 'o' still present
 
 
 # In[14]
+pd.read_csv("combined_df.csv").shape
+pd.read_csv("App_dataframe.csv").shape
 
-# In[14]
-# pd.read_csv("combined_df.csv").shape
-# pd.read_csv("App_dataframe.csv").shape
-
-# In[15]
+In[15] Filter; read_csv("App_dataframe.csv") -> to_csv("App_dataframe_2.csv")
 #Filter the dataframe to English, #organic, and remove duplicate posts
 ##Export to a new dataframe
 print("Reading in dataframe for app with filters and duplicate removal..")
@@ -438,9 +403,9 @@ ad_4['ix']=comb_df['ix'].astype(str) #convert to string type
 #ad_4.to_csv("App_dataframe_2.csv", index_label = False)
 
 
-# In[15] Co-occurrence matrix
-#Implement Vecotrization.
-#Tokenize the processed description
+# In[15] Co-occurrence matrix; read_csv("App_dataframe_2.csv") --> to_pickle("App_dataframe_3.pkl")
+# Implement Vecotrization.
+# Tokenize the processed description
 
 import ast
 import preprocessor as p
@@ -492,11 +457,11 @@ ad_4['cp4_rm_sw'][32000]
 
 #ad_4.to_csv("App_dataframe_3.csv", index_label=False) #After filtering for stopwords.
 #ad_4.to_pickle("App_dataframe_3.pkl", protocol=0) #preserves the list datatypes. protocol 0 so that it reads back properly in google colab
-#App_dataframe_3 now has 
-##words minus stopwords 
-##treated for "addi_treatment
-## tweet preprocessor removed emojis
 
+##App_dataframe_3 now has 
+#words minus stopwords 
+#treated for "addi_treatment
+#tweet preprocessor removed emojis
 
 
 # In[15]
@@ -556,7 +521,8 @@ class CooccEmbedding:
 
 
 # In[12]: #Test bag of words sizes
-#Trim the vocab so that cooccurnce matrix can be computed.
+# Trim the vocab so that cooccurnce matrix can be computed.
+
 ad_5=pd.read_pickle('App_dataframe_3.pkl')
 
 def list_of_words(data): #takes 5:25 mins for the full dataset
@@ -608,8 +574,7 @@ s=str(t)
 print("cp4_rm_sw counting time: ", s[:-5])
 
 
-
-# In[12]: #Lemmatization and stemming
+# In[12]: #Lemmatization and stemming ->create new pkl App_dataframe_4 
 
 ad_5=pd.read_pickle('App_dataframe_3.pkl')
 
@@ -671,81 +636,65 @@ print("rm_sw_lemt unique words: ",len(inst_5.vocabulary())) #41526 unique words
 t=str(datetime.now() - start)
 print("rm_sw_lemt counting time: ", t[:-5]) #1:48 mins
 
-
-
-
-
 #ad_5.to_pickle("App_dataframe_4.pkl", protocol=0) #with 2 new columns stemming and lemmatization
 #make sure to export the new dataframe with the stemming and lemmatization
 
 
+# In[12]: #Window cooccurence matrix; save('co_occ_arr.npy')
+Takes a long time. Run this only for new datasets.
 
-# In[12]: #Moving window size to create the cooccurence matrix
-#Takes a long time. Run this only for new datasets.
+from collections import defaultdict
 
-# from collections import defaultdict
+ad_6=pd.read_pickle('App_dataframe_4.pkl')
 
-# ad_6=pd.read_pickle('App_dataframe_4.pkl')
+words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
 
-# words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
-
-# text=words_rm_sw_lemt #full dataset around 11 mins?. window 2 [shape 45925]
+text=words_rm_sw_lemt #full dataset around 11 mins?. window 2 [shape 45925]
   
-# def co_occ_windows(sentences, window_size):
-#     d = defaultdict(int)
-#     vocab = set()
-#     for text in sentences: #text is a list of lists
-#         # preprocessing (use tokenizer instead)
-#         # text = text.lower().split()
-#         # iterate over sentences
-#         for i in range(len(text)):
-#             token = text[i]
-#             # print("\ntoken is: ",token)
-#             vocab.add(token)  # add to vocab
-#             # print("vocab set now contains: ",vocab)
-#             next_token = text[i+1 : i+1+window_size] #Only forward co-occurence?
-#             # print("next token is: ",next_token) #test
-#             for t in next_token:
-#                 key = tuple( sorted([t, token]) )
-#                 # print("key is: ",key)
-#                 d[key] += 1
-#                 print("default dict value at key is: ",d[key]) #Each key is a tuple and is unique. added with 1. And these will sum over themselves for other posts. 
+def co_occ_windows(sentences, window_size):
+    d = defaultdict(int)
+    vocab = set()
+    for text in sentences: #text is a list of lists
+        for i in range(len(text)):
+            token = text[i]
+            # print("\ntoken is: ",token)
+            vocab.add(token)  # add to vocab
+            # print("vocab set now contains: ",vocab)
+            next_token = text[i+1 : i+1+window_size] #Only forward co-occurence?
+            # print("next token is: ",next_token) #test
+            for t in next_token:
+                key = tuple( sorted([t, token]) )
+                # print("key is: ",key)
+                d[key] += 1
+                print("default dict value at key is: ",d[key]) #Each key is a tuple and is unique. added with 1. And these will sum over themselves for other posts. 
     
     
-#     # formulate the dictionary into dataframe
-#     vocab = sorted(vocab) # sort vocab
-#     df = pd.DataFrame(data=np.zeros((len(vocab), len(vocab)), dtype=np.int16),
-#                       index=vocab,
-#                       columns=vocab) #Initialise a dataframe of zeroes
-#     for key, value in d.items():
-#         df.at[key[0], key[1]] = value
-#         df.at[key[1], key[0]] = value
-#     return df
+    # formulate the dictionary into dataframe
+    vocab = sorted(vocab) # sort vocab
+    df = pd.DataFrame(data=np.zeros((len(vocab), len(vocab)), dtype=np.int16),
+                      index=vocab,
+                      columns=vocab) #Initialise a dataframe of zeroes
+    for key, value in d.items():
+        df.at[key[0], key[1]] = value
+        df.at[key[1], key[0]] = value
+    return df
     
-# #Test out the function
-# start=datetime.now()
-# co_occ_df = co_occ_windows(text, 2)
-# print("shape of co_occ matrix is: ",co_occ_df.shape)
-# t=str(datetime.now() - start)
-# print("Time for execution: ", t[:-5])
+#Test out the function
+start=datetime.now()
+co_occ_df = co_occ_windows(text, 2)
+print("shape of co_occ matrix is: ",co_occ_df.shape)
+t=str(datetime.now() - start)
+print("Time for execution: ", t[:-5])
    
-# #Time for execution 10:43 mins  for rm_sw_lemt
 # co_occ_arr =co_occ_df.to_numpy() #convert to an array
 # co_occ_arr 
-
-###SVD seems to be useful but takes too long to execute.
-## start = datetime.now()
-## svd = TruncatedSVD(n_components = 2, n_iter = 10)
-## Coocc_svd_matrix = svd.fit_transform(co_occ_arr) #Takes too long. Create a funcion to remove occurences which are sparse.
-## t = str(datetime.now()-start)
-## print("Time taken for svd: ",t[:-5])
+# from numpy import save #Have to import explicitly to save array as binary
+# save('co_occ_arr.npy', co_occ_arr)
 
 
-
-# In[12]: #Import relevant files without to avoid all the preproessing of previous steps
+# In[12]: #Import relevant files without previous steps
 # save to npy file
-#from numpy import save #Have to import explicitly to save array as binary
-#save('co_occ_arr.npy', co_occ_arr)
+
 
 # load npy from local
 from numpy import load
@@ -757,60 +706,35 @@ ad_6=pd.read_pickle('App_dataframe_4.pkl')
 
 
 
-# In[12]:
+# In[12]Perform Singular Value Decomposition on the array.
 
 from sklearn.decomposition import TruncatedSVD    
 
 # co_occ_arr_sl=co_occ_arr[0:10000,0:10000] #slice array
 co_occ_arr_sl=co_occ_arr #or keep original scope
 
-# default "random" alogorithm of truncated svd. (did not work for full)
-## Takes 33 seconds for SVD of 10k element. 1 second for 1000. algo=randomized
-## For 20k shape array: Too long. Didnt wait
-## For full array, there is a spike in RAM usage and system crashes. Both on colab and spyder.
-
 start = datetime.now()
 
-# svd = TruncatedSVD(n_components = 2, n_iter = 10)
-#convert to COO format before arpack because it requires it
 from scipy.sparse import coo_matrix
 co_occ_arr_sl_coo=coo_matrix(co_occ_arr_sl) 
 co_occ_arr_sl_coo = co_occ_arr_sl_coo.asfptype() #convert to COO format before arpack
 
-# svd = TruncatedSVD(n_components = 2, n_iter = 10, algorithm = "arpack") 
-svd = TruncatedSVD(n_components = 2, n_iter = 10, algorithm = "randomized") 
+# svd = TruncatedSVD(n_components = 2, n_iter = 10, algorithm = "arpack")  #28.4 secs
+svd = TruncatedSVD(n_components = 2, n_iter = 10, algorithm = "randomized") #18.3 secs
 Coocc_svd_matrix = svd.fit_transform(co_occ_arr_sl_coo)
 Coocc_svd_matrix.shape
 
 t = str(datetime.now()-start)
 print("Time taken for svd: ",t[:-5]) 
 
-# default "random" alogorithm of truncated svd. (did not work for full)
-## Takes 33 seconds for SVD of 10k element. 1 second for 1000. algo=randomized
-## For 20k shape array: Too long. Didnt wait
-## For full array, there is a spike in RAM usage and system crashes. Both on colab and spyder.
+print(type(Coocc_svd_matrix))
 
-#Solution:
-#Use arpack algorithm instead of default in TruncatedSVD.
-##Have to convert to coo format. Permits fast vector operations.
-##Truncated SVD for full scope 41526 shape matrix done in 26 seconds
-## After converting to coo format checked that output of both algorithms are very fast.
-## Can do full array with radomised too? -Yes! No memory spike issues. Happens fast.
-### arpack full array takes 28.4 secs; randomised is 18.3 secs. Same output.
+from numpy import save 
+save('coocc_svd_matrix.npy', Coocc_svd_matrix)
 
 
-
-print(Coocc_svd_matrix)
-
-# In[12]:
-co_occ_arr    
-co_occ_arr[0:3,0:3] #Slice dataframe and time the operations
-
-
-
-#S = np.linalg.svd(co_occ_arr,compute_uv=False, full_matrices=False) #Crashes the computer. RAM overload
-
-
+# In[12]: 
+co_occ_arr = load('coocc_svd_matrix.npy') #load the 
 
 
 # In[12]:
