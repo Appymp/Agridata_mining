@@ -6,10 +6,11 @@
 ## ver 3.5
 
 ##Tuesday Sept 28th-afternoon Van der kunstraat.
-  # Code cleanup. Comments, spaces, redundancies.
+  # Vector space plot ready.
     
 #Next :
-    #
+    # Sort out overlap of words.
+    # Drop downs and filters for visualizing the words.
     
 
 # In[1]:
@@ -318,7 +319,7 @@ for tick in ax.get_xticklabels():
 
 print("Language countplot graph loaded")
 
-In[10]: Selective viewing of dataframe with "views" and "exmplars"
+# In[10]: #Selective viewing of dataframe with "views" and "exmplars"
 ##View the table with languages included
 #Ipython.OutputArea.auto_scroll_threshold = 10 #Tried to set the scroll display threshold. unsuccesful.
 view_extracts=['new_desc','det_lang','clean_captions','caption_processed_4','hashtags','cap_mentions','web_links' ]
@@ -483,6 +484,7 @@ class CooccEmbedding:
         """
         self.vocab = []
         [self.vocab.append(word) for tweet in self.corpus for word in tweet if word not in self.vocab] #sent= tweet (made more sense as single tweet)
+        self.len_vocab = len(self.vocab) #Initiliase this return because coocc module not used.
         return self.vocab #outputs single list of unique words
     
     def coocc_matrix(self): #Note that this is not looking at window size for cooccurence. Considers all words in the tweet.
@@ -520,7 +522,7 @@ class CooccEmbedding:
 
 
 
-# In[12]: #Test bag of words sizes
+# In[12]: #Test bag of words sizes and instantiate Coocc_Embedding class
 # Trim the vocab so that cooccurnce matrix can be computed.
 
 ad_5=pd.read_pickle('App_dataframe_3.pkl')
@@ -574,7 +576,7 @@ s=str(t)
 print("cp4_rm_sw counting time: ", s[:-5])
 
 
-# In[12]: #Lemmatization and stemming ->create new pkl App_dataframe_4 
+# In[12]: #Lemmatization and Stemming ->create new pkl App_dataframe_4 
 
 ad_5=pd.read_pickle('App_dataframe_3.pkl')
 
@@ -640,8 +642,8 @@ print("rm_sw_lemt counting time: ", t[:-5]) #1:48 mins
 #make sure to export the new dataframe with the stemming and lemmatization
 
 
-# In[12]: #Window cooccurence matrix; save('co_occ_arr.npy')
-Takes a long time. Run this only for new datasets.
+# In[12]: #Window cooccurence matrix; save('co_occ_arr.npy'); choose 'rm_sw_lemt'
+# Takes a long time. Run this only for new datasets.
 
 from collections import defaultdict
 
@@ -693,16 +695,13 @@ print("Time for execution: ", t[:-5])
 
 
 # In[12]: #Import relevant files without previous steps
-# save to npy file
-
-
 # load npy from local
+
+
+
 from numpy import load
 co_occ_arr = load('co_occ_arr.npy')
-
 ad_6=pd.read_pickle('App_dataframe_4.pkl')
-
-
 
 
 
@@ -733,8 +732,42 @@ from numpy import save
 save('coocc_svd_matrix.npy', Coocc_svd_matrix)
 
 
-# In[12]: 
-co_occ_arr = load('coocc_svd_matrix.npy') #load the 
+# In[12]: Visualise the words in a vector space
+coocc_svd_matrix = load('coocc_svd_matrix.npy') #load the svd matrix
+ad_6=pd.read_pickle('App_dataframe_4.pkl')
+
+words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
+
+start=datetime.now()
+inst=CooccEmbedding(words_rm_sw_lemt) #Instantiate class
+
+inst.vocabulary() #takes time 
+t=str(datetime.now()-start)
+print("Time taken to instantiate vocab of Coocc class: ", t[:-5])
+
+vocab_to_plot = ['organic', 'vanilla', 'packaging']
+
+vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable']
+dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
+#dict_to_plot
+
+plt.xlim(min(coocc_svd_matrix[:, 0]), max(coocc_svd_matrix[:, 0] - 30))
+plt.ylim(min(coocc_svd_matrix[:, 1] + 5), max(coocc_svd_matrix[:, 1]+1))
+
+# x_lim_min= min()
+x_lim_range=[]
+y_lim_range=[]
+for word, ind in dict_to_plot.items():
+    print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+    x_lim_range.append(coocc_svd_matrix[ind, 0])
+    y_lim_range.append(coocc_svd_matrix[ind, 1])    
+    # x_buffer=(max(x_lim_range)-min(x_lim_range))/20
+    # y_buffer
+    
+    plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.06)
+    plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
+    plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
+
 
 
 # In[12]:
