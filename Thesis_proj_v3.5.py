@@ -8,7 +8,12 @@
 ##Tuesday Sept 28th-afternoon Van der kunstraat.
     #Rolling window bidrectional is useless because anyway the co-occurence 
     #has been logged within the first pass. Redundant calculation step.
+    
+    #Use intitial 1 side window config whihc excludes the token in window
     ##1000 rows w4 takes 1:30 mins; w3 1:12 mins ; w2 is 0:51 mins ;same shapes
+    ## #full array w4 takes 24:25 mins
+    #Larger the window size, larger the range of values. 
+    
     
 #Try :
     # Define a window size.To justify visualise a histogram of the sentence lengths.
@@ -681,7 +686,7 @@ def co_occ_windows(sentences, window_size):
             
             coocc_window = text[i+1 : i+1+window_size] #Rolling window scope; sparse
             # coocc_window = text # full post scope; dense; takes too long
-            # coocc_window = text[i-1-window_size : i+1+window_size] #Rolling bidirectional window
+            # coocc_window = text[i-1-window_size : i+1+window_size] #Rolling bidirectional window.redundant.
             # print("coocc_window is: ",coocc_window) #test
             
                         
@@ -704,7 +709,7 @@ def co_occ_windows(sentences, window_size):
     
 #Test out the function
 start=datetime.now()
-co_occ_df = co_occ_windows(text,3) #1000 rows w4 takes 1:30 mins; w3 1:12 mins ; w2 is 0:51 mins 
+co_occ_df = co_occ_windows(text,4) #full array w4 takes 24:25 mins
 print("shape of co_occ matrix is: ",co_occ_df.shape)
 t=str(datetime.now() - start)
 print("Time for execution: ", t[:-5])
@@ -712,14 +717,14 @@ print("Time for execution: ", t[:-5])
 co_occ_arr =co_occ_df.to_numpy() #convert to an array
 co_occ_arr 
 from numpy import save #Have to import explicitly to save array as binary
-save('co_occ_arr_w3.npy', co_occ_arr)
+save('co_occ_arr_w4.npy', co_occ_arr)
 
 
 # In[12]Perform Singular Value Decomposition on the array. SVD_matrix.npy
 
 from numpy import load
 # co_occ_arr = load('co_occ_arr_w2.npy')
-co_occ_arr = load('co_occ_arr_w3.npy')
+co_occ_arr = load('co_occ_arr_w4.npy')
 
 ad_6=pd.read_pickle('App_dataframe_4.pkl')
 
@@ -747,33 +752,38 @@ print(type(Coocc_svd_matrix))
 
 from numpy import save 
 # save('svd_rand_w2.npy', Coocc_svd_matrix) #Randomised svd done here
-save('svd_arpack_w3.npy', Coocc_svd_matrix) #arpack algo used
+save('svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
 
 
 # In[12]: Visualise the words in a vector space
-# coocc_svd_matrix = load('svd_rand_w2.npy') #Load randomised mode
-coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
-
+# initialise the Coocc embedding class before calling the different window size
 
 ad_6=pd.read_pickle('App_dataframe_4.pkl')
 
 words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
 
 start=datetime.now()
-inst=CooccEmbedding(words_rm_sw_lemt) #Instantiate class
-
+inst=CooccEmbedding(words_rm_sw_lemt) #Instantiate class for dict_to_plot
+#time taken to instantiate class takes 3:02 mins. So keep this instantiated for
+# all window sizes in the dashboard.
 inst.vocabulary() #takes time 
+
 t=str(datetime.now()-start)
 print("Time taken to instantiate vocab of Coocc class: ", t[:-5])
 
-vocab_to_plot = ['organic', 'vanilla', 'packaging']
+# In[12]: Window app callback
+#Direct call in the app from here below
+# coocc_svd_matrix = load('svd_rand_w2.npy') #Load randomised mode
+# coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
+coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
+# coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
 
-vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable']
+
+
+
+vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
 dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
 #dict_to_plot
-
-plt.xlim(min(coocc_svd_matrix[:, 0]), max(coocc_svd_matrix[:, 0] - 30))
-plt.ylim(min(coocc_svd_matrix[:, 1] + 5), max(coocc_svd_matrix[:, 1]+1))
 
 # x_lim_min= min()
 x_lim_range=[]
@@ -785,11 +795,14 @@ for word, ind in dict_to_plot.items():
     # x_buffer=(max(x_lim_range)-min(x_lim_range))/20
     # y_buffer
     
-    plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.06)
+    plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.1)
     plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
     plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
     # plt.title("For window size 2 cocurence svd_randomised")
-    plt.title("For window size 2 coocurence svd_arpack")
+    plt.title("For window size 3 coocurence svd_arpack")
+print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
+print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
+plt.savefig('svd_arpack_w3.png')
 
 # In[12]: Clean_captions_2 for sentences preserving the full stop. 
 
