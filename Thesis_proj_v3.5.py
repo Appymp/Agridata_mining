@@ -986,27 +986,6 @@ app.layout = dbc.Container([
     dbc.Row([
             dbc.Col(html.H3("Coocc svd"), width={'size':2}),
             
-            # dbc.Col(
-            # dcc.Input(
-            # id='input_1',
-            # type='text',
-            # debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
-            # pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
-            # spellCheck=True,
-            # inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
-            # name='text',             # the name of the control, which is submitted with the form data
-            # list='browser',          # identifies a list of pre-defined options to suggest to the user
-            # n_submit=0,              # number of times the Enter key was pressed while the input had focus
-            # n_submit_timestamp=-1,   # last time that Enter was pressed
-            # autoFocus=False,          # the element should be automatically focused after the page loaded
-            # n_blur=0,                # number of times the input lost focus
-            # n_blur_timestamp=-1,     # last time the input lost focus.
-            # # selectionDirection='', # the direction in which selection occurred
-            # # selectionStart='',     # the offset into the element's text content of the first selected character
-            # # selectionEnd='',       # the offset into the element's text content of the last selected character
-            #     ), width={'size': 1.75}, style={'textAlign': "left"}   
-            # ),
-            
             dbc.Col(
                 dbc.Button(id='add1_button', n_clicks=0, children="Add", className="mt-5 mr-2"),            
                 width={'size': 0.5}, style={'textAlign': "left"}),
@@ -1048,54 +1027,7 @@ app.layout = dbc.Container([
             # selectionStart='',     # the offset into the element's text content of the first selected character
             # selectionEnd='',       # the offset into the element's text content of the last selected character
                 ), width={'size': 6}, style={'textAlign': "left"}   
-            ),
-        
-        
-        # dbc.Col(
-        #     dcc.Input(
-        #     id='input_2',
-        #     type='text',
-        #     debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
-        #     pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
-        #     spellCheck=True,
-        #     inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
-        #     name='text',             # the name of the control, which is submitted with the form data
-        #     list='browser',          # identifies a list of pre-defined options to suggest to the user
-        #     n_submit=0,              # number of times the Enter key was pressed while the input had focus
-        #     n_submit_timestamp=-1,   # last time that Enter was pressed
-        #     autoFocus=False,          # the element should be automatically focused after the page loaded
-        #     n_blur=0,                # number of times the input lost focus
-        #     n_blur_timestamp=-1,     # last time the input lost focus.
-        #     # selectionDirection='', # the direction in which selection occurred
-        #     # selectionStart='',     # the offset into the element's text content of the first selected character
-        #     # selectionEnd='',       # the offset into the element's text content of the last selected character
-        #         ), width={'size': 1.75}, style={'textAlign': "left"}   
-        #     ),
-        # dbc.Col(
-        #     dcc.Input(
-        #     id='input_3',
-        #     type='text',
-        #     debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
-        #     pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
-        #     spellCheck=True,
-        #     inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
-        #     name='text',             # the name of the control, which is submitted with the form data
-        #     list='browser',          # identifies a list of pre-defined options to suggest to the user
-        #     n_submit=0,              # number of times the Enter key was pressed while the input had focus
-        #     n_submit_timestamp=-1,   # last time that Enter was pressed
-        #     autoFocus=False,          # the element should be automatically focused after the page loaded
-        #     n_blur=0,                # number of times the input lost focus
-        #     n_blur_timestamp=-1,     # last time the input lost focus.
-        #     # selectionDirection='', # the direction in which selection occurred
-        #     # selectionStart='',     # the offset into the element's text content of the first selected character
-        #     # selectionEnd='',       # the offset into the element's text content of the last selected character
-        #         ), width={'size': 1.75}, style={'textAlign': "left"}   
-        #     )
-    
-    
-    
-    
-        
+            )
             ],no_gutters=False),
 
 
@@ -1108,7 +1040,7 @@ app.layout = dbc.Container([
                        style={'width':'600px' ,'height':'350px'}),
                 )
             ],no_gutters=False),
-        ],fluid=True) #
+        ],fluid=True) #closes initial dbc container
 
 
 
