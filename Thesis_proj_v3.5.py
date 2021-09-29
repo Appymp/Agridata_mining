@@ -5,23 +5,15 @@
 
 ## ver 3.5
 
-##Tuesday Sept 28th-afternoon Van der kunstraat.
-    #Rolling window bidrectional is useless because anyway the co-occurence 
-    #has been logged within the first pass. Redundant calculation step.
-    
-    #Use intitial 1 side window config whihc excludes the token in window
-    ##1000 rows w4 takes 1:30 mins; w3 1:12 mins ; w2 is 0:51 mins ;same shapes
-    ## #full array w4 takes 24:25 mins
-    #Larger the window size, larger the range of values. 
-    
-    
-#Try :
-    # Define a window size.To justify visualise a histogram of the sentence lengths.
-        ## better not because other cols like "hashtags" is not defined by this.
-        ## 
-    # Actually hashtags column will need its own coocc matrix. Window size can be set as full for this.
-    
-    
+##Wednesday Sept 29th-morning Van der kunstraat.
+    # 2 plots for svd matrix:
+        # 1st has input box for vocab_to_plot
+        # 2nd has top 'n' unique words to plot from filtered table
+    #first changes to stable app code for svd matrix
+    #frame for user input plot done. Callback logic to be defined.
+
+        
+
 #Wishlist:
     # Sort out overlap of words.
     # Drop downs and filters for visualizing the words.
@@ -771,7 +763,7 @@ inst.vocabulary() #takes time
 t=str(datetime.now()-start)
 print("Time taken to instantiate vocab of Coocc class: ", t[:-5])
 
-# In[12]: Window app callback
+# In[12]: SVD app callback
 #Direct call in the app from here below
 # coocc_svd_matrix = load('svd_rand_w2.npy') #Load randomised mode
 # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
@@ -830,6 +822,24 @@ from dash.dependencies import Input, Output, State
 
 import dash_bootstrap_components as dbc
 
+
+# import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+# import unicodedata
+# from langdetect import detect
+from wordcloud import WordCloud, STOPWORDS
+from nltk.corpus import stopwords
+# import warnings
+# warnings.filterwarnings('ignore')
+# import os
+# import os.path 
+from datetime import datetime
+
+
+app_launch_start=datetime.now() #Set start time for program start
+
 # dff=df_updated[view_extracts]
 
 disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select columns to display in the dashtable
@@ -837,7 +847,8 @@ disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select
 print("Loading the dataframe..")
 start = datetime.now()
 
-df_updated=pd.read_csv("App_dataframe_2.csv")
+# df_updated=pd.read_csv("App_dataframe_2.csv")
+df_updated=pd.read_pickle('App_dataframe_4.pkl')
 
 print("Dataframe loaded")
 t=datetime.now() - start 
@@ -857,10 +868,13 @@ print("Total time taken to launch app", sal[:-5])
 #---------------------------------------------------------------
 
 col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown
+input_boxs = ['text','text']
+# for i,x in enumerate(input_boxs):
+#     print(i,x)
 
+# input_box[1]
 
 #---------------------------------------------------------------
-# app.layout = html.Div([ 
 
 app.layout = dbc.Container([    
 ################################### ROW1-Headers ########################### 
@@ -896,7 +910,7 @@ app.layout = dbc.Container([
     # width={'size': 6}), #this was in dbc.Col.This is fluid width while resizing
     # But since DashTable is fixed width, width is specified(acts fixed) in dcc.Dropdown
     
-################################### ROW3 ###########################    
+################################### ROW3-Dashtable & Wordcloud ###########################    
 
     dbc.Row([        
         dbc.Col(
@@ -960,9 +974,121 @@ app.layout = dbc.Container([
                        style={'width':'600px' ,'height':'350px'}),
                 )
         #,width={'size': 6},  width = {'size': 5, 'offset':1}
-            ],no_gutters=False)
-        ],fluid=True) #use fluid to strecth to the sides of the webpage
-#'layout': {'height': '100px'}
+            ],no_gutters=False),
+    
+
+################################### ROW4-Headers 2  ###########################
+    dbc.Row([
+            dbc.Col(html.H3("Coocc svd"), width={'size':3}),
+            dbc.Col(
+                dbc.Button(id='svd1_button', n_clicks=0, children="Plot", className="mt-5 mr-2"),            
+                width={'size': 0.5}, style={'textAlign': "left"}), #another way to align
+            # dbc.Col(
+            #     dbc.Button(id='desel-button', n_clicks=0, children="Des_all", className="mt-5"),
+            #     width={'size': 0.5}, style={'textAlign':"left"}),
+            
+            # dbc.Col(html.H3("Wordcloud"), width={'size':5, 'offset':2}, style={'textAlign' : "center"}),         
+            # dbc.Col([
+            #     html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
+            #     width={'size': 3}, style = {'textAlign' : "left"})
+            ], no_gutters=False),
+
+
+
+################################### ROW5-Input_boxs & window_slider  ###########################
+    dbc.Row([
+        dbc.Col(
+            dcc.Input(
+            id='input_1',
+            type='text',
+            debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
+            pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
+            spellCheck=True,
+            inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
+            name='text',             # the name of the control, which is submitted with the form data
+            list='browser',          # identifies a list of pre-defined options to suggest to the user
+            n_submit=0,              # number of times the Enter key was pressed while the input had focus
+            n_submit_timestamp=-1,   # last time that Enter was pressed
+            autoFocus=True,          # the element should be automatically focused after the page loaded
+            n_blur=0,                # number of times the input lost focus
+            n_blur_timestamp=-1,     # last time the input lost focus.
+            # selectionDirection='', # the direction in which selection occurred
+            # selectionStart='',     # the offset into the element's text content of the first selected character
+            # selectionEnd='',       # the offset into the element's text content of the last selected character
+                ), width={'size': 1.75}, style={'textAlign': "left"}   
+            ),
+        dbc.Col(
+            dcc.Input(
+            id='input_2',
+            type='text',
+            debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
+            pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
+            spellCheck=True,
+            inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
+            name='text',             # the name of the control, which is submitted with the form data
+            list='browser',          # identifies a list of pre-defined options to suggest to the user
+            n_submit=0,              # number of times the Enter key was pressed while the input had focus
+            n_submit_timestamp=-1,   # last time that Enter was pressed
+            autoFocus=True,          # the element should be automatically focused after the page loaded
+            n_blur=0,                # number of times the input lost focus
+            n_blur_timestamp=-1,     # last time the input lost focus.
+            # selectionDirection='', # the direction in which selection occurred
+            # selectionStart='',     # the offset into the element's text content of the first selected character
+            # selectionEnd='',       # the offset into the element's text content of the last selected character
+                ), width={'size': 1.75}, style={'textAlign': "left"}   
+            ),
+        dbc.Col(
+            dcc.Input(
+            id='input_3',
+            type='text',
+            debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
+            pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
+            spellCheck=True,
+            inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
+            name='text',             # the name of the control, which is submitted with the form data
+            list='browser',          # identifies a list of pre-defined options to suggest to the user
+            n_submit=0,              # number of times the Enter key was pressed while the input had focus
+            n_submit_timestamp=-1,   # last time that Enter was pressed
+            autoFocus=True,          # the element should be automatically focused after the page loaded
+            n_blur=0,                # number of times the input lost focus
+            n_blur_timestamp=-1,     # last time the input lost focus.
+            # selectionDirection='', # the direction in which selection occurred
+            # selectionStart='',     # the offset into the element's text content of the first selected character
+            # selectionEnd='',       # the offset into the element's text content of the last selected character
+                ), width={'size': 1.75}, style={'textAlign': "left"}   
+            )
+    
+        
+            ],no_gutters=False),
+
+
+
+
+################################### ROW5-svd_graphs  ###########################
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(id='svd_1', figure={}, config={'displayModeBar': True},
+                       style={'width':'600px' ,'height':'350px'}),
+                )
+            ],no_gutters=False),
+        ],fluid=True) #
+
+
+
+
+################################ App Callbacks ################################
+################################ SVD_1 user inputs plot  ################################
+
+@app.callback(
+    [Output(component_id='div_output', component_property='children')],
+    [State(component_id='input_1', component_property='value'),
+     State(component_id='input_2', component_property='value'),
+     State(component_id='input_3', component_property='value'),
+     [Input('svd1_button','n_clicks')]
+
+
+
+
 
 
 ################################ Select all button ################################
