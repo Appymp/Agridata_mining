@@ -5,13 +5,9 @@
 
 ## ver 3.5
 
-##Wednesday Sept 29th-morning Van der kunstraat.
-    # 2 plots for svd matrix:
-        # 1st has input box for vocab_to_plot
-        # 2nd has top 'n' unique words to plot from filtered table
-    #first changes to stable app code for svd matrix
-    #frame for user input plot done. Callback logic to be defined.
-
+##Wednesday Sept 29th-morning Coffee company VKS.
+    # vocab_list interactive buttons for svd ready.
+    # plot button and window_slider remaining.
         
 
 #Wishlist:
@@ -794,12 +790,18 @@ for word, ind in dict_to_plot.items():
     plt.title("For window size 3 coocurence svd_arpack")
 print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
 print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
-plt.savefig('svd_arpack_w3.png')
+#plt.savefig('svd_arpack_w3.png')
 
-# In[12]: Clean_captions_2 for sentences preserving the full stop. 
+# In[12]: Instantuate before running app for quick app loading during testing 
+# Make sure to insantiate the coocc class before running the below code
 
-    
-
+inst_load_time=datetime.now()
+df_updated=pd.read_pickle('App_dataframe_4.pkl')
+words_rm_sw_lemt=[row_list for row_list in df_updated['rm_sw_lemt']]
+inst=CooccEmbedding(words_rm_sw_lemt) 
+inst.vocabulary()    
+ilt=str(datetime.now()-inst_load_time)
+print("Time to load instance: ", ilt[:-5])
 
 
 
@@ -858,21 +860,24 @@ print("Execution time: ", s[:-5], "\n\n")
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
+### Instantiate outside the app for quick load in testing
+# words_rm_sw_lemt=[row_list for row_list in df_updated['rm_sw_lemt']]
+# inst=CooccEmbedding(words_rm_sw_lemt) 
+# inst.vocabulary()
+###
+
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 #the rows and columns from dbc worl only with an external stylesheet
 
-al=datetime.now() - app_launch_start #start time logged at start of program code
-sal=str(al) #string object
-print("Total time taken to launch app", sal[:-5])
+al=str(datetime.now() - app_launch_start) #start time logged at start of program code
+print("Total time taken to launch app", al[:-5])
 
 #---------------------------------------------------------------
 
 col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown
 input_boxs = ['text','text']
-# for i,x in enumerate(input_boxs):
-#     print(i,x)
+vocab_plot_list=[]
 
-# input_box[1]
 
 #---------------------------------------------------------------
 
@@ -979,28 +984,54 @@ app.layout = dbc.Container([
 
 ################################### ROW4-Headers 2  ###########################
     dbc.Row([
-            dbc.Col(html.H3("Coocc svd"), width={'size':3}),
-            dbc.Col(
-                dbc.Button(id='svd1_button', n_clicks=0, children="Plot", className="mt-5 mr-2"),            
-                width={'size': 0.5}, style={'textAlign': "left"}), #another way to align
-            # dbc.Col(
-            #     dbc.Button(id='desel-button', n_clicks=0, children="Des_all", className="mt-5"),
-            #     width={'size': 0.5}, style={'textAlign':"left"}),
+            dbc.Col(html.H3("Coocc svd"), width={'size':2}),
             
-            # dbc.Col(html.H3("Wordcloud"), width={'size':5, 'offset':2}, style={'textAlign' : "center"}),         
-            # dbc.Col([
-            #     html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
-            #     width={'size': 3}, style = {'textAlign' : "left"})
+            # dbc.Col(
+            # dcc.Input(
+            # id='input_1',
+            # type='text',
+            # debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
+            # pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
+            # spellCheck=True,
+            # inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
+            # name='text',             # the name of the control, which is submitted with the form data
+            # list='browser',          # identifies a list of pre-defined options to suggest to the user
+            # n_submit=0,              # number of times the Enter key was pressed while the input had focus
+            # n_submit_timestamp=-1,   # last time that Enter was pressed
+            # autoFocus=False,          # the element should be automatically focused after the page loaded
+            # n_blur=0,                # number of times the input lost focus
+            # n_blur_timestamp=-1,     # last time the input lost focus.
+            # # selectionDirection='', # the direction in which selection occurred
+            # # selectionStart='',     # the offset into the element's text content of the first selected character
+            # # selectionEnd='',       # the offset into the element's text content of the last selected character
+            #     ), width={'size': 1.75}, style={'textAlign': "left"}   
+            # ),
+            
+            dbc.Col(
+                dbc.Button(id='add1_button', n_clicks=0, children="Add", className="mt-5 mr-2"),            
+                width={'size': 0.5}, style={'textAlign': "left"}),
+        
+            dbc.Col(
+                dbc.Button(id='rem1_button', n_clicks=0, children="Rem", className="mt-5 mr-2"),            
+                width={'size': 0.5}, style={'textAlign': "left"}),
+        
+            dbc.Col(
+                dbc.Button(id='clr1_button', n_clicks=0, children="Clr", className="mt-5 mr-2"),            
+                width={'size': 0.5}, style={'textAlign': "left"}),
+        
+            dbc.Col(
+                dbc.Button(id='plt1_button', n_clicks=0, children="Plot", className="mt-5 mr-2"),            
+                width={'size': 0.5}, style={'textAlign': "left"}),
             ], no_gutters=False),
-
-
 
 ################################### ROW5-Input_boxs & window_slider  ###########################
     dbc.Row([
+        # dbc.Col(html.Div(id='text_list1'), width={'size':2}),
         dbc.Col(
             dcc.Input(
             id='input_1',
             type='text',
+            placeholder="",          #pass list vocab to display here   
             debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
             pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
             spellCheck=True,
@@ -1009,54 +1040,60 @@ app.layout = dbc.Container([
             list='browser',          # identifies a list of pre-defined options to suggest to the user
             n_submit=0,              # number of times the Enter key was pressed while the input had focus
             n_submit_timestamp=-1,   # last time that Enter was pressed
-            autoFocus=True,          # the element should be automatically focused after the page loaded
+            autoFocus=False,          # the element should be automatically focused after the page loaded
             n_blur=0,                # number of times the input lost focus
             n_blur_timestamp=-1,     # last time the input lost focus.
+            size="50"
             # selectionDirection='', # the direction in which selection occurred
             # selectionStart='',     # the offset into the element's text content of the first selected character
             # selectionEnd='',       # the offset into the element's text content of the last selected character
-                ), width={'size': 1.75}, style={'textAlign': "left"}   
+                ), width={'size': 6}, style={'textAlign': "left"}   
             ),
-        dbc.Col(
-            dcc.Input(
-            id='input_2',
-            type='text',
-            debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
-            pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
-            spellCheck=True,
-            inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
-            name='text',             # the name of the control, which is submitted with the form data
-            list='browser',          # identifies a list of pre-defined options to suggest to the user
-            n_submit=0,              # number of times the Enter key was pressed while the input had focus
-            n_submit_timestamp=-1,   # last time that Enter was pressed
-            autoFocus=True,          # the element should be automatically focused after the page loaded
-            n_blur=0,                # number of times the input lost focus
-            n_blur_timestamp=-1,     # last time the input lost focus.
-            # selectionDirection='', # the direction in which selection occurred
-            # selectionStart='',     # the offset into the element's text content of the first selected character
-            # selectionEnd='',       # the offset into the element's text content of the last selected character
-                ), width={'size': 1.75}, style={'textAlign': "left"}   
-            ),
-        dbc.Col(
-            dcc.Input(
-            id='input_3',
-            type='text',
-            debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
-            pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
-            spellCheck=True,
-            inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
-            name='text',             # the name of the control, which is submitted with the form data
-            list='browser',          # identifies a list of pre-defined options to suggest to the user
-            n_submit=0,              # number of times the Enter key was pressed while the input had focus
-            n_submit_timestamp=-1,   # last time that Enter was pressed
-            autoFocus=True,          # the element should be automatically focused after the page loaded
-            n_blur=0,                # number of times the input lost focus
-            n_blur_timestamp=-1,     # last time the input lost focus.
-            # selectionDirection='', # the direction in which selection occurred
-            # selectionStart='',     # the offset into the element's text content of the first selected character
-            # selectionEnd='',       # the offset into the element's text content of the last selected character
-                ), width={'size': 1.75}, style={'textAlign': "left"}   
-            )
+        
+        
+        # dbc.Col(
+        #     dcc.Input(
+        #     id='input_2',
+        #     type='text',
+        #     debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
+        #     pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
+        #     spellCheck=True,
+        #     inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
+        #     name='text',             # the name of the control, which is submitted with the form data
+        #     list='browser',          # identifies a list of pre-defined options to suggest to the user
+        #     n_submit=0,              # number of times the Enter key was pressed while the input had focus
+        #     n_submit_timestamp=-1,   # last time that Enter was pressed
+        #     autoFocus=False,          # the element should be automatically focused after the page loaded
+        #     n_blur=0,                # number of times the input lost focus
+        #     n_blur_timestamp=-1,     # last time the input lost focus.
+        #     # selectionDirection='', # the direction in which selection occurred
+        #     # selectionStart='',     # the offset into the element's text content of the first selected character
+        #     # selectionEnd='',       # the offset into the element's text content of the last selected character
+        #         ), width={'size': 1.75}, style={'textAlign': "left"}   
+        #     ),
+        # dbc.Col(
+        #     dcc.Input(
+        #     id='input_3',
+        #     type='text',
+        #     debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
+        #     pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
+        #     spellCheck=True,
+        #     inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
+        #     name='text',             # the name of the control, which is submitted with the form data
+        #     list='browser',          # identifies a list of pre-defined options to suggest to the user
+        #     n_submit=0,              # number of times the Enter key was pressed while the input had focus
+        #     n_submit_timestamp=-1,   # last time that Enter was pressed
+        #     autoFocus=False,          # the element should be automatically focused after the page loaded
+        #     n_blur=0,                # number of times the input lost focus
+        #     n_blur_timestamp=-1,     # last time the input lost focus.
+        #     # selectionDirection='', # the direction in which selection occurred
+        #     # selectionStart='',     # the offset into the element's text content of the first selected character
+        #     # selectionEnd='',       # the offset into the element's text content of the last selected character
+        #         ), width={'size': 1.75}, style={'textAlign': "left"}   
+        #     )
+    
+    
+    
     
         
             ],no_gutters=False),
@@ -1064,7 +1101,7 @@ app.layout = dbc.Container([
 
 
 
-################################### ROW5-svd_graphs  ###########################
+################################### ROW6-svd_graphs  ###########################
     dbc.Row([
         dbc.Col(
             dcc.Graph(id='svd_1', figure={}, config={'displayModeBar': True},
@@ -1080,12 +1117,92 @@ app.layout = dbc.Container([
 ################################ SVD_1 user inputs plot  ################################
 
 @app.callback(
-    [Output(component_id='div_output', component_property='children')],
-    [State(component_id='input_1', component_property='value'),
-     State(component_id='input_2', component_property='value'),
-     State(component_id='input_3', component_property='value'),
-     [Input('svd1_button','n_clicks')]
+    [Output(component_id='input_1', component_property='placeholder'),
+     Output(component_id='input_1', component_property='value')],    
+    [Input('add1_button','n_clicks'),
+     Input('rem1_button','n_clicks'),
+     Input('clr1_button','n_clicks')],
+     # Input('plt1_button','n_clicks')],
+    [State(component_id='input_1', component_property='value')],
+    # State(component_id='input_2', component_property='value'),
+    # State(component_id='input_3', component_property='value')],
+    prevent_initial_call=True
+    )
 
+def vocab_list(add,rem,clr,inp_1):
+    
+    ctx = dash.callback_context
+    
+    if ctx.triggered:
+        print(ctx.triggered)
+        trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
+        
+        if trigger == 'add1_button':
+            print("Input word added: ",inp_1)
+            vocab_plot_list.append(inp_1)
+            print("vocab_list is: ",vocab_plot_list )
+            value=''
+            return vocab_plot_list, value
+        
+        
+        if trigger == 'rem1_button':   
+            print("Last word removed")
+            vocab_plot_list.pop()
+            print("vocab_list is now: ",vocab_plot_list)
+            value=''
+            return vocab_plot_list, value
+ 
+
+        if trigger == 'clr1_button':   
+            print("Clr button clicked")
+            vocab_plot_list.clear()
+            print("vocab_list is now: ",vocab_plot_list )
+            value=''
+            return vocab_plot_list, value
+                 
+
+# def svd_user_inputs(plot_butt,text_1,text_2,text_3):
+    # coocc_svd_matrix = load('svd_rand_w2.npy') #Load randomised mode
+    # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
+    # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
+    # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
+    
+    
+    
+    
+    # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+    # text_1 = 'vanilla'
+    # text_2 = 'skincare'
+    # text_3 = 'packaging'    
+    # vocab_to_plot = [text_1 + text_2 + text_3]
+    # print(vocab_to_plot)
+    
+    # print("Text_1 is: ", text_1)
+    # vocab_plot_list.append(text_1)
+    # print("vocab_plot_list contains: ", vocab_plot_list)
+    
+    
+    
+    # dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
+    # #dict_to_plot
+    
+    # # x_lim_min= min()
+    # x_lim_range=[]
+    # y_lim_range=[]
+    # for word, ind in dict_to_plot.items():
+    #     print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+    #     x_lim_range.append(coocc_svd_matrix[ind, 0])
+    #     y_lim_range.append(coocc_svd_matrix[ind, 1])    
+    #     # x_buffer=(max(x_lim_range)-min(x_lim_range))/20
+    #     # y_buffer
+        
+    #     plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.1)
+    #     plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
+    #     plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
+    #     # plt.title("For window size 2 cocurence svd_randomised")
+    #     plt.title("For window size 3 coocurence svd_arpack")
+    # print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
+    # print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
 
 
 
