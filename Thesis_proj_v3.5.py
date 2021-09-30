@@ -5,10 +5,9 @@
 
 ## ver 3.5
 
-##Wednesday Sept 29th-morning Coffee company VKS.
-    # vocab_list interactive buttons for svd ready.
-    # plot button and window_slider remaining.
-        
+##Wednesday Sept 30th-evening VKS.
+    # Plotly scatter to plot vocab to words.
+    #Next try to plot full vocab. Check time.
 
 #Wishlist:
     # Sort out overlap of words.
@@ -771,7 +770,7 @@ coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
 
 vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
 dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
-#dict_to_plot
+dict_to_plot
 
 # x_lim_min= min()
 x_lim_range=[]
@@ -788,9 +787,45 @@ for word, ind in dict_to_plot.items():
     plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
     # plt.title("For window size 2 cocurence svd_randomised")
     plt.title("For window size 3 coocurence svd_arpack")
-print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
-print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
+    
+    
+# print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
+# print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
 #plt.savefig('svd_arpack_w3.png')
+
+
+
+# In[12]: Use plotly scatter instead to visualise
+
+vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
+dict_to_plot
+
+x_lim_range=[]
+y_lim_range=[]
+data_list=[]
+for word, ind in dict_to_plot.items():
+    print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+    row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
+    data_list.append(row_list)
+    
+print(data_list)
+vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
+vocab_words_df
+
+#Plot the scatter
+import plotly.express as px
+import plotly.io as pio #To plot in browser
+pio.renderers.default='browser' #set to 'svg' for non interactive plt in Spyder
+
+fig = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60)
+fig.update_traces(textposition='top center')
+fig.update_layout(
+    height=800,
+    title_text='Words in SVD matrix')
+fig.show()
+    
+  
 
 # In[12]: Instantuate before running app for quick app loading during testing 
 # Make sure to insantiate the coocc class before running the below code
@@ -838,7 +873,7 @@ from nltk.corpus import stopwords
 # import os
 # import os.path 
 from datetime import datetime
-
+from numpy import load
 
 app_launch_start=datetime.now() #Set start time for program start
 
@@ -1046,7 +1081,7 @@ app.layout = dbc.Container([
 
 
 ################################ App Callbacks ################################
-################################ SVD_1 user inputs plot  ################################
+################################ SVD_1 vocab_plot_list ################################
 
 @app.callback(
     [Output(component_id='input_1', component_property='placeholder'),
@@ -1054,10 +1089,7 @@ app.layout = dbc.Container([
     [Input('add1_button','n_clicks'),
      Input('rem1_button','n_clicks'),
      Input('clr1_button','n_clicks')],
-     # Input('plt1_button','n_clicks')],
     [State(component_id='input_1', component_property='value')],
-    # State(component_id='input_2', component_property='value'),
-    # State(component_id='input_3', component_property='value')],
     prevent_initial_call=True
     )
 
@@ -1091,50 +1123,60 @@ def vocab_list(add,rem,clr,inp_1):
             print("vocab_list is now: ",vocab_plot_list )
             value=''
             return vocab_plot_list, value
-                 
 
-# def svd_user_inputs(plot_butt,text_1,text_2,text_3):
-    # coocc_svd_matrix = load('svd_rand_w2.npy') #Load randomised mode
-    # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
+################################ SVD_1 graph ################################
+
+@app.callback(
+    [Output(component_id='svd_1', component_property='figure')],  
+    [Input('plt1_button','n_clicks')],
+    prevent_initial_call=False
+    )
+
+def svd_user_inputs(plot_butt):
+    
+    coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
     # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
     # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
     
-    
-    
-    
-    # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
-    # text_1 = 'vanilla'
-    # text_2 = 'skincare'
-    # text_3 = 'packaging'    
-    # vocab_to_plot = [text_1 + text_2 + text_3]
-    # print(vocab_to_plot)
-    
-    # print("Text_1 is: ", text_1)
-    # vocab_plot_list.append(text_1)
-    # print("vocab_plot_list contains: ", vocab_plot_list)
-    
-    
-    
-    # dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
-    # #dict_to_plot
-    
-    # # x_lim_min= min()
-    # x_lim_range=[]
-    # y_lim_range=[]
-    # for word, ind in dict_to_plot.items():
-    #     print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-    #     x_lim_range.append(coocc_svd_matrix[ind, 0])
-    #     y_lim_range.append(coocc_svd_matrix[ind, 1])    
-    #     # x_buffer=(max(x_lim_range)-min(x_lim_range))/20
-    #     # y_buffer
+    if len(vocab_plot_list) == 0:
+        print("Vocab list empty. Hence initialised with default.")
         
-    #     plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.1)
-    #     plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
-    #     plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
-    #     # plt.title("For window size 2 cocurence svd_randomised")
-    #     plt.title("For window size 3 coocurence svd_arpack")
-    # print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
-    # print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
+        def_words = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic']
+        to_plot = vocab_plot_list+def_words
+        
+        print("Vocab list contains: ",to_plot)
+    
+    else:
+        print("User has input words to plot.")
+        to_plot=vocab_plot_list
+        print("Vocab list contains: ",to_plot)
+        
+    dict_to_plot = inst.vocab_ind_to_plot(to_plot)
+    
+    x_lim_range=[]
+    y_lim_range=[]
+    for word, ind in dict_to_plot.items():
+        print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+        x_lim_range.append(coocc_svd_matrix[ind, 0])
+        y_lim_range.append(coocc_svd_matrix[ind, 1])    
+        
+        plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.1)
+        plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
+        plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
+        # plt.title("For window size 2 cocurence svd_randomised")
+        plt.title("For window size 3 coocurence svd_arpack")
+    print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
+    print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
+
+
+    fig_svd1 = px.imshow(plt, template='ggplot2') 
+
+    fig_svd1.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+    fig_svd1.update_xaxes(visible=False)
+    fig_svd1.update_yaxes(visible=False)
+
+    return fig_svd1
+
 
 
 
