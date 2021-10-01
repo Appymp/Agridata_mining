@@ -5,9 +5,8 @@
 
 ## ver 3.5
 
-##Wednesday Sept 30th-evening VKS.
-    # Plotly scatter to plot vocab to words.
-    #Next try to plot full vocab. Check time.
+##Wednesday Oct 1st-morning VKS.
+    # Cleaned up code. Making vocab_words_df for different window sizes.
 
 #Wishlist:
     # Sort out overlap of words.
@@ -742,78 +741,90 @@ from numpy import save
 save('svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
 
 
-# In[12]: Visualise the words in a vector space
-# initialise the Coocc embedding class before calling the different window size
 
-ad_6=pd.read_pickle('App_dataframe_4.pkl')
+# In[12]: Matplotlib text plot. Looks primitive. Do not use.
+# #Direct call in the app from here below
+# # coocc_svd_matrix = load('svd_rand_w2.npy') #Load randomised mode
+# # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
+# coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
+# # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
 
-words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
 
-start=datetime.now()
-inst=CooccEmbedding(words_rm_sw_lemt) #Instantiate class for dict_to_plot
-#time taken to instantiate class takes 3:02 mins. So keep this instantiated for
-# all window sizes in the dashboard.
-inst.vocabulary() #takes time 
+# vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+# dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
+# dict_to_plot
 
-t=str(datetime.now()-start)
-print("Time taken to instantiate vocab of Coocc class: ", t[:-5])
+# # x_lim_min= min()
+# x_lim_range=[]
+# y_lim_range=[]
+# for word, ind in dict_to_plot.items():
+#     print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+#     x_lim_range.append(coocc_svd_matrix[ind, 0])
+#     y_lim_range.append(coocc_svd_matrix[ind, 1])    
+#     # x_buffer=(max(x_lim_range)-min(x_lim_range))/20
+#     # y_buffer
+    
+#     plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.1)
+#     plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
+#     plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
+#     # plt.title("For window size 2 cocurence svd_randomised")
+#     plt.title("For window size 3 coocurence svd_arpack")
+    
+    
+# # print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
+# # print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
+# #plt.savefig('svd_arpack_w3.png')
 
-# In[12]: SVD app callback
-#Direct call in the app from here below
-# coocc_svd_matrix = load('svd_rand_w2.npy') #Load randomised mode
-# coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
-coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
+
+# In[12]: Create df for plotting with plotly 
+########## For specific word list.
+# vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+
+coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
+# coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
 # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
 
+# # instantiate words only once
+# ad_6=pd.read_pickle('App_dataframe_4.pkl')
+# words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
+# inst=CooccEmbedding(words_rm_sw_lemt) 
+# print("instantiating vocab..")
+# vocab_full=inst.vocabulary()#3:02 mins. keep instantiated before app start
+# print("vocab initiated")
 
+vocab_to_plot = vocab_full #entire word vocab. Common for all window sizes 
+len(vocab_full) #41526
 
-
-vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+print("Making dict_to_plot..")
+start=datetime.now()
 dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
-dict_to_plot
+# dict_to_plot
+wl1=str(datetime.now()-start)
+print("Time to make dict_to_plot: ", wl1[:-5])
 
-# x_lim_min= min()
-x_lim_range=[]
-y_lim_range=[]
-for word, ind in dict_to_plot.items():
-    print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-    x_lim_range.append(coocc_svd_matrix[ind, 0])
-    y_lim_range.append(coocc_svd_matrix[ind, 1])    
-    # x_buffer=(max(x_lim_range)-min(x_lim_range))/20
-    # y_buffer
-    
-    plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.1)
-    plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
-    plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
-    # plt.title("For window size 2 cocurence svd_randomised")
-    plt.title("For window size 3 coocurence svd_arpack")
-    
-    
-# print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
-# print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
-#plt.savefig('svd_arpack_w3.png')
-
-
-
-# In[12]: Use plotly scatter instead to visualise
-
-vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
-dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
-dict_to_plot
-
-x_lim_range=[]
-y_lim_range=[]
 data_list=[]
 for word, ind in dict_to_plot.items():
-    print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+    # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
     row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
     data_list.append(row_list)
     
-print(data_list)
-vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
-vocab_words_df
+# print(data_list)
 
+vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
+wl2=str(datetime.now()-start)
+print("Time till vocab_words_df ready: ", wl2[:-5])
+# vocab_words_df
+
+vocab_words_df.to_csv("vocab_words_svd_w2.csv", index_label=False) 
+
+# In[12]: Visualise plotly scatter  
 #Plot the scatter
+
+vocab_words_df=pd.read_csv("vocab_words_svd_w2.csv")
+# vocab_words_df=pd.read_csv("vocab_words_svd_w3.csv")
+# vocab_words_df=pd.read_csv("vocab_words_svd_w4.csv")
+
+
 import plotly.express as px
 import plotly.io as pio #To plot in browser
 pio.renderers.default='browser' #set to 'svg' for non interactive plt in Spyder
@@ -825,7 +836,7 @@ fig.update_layout(
     title_text='Words in SVD matrix')
 fig.show()
     
-  
+
 
 # In[12]: Instantuate before running app for quick app loading during testing 
 # Make sure to insantiate the coocc class before running the below code
@@ -834,7 +845,7 @@ inst_load_time=datetime.now()
 df_updated=pd.read_pickle('App_dataframe_4.pkl')
 words_rm_sw_lemt=[row_list for row_list in df_updated['rm_sw_lemt']]
 inst=CooccEmbedding(words_rm_sw_lemt) 
-inst.vocabulary()    
+vocab_full=inst.vocabulary()#3:02 mins
 ilt=str(datetime.now()-inst_load_time)
 print("Time to load instance: ", ilt[:-5])
 
