@@ -6,10 +6,13 @@
 ## ver 3.5
 
 ##Wednesday Oct 1st-morning VKS.
-    # Cleaned up code. Making vocab_words_df for different window sizes.
+    # First viz of svd matrix on dashboard.
+    # Next: 
+        #window slider. 
+        #A 2nd svd matrix with only unique words from a filter selection.
 
 #Wishlist:
-    # Sort out overlap of words.
+    # Sort out overlap of words. Done. Addressed with plotly.
     # Drop downs and filters for visualizing the words.
     
 
@@ -778,11 +781,11 @@ save('svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
 
 # In[12]: Create df for plotting with plotly 
 ########## For specific word list.
-# vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
 
-coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
+
+# coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
 # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
-# coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
+coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
 
 # # instantiate words only once
 # ad_6=pd.read_pickle('App_dataframe_4.pkl')
@@ -793,7 +796,9 @@ coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
 # print("vocab initiated")
 
 vocab_to_plot = vocab_full #entire word vocab. Common for all window sizes 
-len(vocab_full) #41526
+# len(vocab_full) #41526
+# vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+
 
 print("Making dict_to_plot..")
 start=datetime.now()
@@ -813,20 +818,24 @@ for word, ind in dict_to_plot.items():
 vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
 wl2=str(datetime.now()-start)
 print("Time till vocab_words_df ready: ", wl2[:-5])
-# vocab_words_df
+vocab_words_df
+vocab_words_df.dtypes
 
-vocab_words_df.to_csv("vocab_words_svd_w2.csv", index_label=False) 
+# vocab_words_df.to_pickle("vocab_words_svd_w2.pkl", protocol=0)
+# vocab_words_df.to_pickle("vocab_words_svd_w3.pkl", protocol=0)
+vocab_words_df.to_pickle("vocab_words_svd_w4.pkl", protocol=0)
+
+
 
 # In[12]: Visualise plotly scatter  
 #Plot the scatter
 
-vocab_words_df=pd.read_csv("vocab_words_svd_w2.csv")
-# vocab_words_df=pd.read_csv("vocab_words_svd_w3.csv")
-# vocab_words_df=pd.read_csv("vocab_words_svd_w4.csv")
-
+# vocab_words_df=pd.read_pickle("vocab_words_svd_w2.pkl") #Has to be stored as pickle. Otherwise does not plot when read back.
+# vocab_words_df=pd.read_pickle("vocab_words_svd_w3.pkl")
+vocab_words_df=pd.read_pickle("vocab_words_svd_w4.pkl")
 
 import plotly.express as px
-import plotly.io as pio #To plot in browser
+# import plotly.io as pio #To plot in browser
 pio.renderers.default='browser' #set to 'svg' for non interactive plt in Spyder
 
 fig = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60)
@@ -841,9 +850,32 @@ fig.show()
 # In[12]: Instantuate before running app for quick app loading during testing 
 # Make sure to insantiate the coocc class before running the below code
 
+import pandas as pd     #(version 1.0.0)
+import plotly           #(version 4.5.4) pip install plotly==4.5.4
+import plotly.express as px
+import dash             #(version 1.9.1) pip install dash==1.9.1
+import dash_table
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dbc
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from wordcloud import WordCloud, STOPWORDS
+from nltk.corpus import stopwords
+# import warnings
+# warnings.filterwarnings('ignore')
+# import os
+# import os.path 
+from datetime import datetime
+from numpy import load
+
 inst_load_time=datetime.now()
 df_updated=pd.read_pickle('App_dataframe_4.pkl')
 words_rm_sw_lemt=[row_list for row_list in df_updated['rm_sw_lemt']]
+
+print("Loading instance..")
 inst=CooccEmbedding(words_rm_sw_lemt) 
 vocab_full=inst.vocabulary()#3:02 mins
 ilt=str(datetime.now()-inst_load_time)
@@ -922,8 +954,8 @@ print("Total time taken to launch app", al[:-5])
 
 col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown
 input_boxs = ['text','text']
-vocab_plot_list=[]
-
+# vocab_plot_list=[]
+vocab_plot_list = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic']
 
 #---------------------------------------------------------------
 
@@ -1068,7 +1100,7 @@ app.layout = dbc.Container([
             autoFocus=False,          # the element should be automatically focused after the page loaded
             n_blur=0,                # number of times the input lost focus
             n_blur_timestamp=-1,     # last time the input lost focus.
-            size="50"
+            size="65"                # Width of box which can display placeholders
             # selectionDirection='', # the direction in which selection occurred
             # selectionStart='',     # the offset into the element's text content of the first selected character
             # selectionEnd='',       # the offset into the element's text content of the last selected character
@@ -1082,8 +1114,9 @@ app.layout = dbc.Container([
 ################################### ROW6-svd_graphs  ###########################
     dbc.Row([
         dbc.Col(
-            dcc.Graph(id='svd_1', figure={}, config={'displayModeBar': True},
-                       style={'width':'600px' ,'height':'350px'}),
+            # dcc.Graph(id='svd_1', figure={}, config={'displayModeBar': True},
+            #            style={'width':'600px' ,'height':'350px'}),
+            dcc.Graph(id='svd_1'), width={'size': 5}
                 )
             ],no_gutters=False),
         ],fluid=True) #closes initial dbc container
@@ -1101,13 +1134,12 @@ app.layout = dbc.Container([
      Input('rem1_button','n_clicks'),
      Input('clr1_button','n_clicks')],
     [State(component_id='input_1', component_property='value')],
-    prevent_initial_call=True
+    prevent_initial_call=False
     )
 
 def vocab_list(add,rem,clr,inp_1):
     
     ctx = dash.callback_context
-    
     if ctx.triggered:
         print(ctx.triggered)
         trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
@@ -1134,11 +1166,14 @@ def vocab_list(add,rem,clr,inp_1):
             print("vocab_list is now: ",vocab_plot_list )
             value=''
             return vocab_plot_list, value
-
+        
+    else:
+        value=''
+        return vocab_plot_list, value
 ################################ SVD_1 graph ################################
 
 @app.callback(
-    [Output(component_id='svd_1', component_property='figure')],  
+    Output(component_id='svd_1', component_property='figure'),  
     [Input('plt1_button','n_clicks')],
     prevent_initial_call=False
     )
@@ -1149,48 +1184,52 @@ def svd_user_inputs(plot_butt):
     # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
     # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
     
-    if len(vocab_plot_list) == 0:
-        print("Vocab list empty. Hence initialised with default.")
+    # if len(vocab_plot_list) == 0:
+    #     print("Vocab list empty. Hence initialised with default.")
         
-        def_words = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic']
-        to_plot = vocab_plot_list+def_words
+    #     def_words = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic']
+    #     to_plot = vocab_plot_list+def_words
         
-        print("Vocab list contains: ",to_plot)
+    #     print("Vocab list contains: ",to_plot)
     
-    else:
-        print("User has input words to plot.")
-        to_plot=vocab_plot_list
-        print("Vocab list contains: ",to_plot)
+    # else:
+    #     print("User has input words to plot.")
+    #     to_plot=vocab_plot_list
+    #     print("Vocab list contains: ",to_plot)
+    
+    to_plot = vocab_plot_list
         
     dict_to_plot = inst.vocab_ind_to_plot(to_plot)
+    # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+    # dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
     
-    x_lim_range=[]
-    y_lim_range=[]
+    data_list=[]
     for word, ind in dict_to_plot.items():
-        print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-        x_lim_range.append(coocc_svd_matrix[ind, 0])
-        y_lim_range.append(coocc_svd_matrix[ind, 1])    
-        
-        plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.1)
-        plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
-        plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
-        # plt.title("For window size 2 cocurence svd_randomised")
-        plt.title("For window size 3 coocurence svd_arpack")
-    print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
-    print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
+        # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+        row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
+        data_list.append(row_list)
+    
+    vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
+    # vocab_words_df
+    
+    # import plotly.express as px
+    # import plotly.io as pio #To plot in browser
+    # pio.renderers.default='browser' #set to 'svg' for non interactive plt in Spyder
+    
+    fig = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60)
+    fig.update_traces(textposition='top center')
+    # fig.update_layout(
+    #     height=800,
+    #     title_text='Words in SVD matrix')
+    # fig.show() #Will open in a browser tab
+    
+    fig.update_layout(margin=dict(l=0, r=0))
+    # fig.update_xaxes(visible=False)
+    # fig.update_yaxes(visible=False)
+    
+    
 
-
-    fig_svd1 = px.imshow(plt, template='ggplot2') 
-
-    fig_svd1.update_layout(margin=dict(l=0, r=0, t=0, b=0))
-    fig_svd1.update_xaxes(visible=False)
-    fig_svd1.update_yaxes(visible=False)
-
-    return fig_svd1
-
-
-
-
+    return (fig)
 
 
 ################################ Select all button ################################
@@ -1284,7 +1323,7 @@ def ren_wordcloud(chosen_rows, chosen_cols):
     fig_wordcloud = px.imshow(wordcloud, template='ggplot2',
                               ) #title="test wordcloud of eng and fr stopwords"
 
-    fig_wordcloud.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+    fig_wordcloud.update_layout(margin=dict(l=0, r=0,b=0,t=0))
     fig_wordcloud.update_xaxes(visible=False)
     fig_wordcloud.update_yaxes(visible=False)
 
