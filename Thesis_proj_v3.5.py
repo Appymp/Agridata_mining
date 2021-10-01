@@ -5,11 +5,14 @@
 
 ## ver 3.5
 
-##Wednesday Oct 1st-morning VKS.
-    # First viz of svd matrix on dashboard.
-    # Next: 
-        #window slider. 
-        #A 2nd svd matrix with only unique words from a filter selection.
+##Wednesday Oct 1st-evening VKS.
+    # 2 SVD graphs on dashboar with window selector.
+    # Connect dashtable filtering to 2nd svd
+    ##Call with Alessandra
+    #define groups of people and structure the "insight" or intel from this tool.
+    #shouldnt be so cluttered. Wordcloud is intuitive.
+    #For example if we were to sell something to someone, we should speak their on lang
+    # They may think that organic means: healthy, natural, preserves culture, 
 
 #Wishlist:
     # Sort out overlap of words. Done. Addressed with plotly.
@@ -1062,7 +1065,7 @@ app.layout = dbc.Container([
 
 ################################### ROW4-Headers 2  ###########################
     dbc.Row([
-            dbc.Col(html.H3("Coocc svd"), width={'size':2}),
+            dbc.Col(html.H3("Coocc svd ip"), width={'size':2}),
             
             dbc.Col(
                 dbc.Button(id='add1_button', n_clicks=0, children="Add", className="mt-5 mr-2"),            
@@ -1079,6 +1082,26 @@ app.layout = dbc.Container([
             dbc.Col(
                 dbc.Button(id='plt1_button', n_clicks=0, children="Plot", className="mt-5 mr-2"),            
                 width={'size': 0.5}, style={'textAlign': "left"}),
+            
+            dbc.Col(
+                dcc.Dropdown(id='wind_dd', multi=False,
+                      options=[{'label': x, 'value': x} for x in range(2,5)],
+                      value=2, #initial values to pass
+                      className="mt-5 mr-2",
+                      style={'width':'150px'}
+                      ),
+                width={'size':2, 'offset':0}, style={'textAlign': "left"}),
+            
+            dbc.Col(html.H3("Coocc svd "), width={'size':2}),
+            
+            dbc.Col(
+                dcc.Dropdown(id='wind_dd_2', multi=False,
+                      options=[{'label': x, 'value': x} for x in range(2,5)],
+                      value=2, #initial values to pass
+                      className="mt-5 mr-2",
+                      style={'width':'150px'}
+                      ),
+                width={'size':3, 'offset':1}, style={'textAlign': "left"}),
             ], no_gutters=False),
 
 ################################### ROW5-Input_boxs & window_slider  ###########################
@@ -1111,21 +1134,81 @@ app.layout = dbc.Container([
 
 
 
-################################### ROW6-svd_graphs  ###########################
+################################### ROW6-svd_graph_1  ###########################
     dbc.Row([
         dbc.Col(
             # dcc.Graph(id='svd_1', figure={}, config={'displayModeBar': True},
             #            style={'width':'600px' ,'height':'350px'}),
-            dcc.Graph(id='svd_1'), width={'size': 5}
+            dcc.Graph(id='svd_1'), 
+            width={'size': 6}
+                ),
+
+################################### ROW7-svd_graph_2  ###########################
+        dbc.Col(
+            dcc.Graph(id='svd_2'), 
+            width={'size': 6}
                 )
             ],no_gutters=False),
         ],fluid=True) #closes initial dbc container
 
 
-
-
 ################################ App Callbacks ################################
-################################ SVD_1 vocab_plot_list ################################
+################################ SVD_2 graph ################################
+@app.callback(
+    Output(component_id='svd_2', component_property='figure'), 
+    [Input('wind_dd_2','value')],
+    prevent_initial_call=False
+    )
+
+def svd_graph_full(window):
+    
+    if window == 2:
+        # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
+        vocab_words_df= pd.read_pickle('vocab_words_svd_w2.pkl')
+
+    elif window == 3:
+        # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
+        vocab_words_df= pd.read_pickle('vocab_words_svd_w3.pkl')
+    
+    elif window ==4:
+        # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
+        vocab_words_df= pd.read_pickle('vocab_words_svd_w4.pkl')
+    
+   
+    
+    # to_plot = vocab_full #pass list of unique words from dash table filter selection.
+
+    # dict_to_plot = inst.vocab_ind_to_plot(to_plot)
+    # # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+    # # dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
+    
+    # data_list=[]
+    # for word, ind in dict_to_plot.items():
+    #     # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+    #     row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
+    #     data_list.append(row_list)
+    
+    # vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
+    
+    fig2 = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60)
+    fig2.update_traces(textposition='top center')
+    # fig.update_layout(
+    #     height=800,
+    #     title_text='Words in SVD matrix')
+    # fig.show() #Will open in a browser tab
+    
+    fig2.update_layout(margin=dict(l=0, r=0))
+    # fig.update_xaxes(visible=False)
+    # fig.update_yaxes(visible=False)
+    
+    
+
+    return (fig2)
+
+
+
+
+################################ SVD_1 inputbox ################################
 
 @app.callback(
     [Output(component_id='input_1', component_property='placeholder'),
@@ -1138,6 +1221,13 @@ app.layout = dbc.Container([
     )
 
 def vocab_list(add,rem,clr,inp_1):
+    
+    print("Input word added: ",inp_1)
+    vocab_plot_list.append(inp_1)
+    print("vocab_list is: ",vocab_plot_list )
+    value=''
+    return vocab_plot_list, value
+    
     
     ctx = dash.callback_context
     if ctx.triggered:
@@ -1168,34 +1258,32 @@ def vocab_list(add,rem,clr,inp_1):
             return vocab_plot_list, value
         
     else:
+        vocab_plot_list.append(inp_1)
         value=''
         return vocab_plot_list, value
+        
+        
+       
 ################################ SVD_1 graph ################################
 
 @app.callback(
     Output(component_id='svd_1', component_property='figure'),  
-    [Input('plt1_button','n_clicks')],
+    [Input('plt1_button','n_clicks'),
+     Input('wind_dd','value')],
     prevent_initial_call=False
     )
 
-def svd_user_inputs(plot_butt):
+def svd_user_inputs(plot_butt,window):
     
-    coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
-    # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
-    # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
+    if window == 2:
+        coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode        
+
+    elif window == 3:
+        coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
     
-    # if len(vocab_plot_list) == 0:
-    #     print("Vocab list empty. Hence initialised with default.")
-        
-    #     def_words = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic']
-    #     to_plot = vocab_plot_list+def_words
-        
-    #     print("Vocab list contains: ",to_plot)
+    elif window ==4:
+        coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
     
-    # else:
-    #     print("User has input words to plot.")
-    #     to_plot=vocab_plot_list
-    #     print("Vocab list contains: ",to_plot)
     
     to_plot = vocab_plot_list
         
@@ -1210,11 +1298,6 @@ def svd_user_inputs(plot_butt):
         data_list.append(row_list)
     
     vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
-    # vocab_words_df
-    
-    # import plotly.express as px
-    # import plotly.io as pio #To plot in browser
-    # pio.renderers.default='browser' #set to 'svg' for non interactive plt in Spyder
     
     fig = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60)
     fig.update_traces(textposition='top center')
