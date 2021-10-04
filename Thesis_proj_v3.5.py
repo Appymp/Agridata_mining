@@ -5,14 +5,9 @@
 
 ## ver 3.5
 
-##Wednesday Oct 1st-evening VKS.
-    # 2 SVD graphs on dashboar with window selector.
-    # Connect dashtable filtering to 2nd svd
-    ##Call with Alessandra
-    #define groups of people and structure the "insight" or intel from this tool.
-    #shouldnt be so cluttered. Wordcloud is intuitive.
-    #For example if we were to sell something to someone, we should speak their on lang
-    # They may think that organic means: healthy, natural, preserves culture, 
+##Monday Oct 4th-morning Tilburg Poonchs.
+    # Logic for vocab to plot based on row selection done.
+    # Incorporate into the dashboard.
 
 #Wishlist:
     # Sort out overlap of words. Done. Addressed with plotly.
@@ -837,6 +832,52 @@ vocab_words_df.to_pickle("vocab_words_svd_w4.pkl", protocol=0)
 # vocab_words_df=pd.read_pickle("vocab_words_svd_w3.pkl")
 vocab_words_df=pd.read_pickle("vocab_words_svd_w4.pkl")
 
+
+######################Simultate app control flow#######################
+
+df_updated=pd.read_pickle('App_dataframe_4.pkl')
+df_updated.rename(columns={"caption_processed_4": "description"},inplace=True)
+
+###Interactive dash table selection
+chosen_cols = ['ix','description'] # The column selection shouldnt matter. Use rm_sw_lemt column only
+chosen_rows = [4,5,6,7]
+###Interactive app selection
+
+
+if len(chosen_cols) > 0: #atleast 1 col to be selected
+     if len(chosen_rows)==0:                    
+         df_filtered = df_disp_1[chosen_cols] #if no rows selected consider all rows
+
+     elif len(chosen_rows) > 0 :
+         df_filtered = df_disp_1[chosen_cols]
+         df_filtered=df_filtered[df_filtered.index.isin(chosen_rows)]
+            
+     elif len(chosen_cols) == 0:        
+         raise dash.exceptions.PreventUpdate
+
+filtered_table=df_filtered #in app use the actual filtered table
+filtered_table
+
+main_table_index = [row['ix'] for ind,row in filtered_table.iterrows()] #Grab index from filtered table for referenccing the main table rm_sw_lemt column. Main table index is preserved in 'ix' col
+
+# main_table_index = [int(i) for i in main_table_index] #convert to int for index reference
+# main_table_index
+
+rm_sw_lemt_ser=df_updated[df_updated.index.isin(main_table_index)].rm_sw_lemt
+type(rm_sw_lemt_ser)
+
+len(rm_sw_lemt_ser[4])
+len(set(rm_sw_lemt_ser[4]))
+print(set(rm_sw_lemt_ser[4]))
+
+flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list]
+len(flat_rm_sw_lemt_ser)
+len(set(flat_rm_sw_lemt_ser))
+unique_words = list(set(flat_rm_sw_lemt_ser))
+len(unique_words)
+
+######################Simultate app control flow#######################
+
 import plotly.express as px
 # import plotly.io as pio #To plot in browser
 pio.renderers.default='browser' #set to 'svg' for non interactive plt in Spyder
@@ -932,6 +973,11 @@ start = datetime.now()
 
 # df_updated=pd.read_csv("App_dataframe_2.csv")
 df_updated=pd.read_pickle('App_dataframe_4.pkl')
+vocab_words_df_2= pd.read_pickle('vocab_words_svd_w2.pkl')    
+vocab_words_df_3= pd.read_pickle('vocab_words_svd_w2.pkl')      
+vocab_words_df_4= pd.read_pickle('vocab_words_svd_w2.pkl')  
+
+
 
 print("Dataframe loaded")
 t=datetime.now() - start 
@@ -941,7 +987,7 @@ print("Execution time: ", s[:-5], "\n\n")
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
-### Instantiate outside the app for quick load in testing
+### Instantiate outside the app for quick load in testing. Cmment out after first run.
 # words_rm_sw_lemt=[row_list for row_list in df_updated['rm_sw_lemt']]
 # inst=CooccEmbedding(words_rm_sw_lemt) 
 # inst.vocabulary()
@@ -954,6 +1000,9 @@ al=str(datetime.now() - app_launch_start) #start time logged at start of program
 print("Total time taken to launch app", al[:-5])
 
 #---------------------------------------------------------------
+
+
+
 
 col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown
 input_boxs = ['text','text']
@@ -1152,31 +1201,65 @@ app.layout = dbc.Container([
         ],fluid=True) #closes initial dbc container
 
 
-################################ App Callbacks ################################
+################################ App Callbacks ###################################################
+################################ App Callbacks ###################################################
+
+
 ################################ SVD_2 graph ################################
 @app.callback(
     Output(component_id='svd_2', component_property='figure'), 
-    [Input('wind_dd_2','value')],
+    [Input('wind_dd_2','value'),
+    Input(component_id='datatable_id',component_property='selected_rows'),
+    Input(component_id='my-dropdown', component_property='value')],
     prevent_initial_call=False
     )
 
-def svd_graph_full(window):
+def svd_graph_full(window,rows,cols):    
+
     
     if window == 2:
         # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
-        vocab_words_df= pd.read_pickle('vocab_words_svd_w2.pkl')
+        vocab_words_df=vocab_words_df_2
 
     elif window == 3:
         # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
-        vocab_words_df= pd.read_pickle('vocab_words_svd_w3.pkl')
+        vocab_words_df=vocab_words_df_3
     
     elif window ==4:
         # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
-        vocab_words_df= pd.read_pickle('vocab_words_svd_w4.pkl')
+        vocab_words_df=vocab_words_df_4
+
     
+########## Simulate the wordcloud dashtable control flow ############
+    if len(chosen_cols) > 0: #atleast 1 col to be selected
+     if len(chosen_rows)==0:                    
+         df_filtered = df_disp_1[chosen_cols] #if no rows selected consider all rows
+
+     elif len(chosen_rows) > 0 :
+         df_filtered = df_disp_1[chosen_cols]
+         df_filtered=df_filtered[df_filtered.index.isin(chosen_rows)]
+            
+    elif len(chosen_cols) == 0:
+        raise dash.exceptions.PreventUpdate
+
+    #df_filtered only has the selected rows and columns. So use only the split columns and avoid redundancy
+    # type(df_filtered)
+    #Combine multiple columns into a single series for wordcloud generation
+    df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply(
+        lambda x: ' '.join(x.dropna().astype(str)),        
+        axis=1)
+    
+    
+    print(' '.join(df_filtered['comb_cols']) 
    
+######Simulate the wordcloud code segment########
+
     
     # to_plot = vocab_full #pass list of unique words from dash table filter selection.
+    # filt_table_words = ' '.join(df_filtered['comb_cols'])
+    # print(filt_table_words)             
+
+
 
     # dict_to_plot = inst.vocab_ind_to_plot(to_plot)
     # # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
@@ -1200,7 +1283,6 @@ def svd_graph_full(window):
     fig2.update_layout(margin=dict(l=0, r=0))
     # fig.update_xaxes(visible=False)
     # fig.update_yaxes(visible=False)
-    
     
 
     return (fig2)
@@ -1361,7 +1443,7 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
     prevent_initial_call=False
 )
 
-
+# chosen_cols = 'description'
 def ren_wordcloud(chosen_rows, chosen_cols):
     if len(chosen_cols) > 0: #atleast 1 col to be selected
         if len(chosen_rows)==0:                    
@@ -1379,7 +1461,7 @@ def ren_wordcloud(chosen_rows, chosen_cols):
         raise dash.exceptions.PreventUpdate
 
     #df_filtered only has the selected rows and columns. So us only the split columns and avoid redunancy
-    
+    # type(df_filtered)
     #Combine multiple columns into a single series for wordcloud generation
     df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply(
         lambda x: ' '.join(x.dropna().astype(str)),        
@@ -1401,7 +1483,7 @@ def ren_wordcloud(chosen_rows, chosen_cols):
                           height=1000, #1000
                           random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
 
-    #print(' '.join(df_filtered['comb_cols']))
+    # print(' '.join(df_filtered['comb_cols']))
 
     fig_wordcloud = px.imshow(wordcloud, template='ggplot2',
                               ) #title="test wordcloud of eng and fr stopwords"
