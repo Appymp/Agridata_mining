@@ -5,9 +5,11 @@
 
 ## ver 3.5
 
-##Monday Oct 4th-morning Tilburg Poonchs.
-    # Logic for vocab to plot based on row selection done.
-    # Incorporate into the dashboard.
+##Monday Oct 4th-afternoon Tilburg Poonchs.
+    # Filtered table vocab selection incorporated in dashboard.
+    # Optimise wordcloud rendering.
+    # Figure out how to make sense of the data.
+
 
 #Wishlist:
     # Sort out overlap of words. Done. Addressed with plotly.
@@ -973,9 +975,14 @@ start = datetime.now()
 
 # df_updated=pd.read_csv("App_dataframe_2.csv")
 df_updated=pd.read_pickle('App_dataframe_4.pkl')
+
+coocc_svd_matrix_2 = load('svd_arpack_w2.npy') 
+coocc_svd_matrix_3 = load('svd_arpack_w3.npy') 
+coocc_svd_matrix_4 = load('svd_arpack_w4.npy') 
+
 vocab_words_df_2= pd.read_pickle('vocab_words_svd_w2.pkl')    
-vocab_words_df_3= pd.read_pickle('vocab_words_svd_w2.pkl')      
-vocab_words_df_4= pd.read_pickle('vocab_words_svd_w2.pkl')  
+vocab_words_df_3= pd.read_pickle('vocab_words_svd_w3.pkl')      
+vocab_words_df_4= pd.read_pickle('vocab_words_svd_w4.pkl')  
 
 
 
@@ -987,7 +994,7 @@ print("Execution time: ", s[:-5], "\n\n")
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
-### Instantiate outside the app for quick load in testing. Cmment out after first run.
+### Instantiate outside the app for quick load in testing. Comment out after first run.
 # words_rm_sw_lemt=[row_list for row_list in df_updated['rm_sw_lemt']]
 # inst=CooccEmbedding(words_rm_sw_lemt) 
 # inst.vocabulary()
@@ -1007,7 +1014,7 @@ print("Total time taken to launch app", al[:-5])
 col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown
 input_boxs = ['text','text']
 # vocab_plot_list=[]
-vocab_plot_list = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic']
+vocab_plot_list = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic'] #Default plot list for svd_1
 
 #---------------------------------------------------------------
 
@@ -1209,71 +1216,67 @@ app.layout = dbc.Container([
 @app.callback(
     Output(component_id='svd_2', component_property='figure'), 
     [Input('wind_dd_2','value'),
-    Input(component_id='datatable_id',component_property='selected_rows'),
-    Input(component_id='my-dropdown', component_property='value')],
+    Input(component_id='datatable_id',component_property='selected_rows')],
+    # State('datatable_id', 'derived_virtual_data'),
+    # Input(component_id='my-dropdown', component_property='value')],
     prevent_initial_call=False
     )
 
-def svd_graph_full(window,rows,cols):    
+def svd_graph_full(window,chosen_rows):    
 
     
     if window == 2:
-        # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
+        coocc_svd_matrix = coocc_svd_matrix_2
         vocab_words_df=vocab_words_df_2
 
     elif window == 3:
-        # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
+        coocc_svd_matrix = coocc_svd_matrix_3
         vocab_words_df=vocab_words_df_3
     
     elif window ==4:
-        # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
+        coocc_svd_matrix = coocc_svd_matrix_4
         vocab_words_df=vocab_words_df_4
 
     
-########## Simulate the wordcloud dashtable control flow ############
-    if len(chosen_cols) > 0: #atleast 1 col to be selected
-     if len(chosen_rows)==0:                    
-         df_filtered = df_disp_1[chosen_cols] #if no rows selected consider all rows
 
-     elif len(chosen_rows) > 0 :
-         df_filtered = df_disp_1[chosen_cols]
-         df_filtered=df_filtered[df_filtered.index.isin(chosen_rows)]
-            
-    elif len(chosen_cols) == 0:
+###Interactive dash table selection            
+    if len(chosen_rows) == 0:        
         raise dash.exceptions.PreventUpdate
 
-    #df_filtered only has the selected rows and columns. So use only the split columns and avoid redundancy
-    # type(df_filtered)
-    #Combine multiple columns into a single series for wordcloud generation
-    df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply(
-        lambda x: ' '.join(x.dropna().astype(str)),        
-        axis=1)
     
+    # main_table_index = [row['ix'] for row in filtered_table]   #filtered table has its own index. So grab main table index from 'ix' 
+    main_table_index = chosen_rows
     
-    print(' '.join(df_filtered['comb_cols']) 
-   
-######Simulate the wordcloud code segment########
+    print("Main table index is: ", main_table_index)
+    
+    rm_sw_lemt_ser=df_updated[df_updated.index.isin(main_table_index)].rm_sw_lemt
+    # type(rm_sw_lemt_ser)
+    
+    print(rm_sw_lemt_ser)
+    # len(set(rm_sw_lemt_ser[4]))
+    # print(set(rm_sw_lemt_ser))
+    
+    ######Testing above code#######
+    
+    flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list]
+    print("Total number of words in rows: ",len(flat_rm_sw_lemt_ser))
+    # len(set(flat_rm_sw_lemt_ser))
+    unique_words = list(set(flat_rm_sw_lemt_ser))
+    print("Number of unique words are: ",len(unique_words))
+    print("Unique words are: ",unique_words)    
+    to_plot = unique_words #pass list of unique words from dash table filter selection.
+             
+    dict_to_plot = inst.vocab_ind_to_plot(to_plot)
 
+    data_list=[]
+    for word, ind in dict_to_plot.items():
+        # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+        row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
+        data_list.append(row_list)
     
-    # to_plot = vocab_full #pass list of unique words from dash table filter selection.
-    # filt_table_words = ' '.join(df_filtered['comb_cols'])
-    # print(filt_table_words)             
-
-
-
-    # dict_to_plot = inst.vocab_ind_to_plot(to_plot)
-    # # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
-    # # dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
+    vocab_words_df_list= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
     
-    # data_list=[]
-    # for word, ind in dict_to_plot.items():
-    #     # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-    #     row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
-    #     data_list.append(row_list)
-    
-    # vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
-    
-    fig2 = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60)
+    fig2 = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
     fig2.update_traces(textposition='top center')
     # fig.update_layout(
     #     height=800,
@@ -1428,7 +1431,6 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
             print("\n\nDeselect button clicked")
             print("Length of Selected_rows is: ", len(selected_rows))
             return [[]]
-
 
 ################################ Wordcloud callback ################################
 
