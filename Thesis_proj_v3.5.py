@@ -5,8 +5,8 @@
 
 ## ver 3.5
 
-##Monday Oct 4th-night Tilburg Poonchs.
-    #  Wordcloud rendering optimised.
+##Friday Oct 8th-morning. Tilburg Poonchs.
+    #  Word2vec model implemented.
 
 
 #Wishlist:
@@ -882,7 +882,118 @@ fig2.update_layout(margin=dict(l=0, r=0))
 
 return (fig2)
     
+# In[12]: ## Word2vec model
+import os
+import re
+import time
+from gensim.models import Word2Vec
+from gensim.models import KeyedVectors #For loading the model
+from sklearn.manifold import TSNE #for reducing the dimensions 
+from tqdm import tqdm
+tqdm.pandas()
 
+# ad_6=pd.read_pickle('App_dataframe_4.pkl')
+# words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
+
+print("number of sentences is: ",len(words_rm_sw_lemt))
+train_sentences = words_rm_sw_lemt
+
+start=datetime.now()
+model = Word2Vec(sentences=train_sentences, sg=1,vector_size=100, window=5, min_count=1, workers=4)
+model.save("thesis_word2vec.model") #save a part of the training
+t=str(datetime.now()-start)
+print("Time taken for Word2vec on full dataset is: ", t[:-5]) #28 secs for full dataset
+
+
+model = Word2Vec.load("thesis_word2vec.model") #load and continue training the sample
+# model.train([["hello", "world"]], total_examples=1, epochs=1) #train new samples
+# model.wv.vector_size #100 if vector_size set to this
+# model.wv.get_vector('vanilla')
+
+
+model.wv.most_similar('sustainable')
+model.wv.most_similar('organic', topn = 20)
+model.wv.most_similar('fairtrade', topn = 20)
+model.wv.most_similar('ethical')
+model.wv.most_similar('conscious')
+model.wv.most_similar('cool')
+model.wv.most_similar('work')
+model.wv.most_similar('labour')
+
+model.wv.most_similar('producer')
+model.wv.most_similar('beauty')
+model.wv.most_similar('health')
+model.wv.most_similar('pharma')
+model.wv.most_similar('agriculture')
+model.wv.most_similar('industry')
+model.wv.most_similar('agriculture')
+model.wv.most_similar('skateboard')
+model.wv.most_similar('music')
+model.wv.most_similar('art')
+model.wv.most_similar('creativity')
+model.wv.most_similar('agritech')
+
+model.wv.most_similar(['agriculture','agritech','coffee'])
+model.wv.most_similar(['agriculture','sustainable','coffee','labour'])
+
+
+
+model.wv.most_similar('vanilla')
+model.wv.most_similar('cacao', topn = 10) #where would the meaning change and where it wouldnt
+model.wv.most_similar('coffee')
+model.wv.most_similar('crop')
+model.wv.most_similar('cream','organic')
+model.wv.most_similar(['healthy','face','product'])
+model.wv.most_similar('organic','coffee')
+model.wv.most_similar(['pesticide','organic'])
+model.wv.most_similar(['pesticide','farming'])
+
+
+##Note how before the saving the model, called as model.wv 
+model.wv.save_word2vec_format('organic_glove_100d.txt') #After training full dataset save in the format
+w2v = KeyedVectors.load_word2vec_format('organic_glove_100d.txt') # To load
+w2v.most_similar('vanilla') # How to get vector using loaded model
+
+# w2v.vocab #deprecated. Instead use the below
+words = list(w2v.index_to_key) #instead of model.wv.vocab
+len(words)
+
+model.wv.get_item(['vanilla'])
+model.wv['vanilla'].reshape((1, vector_size))
+
+
+#To plot
+def tsne_plot(model):
+    "Creates and TSNE model and plots it"
+    labels = []
+    tokens = []
+
+    for word in words:
+        tokens.append(model[word])
+        labels.append(word)
+    
+    tsne_model = TSNE(perplexity=40, n_components=2, init='pca', n_iter=2500, random_state=23)
+    new_values = tsne_model.fit_transform(tokens)
+
+    x = []
+    y = []
+    for value in new_values:
+        x.append(value[0])
+        y.append(value[1])
+        
+    plt.figure(figsize=(16, 16)) 
+    for i in range(len(x)):
+        plt.scatter(x[i],y[i])
+        plt.annotate(labels[i],
+                     xy=(x[i], y[i]),
+                     xytext=(5, 2),
+                     textcoords='offset points',
+                     ha='right',
+                     va='bottom')
+    plt.show()
+
+
+tsne_plot(model)
 
 # In[12]: Instantuate before running app for quick app loading during testing 
 # Make sure to insantiate the coocc class before running the below code
@@ -926,7 +1037,7 @@ print("Time to load instance: ", ilt[:-5])
 ##Dashboard application Test shift to dbc.Container
 print("\nStarting dashboard app...")
 
-#Import libraries and dataset
+##############Import libraries and dataset
 import pandas as pd     #(version 1.0.0)
 import plotly           #(version 4.5.4) pip install plotly==4.5.4
 import plotly.express as px
@@ -938,7 +1049,6 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
 import dash_bootstrap_components as dbc
-
 
 # import numpy as np
 import pandas as pd
@@ -954,6 +1064,14 @@ from nltk.corpus import stopwords
 # import os.path 
 from datetime import datetime
 from numpy import load
+
+import os
+import re
+import time
+from gensim.models import Word2Vec
+
+############
+
 
 app_launch_start=datetime.now() #Set start time for program start
 
