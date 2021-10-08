@@ -949,18 +949,23 @@ model.wv.most_similar(['pesticide','organic'])
 model.wv.most_similar(['pesticide','farming'])
 
 
-##Note how before the saving the model, called as model.wv 
 model.wv.save_word2vec_format('organic_glove_100d.txt') #After training full dataset save in the format
+
+# In[12]: Load pre-trained embeddings
+##Note how before the saving the model, called as model.wv 
+
 w2v = KeyedVectors.load_word2vec_format('organic_glove_100d.txt') # To load
 w2v.most_similar('vanilla') # How to get vector using loaded model
 
 # w2v.vocab #deprecated. Instead use the below
 words = list(w2v.index_to_key) #instead of model.wv.vocab
+words
 len(words)
+# w2v.index_to_key #list
+# w2v.key_to_index # dictionary. {'digetion':999,'...}
 
-model.wv.get_item(['vanilla'])
-model.wv['vanilla'].reshape((1, vector_size))
-
+model_words=model.wv 
+model_words['vanilla']
 
 #To plot
 def tsne_plot(model):
@@ -968,9 +973,14 @@ def tsne_plot(model):
     labels = []
     tokens = []
 
+    # for word in words:
+    #     tokens.append(model[word])
+    #     labels.append(word)
+    
     for word in words:
-        tokens.append(model[word])
+        tokens.append(model.wv[word]) #
         labels.append(word)
+    
     
     tsne_model = TSNE(perplexity=40, n_components=2, init='pca', n_iter=2500, random_state=23)
     new_values = tsne_model.fit_transform(tokens)
@@ -993,7 +1003,7 @@ def tsne_plot(model):
     plt.show()
 
 
-tsne_plot(model)
+tsne_plot(model) #Takes  a long time.
 
 # In[12]: Instantuate before running app for quick app loading during testing 
 # Make sure to insantiate the coocc class before running the below code
