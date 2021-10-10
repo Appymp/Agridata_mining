@@ -5,8 +5,8 @@
 
 ## ver 3.5
 
-##Friday Oct 8th-morning. Tilburg Poonchs.
-    #  Word2vec model implemented.
+##Sunday Oct 10th-afternoon. Tilburg Poonchs.
+    #  Word2vec plotting on plotly scatter.Optimise rendering next.
 
 
 #Wishlist:
@@ -953,6 +953,8 @@ model.wv.save_word2vec_format('organic_glove_100d.txt') #After training full dat
 
 # In[12]: Load pre-trained embeddings
 ##Note how before the saving the model, called as model.wv 
+import plotly.io as pio #To plot in browser
+pio.renderers.default='browser'
 
 w2v = KeyedVectors.load_word2vec_format('organic_glove_100d.txt') # To load
 w2v.most_similar('vanilla') # How to get vector using loaded model
@@ -961,6 +963,9 @@ w2v.most_similar('vanilla') # How to get vector using loaded model
 words = list(w2v.index_to_key) #instead of model.wv.vocab
 words
 len(words)
+
+words_cut=words[:5]
+len(words_cut)
 # w2v.index_to_key #list
 # w2v.key_to_index # dictionary. {'digetion':999,'...}
 
@@ -977,13 +982,19 @@ def tsne_plot(model):
     #     tokens.append(model[word])
     #     labels.append(word)
     
-    for word in words:
-        tokens.append(model.wv[word]) #
-        labels.append(word)
+    for word in words_cut:
+        tokens.append(model.wv[word]) #Fetches the vector for the word
+        print(model.wv[word])        
+        labels.append(word) #Word
+        print(word)
     
     
     tsne_model = TSNE(perplexity=40, n_components=2, init='pca', n_iter=2500, random_state=23)
-    new_values = tsne_model.fit_transform(tokens)
+    new_values = tsne_model.fit_transform(tokens) #fit_transform on the list of vectors
+# len(words_cut)
+# len(tokens)
+# new_values
+
 
     x = []
     y = []
@@ -991,21 +1002,36 @@ def tsne_plot(model):
         x.append(value[0])
         y.append(value[1])
         
-    plt.figure(figsize=(16, 16)) 
-    for i in range(len(x)):
-        plt.scatter(x[i],y[i])
-        plt.annotate(labels[i],
-                     xy=(x[i], y[i]),
-                     xytext=(5, 2),
-                     textcoords='offset points',
-                     ha='right',
-                     va='bottom')
-    plt.show()
+    tsne_plot_df = pd.DataFrame(
+    {'word': labels,
+     'x': x,
+     'y': y
+    })
+        
+    tsne_plot_df
+    
+    # plt.figure(figsize=(16, 16)) 
+    # for i in range(len(x)):
+    #     plt.scatter(x[i],y[i])
+    #     plt.annotate(labels[i],
+    #                  xy=(x[i], y[i]),
+    #                  xytext=(5, 2),
+    #                  textcoords='offset points',
+    #                  ha='right',
+    #                  va='bottom')
+    # plt.show()
+    
+    fig3 = px.scatter(tsne_plot_df, x="x", y="y", text="word", log_x=False, size_max=60)
+    fig3.update_traces(textposition='top center')
+    return fig3.show()
+    
+
+start=datetime.now()
+tsne_plot(model) #Takes  a long time. For 1k words takes 55 secs.
+print("Time taken is: ", str(datetime.now()-start)[:-5])
 
 
-tsne_plot(model) #Takes  a long time.
-
-# In[12]: Instantuate before running app for quick app loading during testing 
+# In[12]: Instantiate before running app for quick app loading during testing 
 # Make sure to insantiate the coocc class before running the below code
 
 import pandas as pd     #(version 1.0.0)
