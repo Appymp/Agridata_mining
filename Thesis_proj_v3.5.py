@@ -6,7 +6,10 @@
 ## ver 3.5
 
 ##Sunday Oct 10th-afternoon. Tilburg Poonchs.
-    #  Word2vec plotting on plotly scatter.Optimise rendering next.
+    # tsne full vocab : For 1k words takes 55 secs. For full vocab 40:32 mins
+        #tsne full vocab dataset stored
+    # Optimised code for vocab_to_plot rendering based on referencing stored dataframe
+    
 
 
 #Wishlist:
@@ -951,50 +954,35 @@ model.wv.most_similar(['pesticide','farming'])
 
 model.wv.save_word2vec_format('organic_glove_100d.txt') #After training full dataset save in the format
 
-# In[12]: Load pre-trained embeddings
+# In[12]: Tsne dataframe by Loading pre-trained embeddings. 
 ##Note how before the saving the model, called as model.wv 
 import plotly.io as pio #To plot in browser
 pio.renderers.default='browser'
 
 w2v = KeyedVectors.load_word2vec_format('organic_glove_100d.txt') # To load
-w2v.most_similar('vanilla') # How to get vector using loaded model
-
+# w2v.most_similar('vanilla') # vs model.wv.most_similar('vanilla')
 # w2v.vocab #deprecated. Instead use the below
+
+# model_words=model.wv 
 words = list(w2v.index_to_key) #instead of model.wv.vocab
-words
 len(words)
-
 words_cut=words[:5]
-len(words_cut)
-# w2v.index_to_key #list
-# w2v.key_to_index # dictionary. {'digetion':999,'...}
-
-model_words=model.wv 
-model_words['vanilla']
 
 #To plot
 def tsne_plot(model):
     "Creates and TSNE model and plots it"
     labels = []
     tokens = []
-
-    # for word in words:
-    #     tokens.append(model[word])
-    #     labels.append(word)
     
-    for word in words_cut:
+    for word in words:
         tokens.append(model.wv[word]) #Fetches the vector for the word
-        print(model.wv[word])        
+        # print(model.wv[word])        
         labels.append(word) #Word
-        print(word)
+        # print(word)
     
     
     tsne_model = TSNE(perplexity=40, n_components=2, init='pca', n_iter=2500, random_state=23)
-    new_values = tsne_model.fit_transform(tokens) #fit_transform on the list of vectors
-# len(words_cut)
-# len(tokens)
-# new_values
-
+    new_values = tsne_model.fit_transform(tokens) #fit_transform on vectors
 
     x = []
     y = []
@@ -1002,33 +990,42 @@ def tsne_plot(model):
         x.append(value[0])
         y.append(value[1])
         
-    tsne_plot_df = pd.DataFrame(
+    tsne_100d_w5_df = pd.DataFrame(
     {'word': labels,
      'x': x,
      'y': y
     })
         
-    tsne_plot_df
+    # tsne_100d_w5_df.to_pickle("tsne_100d_w5_df.pkl", protocol=0)
+    print("Time taken for tsne: ",str(datetime.now()-start)[:-5])
     
-    # plt.figure(figsize=(16, 16)) 
-    # for i in range(len(x)):
-    #     plt.scatter(x[i],y[i])
-    #     plt.annotate(labels[i],
-    #                  xy=(x[i], y[i]),
-    #                  xytext=(5, 2),
-    #                  textcoords='offset points',
-    #                  ha='right',
-    #                  va='bottom')
-    # plt.show()
     
-    fig3 = px.scatter(tsne_plot_df, x="x", y="y", text="word", log_x=False, size_max=60)
-    fig3.update_traces(textposition='top center')
-    return fig3.show()
+start=datetime.now()
+tsne_plot(model) #Takes  a long time. For 1k words takes 55 secs. Full vocab 40:32 mins
+# test_tsne_df=pd.read_pickle('tsne_100d_w5_df.pkl')
+# test_tsne_df
+
+
+# In[12]: Load tsne_df and plot only selected words
+
+vocab_to_plot = ['vanilla','organic','sustainable','cacao']
+tsne_df_full=pd.read_pickle('tsne_100d_w5_df.pkl')
+
+
+tsne_plot_df = tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)]
+tsne_plot_df 
+
+fig3 = px.scatter(tsne_plot_df, x="x", y="y", text="word", log_x=False, size_max=60)
+fig3.update_traces(textposition='top center')
     
 
-start=datetime.now()
-tsne_plot(model) #Takes  a long time. For 1k words takes 55 secs.
-print("Time taken is: ", str(datetime.now()-start)[:-5])
+
+
+
+
+
+
+
 
 
 # In[12]: Instantiate before running app for quick app loading during testing 
@@ -1371,15 +1368,15 @@ def svd_graph_full(window,chosen_rows):
 
     
     if window == 2:
-        coocc_svd_matrix = coocc_svd_matrix_2
+        # coocc_svd_matrix = coocc_svd_matrix_2
         vocab_words_df=vocab_words_df_2
 
     elif window == 3:
-        coocc_svd_matrix = coocc_svd_matrix_3
+        # coocc_svd_matrix = coocc_svd_matrix_3
         vocab_words_df=vocab_words_df_3
     
     elif window ==4:
-        coocc_svd_matrix = coocc_svd_matrix_4
+        # coocc_svd_matrix = coocc_svd_matrix_4
         vocab_words_df=vocab_words_df_4
 
     
@@ -1410,16 +1407,27 @@ def svd_graph_full(window,chosen_rows):
     print("Number of unique words are: ",len(unique_words))
     print("Unique words are: ",unique_words)    
     to_plot = unique_words #pass list of unique words from dash table filter selection.
-             
-    dict_to_plot = inst.vocab_ind_to_plot(to_plot)
+      
 
-    data_list=[]
-    for word, ind in dict_to_plot.items():
-        # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-        row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
-        data_list.append(row_list)
+
+
+    ##############previous code segment overriding    
+    # dict_to_plot = inst.vocab_ind_to_plot(to_plot)
+
+    # data_list=[]
+    # for word, ind in dict_to_plot.items():
+    #     # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
+    #     row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
+    #     data_list.append(row_list)
     
-    vocab_words_df_list= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
+    # vocab_words_df_list= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
+    
+    ##############
+    vocab_words_df_list = vocab_words_df[vocab_words_df['word'].isin(to_plot)]
+    
+    
+    
+    
     
     fig2 = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
     fig2.update_traces(textposition='top center')
@@ -1506,30 +1514,32 @@ def vocab_list(add,rem,clr,inp_1):
 def svd_user_inputs(plot_butt,window):
     
     if window == 2:
-        coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode        
+        # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
+        # coocc_svd_matrix = coocc_svd_matrix_2
+        vocab_words_df=vocab_words_df_2
 
     elif window == 3:
-        coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
+        # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
+        # coocc_svd_matrix = coocc_svd_matrix_3
+        vocab_words_df=vocab_words_df_3
     
     elif window ==4:
-        coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
-    
+        # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
+        # coocc_svd_matrix = coocc_svd_matrix_4
+        vocab_words_df=vocab_words_df_4
     
     to_plot = vocab_plot_list
         
-    dict_to_plot = inst.vocab_ind_to_plot(to_plot)
-    # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
-    # dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
+    # dict_to_plot = inst.vocab_ind_to_plot(to_plot)    
+    # data_list=[]
+    # for word, ind in dict_to_plot.items():
+    #     row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
+    #     data_list.append(row_list)
     
-    data_list=[]
-    for word, ind in dict_to_plot.items():
-        # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-        row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
-        data_list.append(row_list)
+    # vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
     
-    vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
-    
-    fig = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60)
+    vocab_words_df_list = vocab_words_df[vocab_words_df['word'].isin(to_plot)]
+    fig = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
     fig.update_traces(textposition='top center')
     # fig.update_layout(
     #     height=800,
