@@ -5,11 +5,23 @@
 
 ## ver 3.5
 
-##Sunday Oct 10th-afternoon. Tilburg Poonchs.
-    # tsne full vocab : For 1k words takes 55 secs. For full vocab 40:32 mins
-        #tsne full vocab dataset stored
-    # Optimised code for vocab_to_plot rendering based on referencing stored dataframe
+##Sunday Oct 10th-evening. Tilburg Poonchs.
+    # Replace coocc svd graphs with word2vec. Comment to preserve previous code.
+    # Graph_1 to use input box and the 10 most similar
+    # Graph_2 area to have to abstract summarization with BERT for filtered rows
+        # And vector math input. 'this' + 'that' - 'something' = 'what'
+        # No point displaying w2c for selected rows. Too congested.
+    # Add multiple window sizes of TSNE dataframes
+    # TSNE dataframe
+    # 100d: For 1k words takes 55 secs. Full vocab 40:32 mins
+    # 200d: For 1k words takes 47 secs. Full vocab 48:57 mins
+    # 300d: For 1k words takes 34 secs. Full vocab 45:21 mins
+    # Removed duplicate posts:
+        # from 35131 of ad_6,ad_7 is reduced to 30240; Another 14.2% drop in the rows.
+        
     
+    
+
 
 
 #Wishlist:
@@ -266,7 +278,8 @@ print("Text preprocessing done")
 t=datetime.now() - start 
 s=str(t) 
 print("Execution time ", s[:-5])
-In[8]: "views" and "exemplars"
+
+# In[8]: "views" and "exemplars"
 ##Define view frame to view previous processing steps with exemplars
 view2=[]
 view2=['clean_captions','caption_processed','caption_processed_2', 'caption_processed_3', 'caption_processed_4']
@@ -884,8 +897,21 @@ fig2.update_traces(textposition='top center')
 fig2.update_layout(margin=dict(l=0, r=0))
 
 return (fig2)
+
+# In[12]: ##Filter out duplicate posts and create another pickle App_dataframe_5
+
+ad_6=pd.read_pickle('App_dataframe_4.pkl')
+len(ad_6) # 35131
+
+ad_7 = ad_6.drop_duplicates(subset=['caption_processed_4'])
+len(ad_7) # from 35131 of ad_6, ad_7 is reduced to 30240; Another 14.2% drop in the rows.
+
+ad_7.to_pickle("App_dataframe_5.pkl", protocol=0)
+
+len(ad_7)
+
     
-# In[12]: ## Word2vec model
+# In[12]: ## Word2vec model and saving glove.txt files
 import os
 import re
 import time
@@ -895,92 +921,66 @@ from sklearn.manifold import TSNE #for reducing the dimensions
 from tqdm import tqdm
 tqdm.pandas()
 
-# ad_6=pd.read_pickle('App_dataframe_4.pkl')
-# words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
+
+ad_7 = pd.read_pickle('App_dataframe_5.pkl')
+
+
+words_rm_sw_lemt = [row_list for row_list in ad_7['rm_sw_lemt']]
+# len(words_rm_sw_lemt)
 
 print("number of sentences is: ",len(words_rm_sw_lemt))
-train_sentences = words_rm_sw_lemt
+train_sentences = words_rm_sw_lemt #list of lists sentences and words
 
 start=datetime.now()
-model = Word2Vec(sentences=train_sentences, sg=1,vector_size=100, window=5, min_count=1, workers=4)
-model.save("thesis_word2vec.model") #save a part of the training
-t=str(datetime.now()-start)
-print("Time taken for Word2vec on full dataset is: ", t[:-5]) #28 secs for full dataset
+model = Word2Vec(sentences=train_sentences, sg=1,vector_size=300, window=5, min_count=1, workers=4)
+# model.save("thesis_word2vec.model") #save a part of the training
+# t=str(datetime.now()-start)
+# print("Time taken for Word2vec on full dataset is: ", t[:-5]) #28 secs for full dataset
 
 
-model = Word2Vec.load("thesis_word2vec.model") #load and continue training the sample
+# model = Word2Vec.load("thesis_word2vec.model") #load and continue training the sample
 # model.train([["hello", "world"]], total_examples=1, epochs=1) #train new samples
 # model.wv.vector_size #100 if vector_size set to this
 # model.wv.get_vector('vanilla')
 
 
-model.wv.most_similar('sustainable')
-model.wv.most_similar('organic', topn = 20)
-model.wv.most_similar('fairtrade', topn = 20)
-model.wv.most_similar('ethical')
-model.wv.most_similar('conscious')
-model.wv.most_similar('cool')
-model.wv.most_similar('work')
-model.wv.most_similar('labour')
+# model.wv.most_similar('sustainable')
+# model.wv.most_similar('organic', topn = 20)
+# model.wv.most_similar(['agriculture','agritech','coffee'])
+# model.wv.most_similar(['agriculture','sustainable','coffee','labour'])
 
-model.wv.most_similar('producer')
-model.wv.most_similar('beauty')
-model.wv.most_similar('health')
-model.wv.most_similar('pharma')
-model.wv.most_similar('agriculture')
-model.wv.most_similar('industry')
-model.wv.most_similar('agriculture')
-model.wv.most_similar('skateboard')
-model.wv.most_similar('music')
-model.wv.most_similar('art')
-model.wv.most_similar('creativity')
-model.wv.most_similar('agritech')
+# model.wv.save_word2vec_format('organic_glove_300d_w4.txt') 
+#After training full dataset save in the format
+#Try avoiding creating this text file because they are large.
 
-model.wv.most_similar(['agriculture','agritech','coffee'])
-model.wv.most_similar(['agriculture','sustainable','coffee','labour'])
+
+print("Time taken for creating model: ", str(datetime.now()-start)[:-5])
+#44 secs for 300d_w4
 
 
 
-model.wv.most_similar('vanilla')
-model.wv.most_similar('cacao', topn = 10) #where would the meaning change and where it wouldnt
-model.wv.most_similar('coffee')
-model.wv.most_similar('crop')
-model.wv.most_similar('cream','organic')
-model.wv.most_similar(['healthy','face','product'])
-model.wv.most_similar('organic','coffee')
-model.wv.most_similar(['pesticide','organic'])
-model.wv.most_similar(['pesticide','farming'])
-
-
-model.wv.save_word2vec_format('organic_glove_100d.txt') #After training full dataset save in the format
-
-# In[12]: Tsne dataframe by Loading pre-trained embeddings. 
+# In[12]: Export Tsne dataframe by transforming w2c text files 
 ##Note how before the saving the model, called as model.wv 
-import plotly.io as pio #To plot in browser
-pio.renderers.default='browser'
 
-w2v = KeyedVectors.load_word2vec_format('organic_glove_100d.txt') # To load
-# w2v.most_similar('vanilla') # vs model.wv.most_similar('vanilla')
-# w2v.vocab #deprecated. Instead use the below
-
-# model_words=model.wv 
-words = list(w2v.index_to_key) #instead of model.wv.vocab
-len(words)
-words_cut=words[:5]
+# w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') # To load text file
+w2v = model.wv
 
 #To plot
-def tsne_plot(model):
+def tsne_df(w2v):
     "Creates and TSNE model and plots it"
     labels = []
     tokens = []
+
+    words = list(w2v.index_to_key) #instead of model.wv.vocab
+    len(words)
+    words_cut=words[:1000] #To test time on a smaller df
     
-    for word in words:
-        tokens.append(model.wv[word]) #Fetches the vector for the word
+    for word in words: #Test with 'words_cut' first
+        tokens.append(w2v[word]) #Fetches the vector for the word. same as model.wv
         # print(model.wv[word])        
         labels.append(word) #Word
         # print(word)
-    
-    
+
     tsne_model = TSNE(perplexity=40, n_components=2, init='pca', n_iter=2500, random_state=23)
     new_values = tsne_model.fit_transform(tokens) #fit_transform on vectors
 
@@ -990,27 +990,36 @@ def tsne_plot(model):
         x.append(value[0])
         y.append(value[1])
         
-    tsne_100d_w5_df = pd.DataFrame(
+    tsne_df = pd.DataFrame(
     {'word': labels,
      'x': x,
      'y': y
     })
         
-    # tsne_100d_w5_df.to_pickle("tsne_100d_w5_df.pkl", protocol=0)
-    print("Time taken for tsne: ",str(datetime.now()-start)[:-5])
+    tsne_df.to_pickle("tsne_300d_w5_df.pkl", protocol=0)
+    print("Time taken for TSNE: ",str(datetime.now()-start)[:-5])
     
-    
+print("Creating new TSNE dataframe..") 
 start=datetime.now()
-tsne_plot(model) #Takes  a long time. For 1k words takes 55 secs. Full vocab 40:32 mins
+tsne_df(w2v) 
+
+#100d_w5: For 1k words takes 55 secs. Full vocab 40:32 mins
+#200d_w5: For 1k words takes 47 secs. Full vocab 48:57 mins
+#300d_w5: For 1k words takes 34 secs. Full vocab 45:21 mins
+#300d_w4: For 1k words takes 33 secs. Full vocab  mins
+
+
 # test_tsne_df=pd.read_pickle('tsne_100d_w5_df.pkl')
 # test_tsne_df
 
 
 # In[12]: Load tsne_df and plot only selected words
 
+import plotly.io as pio #To plot in browser
+pio.renderers.default='browser'
+
 vocab_to_plot = ['vanilla','organic','sustainable','cacao']
 tsne_df_full=pd.read_pickle('tsne_100d_w5_df.pkl')
-
 
 tsne_plot_df = tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)]
 tsne_plot_df 
@@ -1018,51 +1027,6 @@ tsne_plot_df
 fig3 = px.scatter(tsne_plot_df, x="x", y="y", text="word", log_x=False, size_max=60)
 fig3.update_traces(textposition='top center')
     
-
-
-
-
-
-
-
-
-
-
-# In[12]: Instantiate before running app for quick app loading during testing 
-# Make sure to insantiate the coocc class before running the below code
-
-import pandas as pd     #(version 1.0.0)
-import plotly           #(version 4.5.4) pip install plotly==4.5.4
-import plotly.express as px
-import dash             #(version 1.9.1) pip install dash==1.9.1
-import dash_table
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output, State
-import dash_bootstrap_components as dbc
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from wordcloud import WordCloud, STOPWORDS
-from nltk.corpus import stopwords
-# import warnings
-# warnings.filterwarnings('ignore')
-# import os
-# import os.path 
-from datetime import datetime
-from numpy import load
-
-inst_load_time=datetime.now()
-df_updated=pd.read_pickle('App_dataframe_4.pkl')
-words_rm_sw_lemt=[row_list for row_list in df_updated['rm_sw_lemt']]
-
-print("Loading instance..")
-inst=CooccEmbedding(words_rm_sw_lemt) 
-vocab_full=inst.vocabulary()#3:02 mins
-ilt=str(datetime.now()-inst_load_time)
-print("Time to load instance: ", ilt[:-5])
-
-
 
 
 
@@ -1122,10 +1086,13 @@ coocc_svd_matrix_2 = load('svd_arpack_w2.npy')
 coocc_svd_matrix_3 = load('svd_arpack_w3.npy') 
 coocc_svd_matrix_4 = load('svd_arpack_w4.npy') 
 
-vocab_words_df_2= pd.read_pickle('vocab_words_svd_w2.pkl')    
-vocab_words_df_3= pd.read_pickle('vocab_words_svd_w3.pkl')      
-vocab_words_df_4= pd.read_pickle('vocab_words_svd_w4.pkl')  
+vocab_words_df_2 = pd.read_pickle('vocab_words_svd_w2.pkl')    
+vocab_words_df_3 = pd.read_pickle('vocab_words_svd_w3.pkl')      
+vocab_words_df_4 = pd.read_pickle('vocab_words_svd_w4.pkl')  
 
+tsne_100d_w5_df = pd.read_pickle('tsne_100d_w5_df.pkl')
+tsne_200d_w5_df = pd.read_pickle('tsne_200d_w5_df.pkl')
+tsne_300d_w5_df = pd.read_pickle('tsne_300d_w5_df.pkl')
 
 
 print("Dataframe loaded")
@@ -1263,7 +1230,7 @@ app.layout = dbc.Container([
 
 ################################### ROW4-Headers 2  ###########################
     dbc.Row([
-            dbc.Col(html.H3("Coocc svd ip"), width={'size':2}),
+            dbc.Col(html.H3("Word2vec input"), width={'size':2}),
             
             dbc.Col(
                 dbc.Button(id='add1_button', n_clicks=0, children="Add", className="mt-5 mr-2"),            
@@ -1283,25 +1250,40 @@ app.layout = dbc.Container([
             
             dbc.Col(
                 dcc.Dropdown(id='wind_dd', multi=False,
-                      options=[{'label': x, 'value': x} for x in range(2,5)],
-                      value=2, #initial values to pass
+                      options=[{'label': x, 'value': x} for x in [100,200,300]],
+                      value=100, #initial values to pass
                       className="mt-5 mr-2",
                       style={'width':'150px'}
                       ),
                 width={'size':2, 'offset':0}, style={'textAlign': "left"}),
             
-            dbc.Col(html.H3("Coocc svd "), width={'size':2}),
+            dbc.Col(html.H3("Word2vec rows"), width={'size':2}),
             
             dbc.Col(
                 dcc.Dropdown(id='wind_dd_2', multi=False,
-                      options=[{'label': x, 'value': x} for x in range(2,5)],
-                      value=2, #initial values to pass
+                      options=[{'label': x, 'value': x} for x in [100,200,300]],
+                      value=100, #initial values to pass
                       className="mt-5 mr-2",
                       style={'width':'150px'}
                       ),
                 width={'size':3, 'offset':1}, style={'textAlign': "left"}),
+            
+            dbc.Col(
+                dcc.Dropdown(id='wind_dd_3', multi=False,
+                      options=[{'label': x, 'value': x} for x in [3,4,5]],
+                      value=5, #initial values to pass
+                      className="mt-5 mr-2",
+                      style={'width':'150px'}
+                      ),
+                width={'size':3, 'offset':1}, style={'textAlign': "left"}),
+            
             ], no_gutters=False),
 
+
+# for i in [100,200,300]:
+#     print(type(i))
+#     print(i)    
+ 
 ################################### ROW5-Input_boxs & window_slider  ###########################
     dbc.Row([
         # dbc.Col(html.Div(id='text_list1'), width={'size':2}),
@@ -1337,13 +1319,13 @@ app.layout = dbc.Container([
         dbc.Col(
             # dcc.Graph(id='svd_1', figure={}, config={'displayModeBar': True},
             #            style={'width':'600px' ,'height':'350px'}),
-            dcc.Graph(id='svd_1'), 
+            dcc.Graph(id='word2vec_1'), 
             width={'size': 6}
                 ),
 
 ################################### ROW7-svd_graph_2  ###########################
         dbc.Col(
-            dcc.Graph(id='svd_2'), 
+            dcc.Graph(id='word2vec_2'), 
             width={'size': 6}
                 )
             ],no_gutters=False),
@@ -1356,92 +1338,63 @@ app.layout = dbc.Container([
 
 ################################ SVD_2 graph ################################
 @app.callback(
-    Output(component_id='svd_2', component_property='figure'), 
+    Output(component_id='word2vec_2', component_property='figure'), 
     [Input('wind_dd_2','value'),
-    Input(component_id='datatable_id',component_property='selected_rows')],
+     Input('wind_dd_3','value'),
+     Input(component_id='datatable_id',component_property='selected_rows')],
     # State('datatable_id', 'derived_virtual_data'),
     # Input(component_id='my-dropdown', component_property='value')],
     prevent_initial_call=False
     )
 
-def svd_graph_full(window,chosen_rows):    
+def svd_graph_full(vectors,window,chosen_rows):    
 
     
-    if window == 2:
+    if vectors == 100:
         # coocc_svd_matrix = coocc_svd_matrix_2
-        vocab_words_df=vocab_words_df_2
+        # vocab_words_df=vocab_words_df_2
+        tsne_df = tsne_100d_w5_df
+        
+        if window == 3:
+            
+        
+        if window == 4:
+            
+        
+        if window == 5:
+            
+        
 
-    elif window == 3:
+    elif vectors == 200:
         # coocc_svd_matrix = coocc_svd_matrix_3
-        vocab_words_df=vocab_words_df_3
+        # vocab_words_df=vocab_words_df_3
+        tsne_df = tsne_200d_w5_df
     
-    elif window ==4:
+    elif vectors ==300:
         # coocc_svd_matrix = coocc_svd_matrix_4
-        vocab_words_df=vocab_words_df_4
-
-    
+        # vocab_words_df=vocab_words_df_4
+        tsne_df = tsne_300d_w5_df
 
 ###Interactive dash table selection            
     if len(chosen_rows) == 0:        
         raise dash.exceptions.PreventUpdate
-
     
     # main_table_index = [row['ix'] for row in filtered_table]   #filtered table has its own index. So grab main table index from 'ix' 
     main_table_index = chosen_rows
-    
-    print("Main table index is: ", main_table_index)
-    
     rm_sw_lemt_ser=df_updated[df_updated.index.isin(main_table_index)].rm_sw_lemt
-    # type(rm_sw_lemt_ser)
-    
-    print(rm_sw_lemt_ser)
-    # len(set(rm_sw_lemt_ser[4]))
-    # print(set(rm_sw_lemt_ser))
-    
-    ######Testing above code#######
-    
+
     flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list]
-    print("Total number of words in rows: ",len(flat_rm_sw_lemt_ser))
-    # len(set(flat_rm_sw_lemt_ser))
+
     unique_words = list(set(flat_rm_sw_lemt_ser))
-    print("Number of unique words are: ",len(unique_words))
-    print("Unique words are: ",unique_words)    
-    to_plot = unique_words #pass list of unique words from dash table filter selection.
-      
+    print("Number of unique words are: ",len(unique_words))   
+    to_plot = unique_words #unique words from selected rows
 
+    tsne_plot_df_2 = tsne_df[tsne_df['word'].isin(to_plot)]
 
+    fig_2 = px.scatter(tsne_plot_df_2, x="x", y="y", text="word", log_x=False, size_max=60)
+    fig_2.update_traces(textposition='top center')
 
-    ##############previous code segment overriding    
-    # dict_to_plot = inst.vocab_ind_to_plot(to_plot)
-
-    # data_list=[]
-    # for word, ind in dict_to_plot.items():
-    #     # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-    #     row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
-    #     data_list.append(row_list)
-    
-    # vocab_words_df_list= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
-    
-    ##############
-    vocab_words_df_list = vocab_words_df[vocab_words_df['word'].isin(to_plot)]
-    
-    
-    
-    
-    
-    fig2 = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
-    fig2.update_traces(textposition='top center')
-    # fig.update_layout(
-    #     height=800,
-    #     title_text='Words in SVD matrix')
-    # fig.show() #Will open in a browser tab
-    
-    fig2.update_layout(margin=dict(l=0, r=0))
-    # fig.update_xaxes(visible=False)
-    # fig.update_yaxes(visible=False)
-    
-
-    return (fig2)
+    return (fig_2)
 
 
 
@@ -1460,11 +1413,11 @@ def svd_graph_full(window,chosen_rows):
 
 def vocab_list(add,rem,clr,inp_1):
     
-    print("Input word added: ",inp_1)
-    vocab_plot_list.append(inp_1)
-    print("vocab_list is: ",vocab_plot_list )
-    value=''
-    return vocab_plot_list, value
+    # print("Input word added: ",inp_1)
+    # vocab_plot_list.append(inp_1)
+    # print("vocab_list is: ",vocab_plot_list )
+    # value=''
+    # return vocab_plot_list, value
     
     
     ctx = dash.callback_context
@@ -1505,7 +1458,7 @@ def vocab_list(add,rem,clr,inp_1):
 ################################ SVD_1 graph ################################
 
 @app.callback(
-    Output(component_id='svd_1', component_property='figure'),  
+    Output(component_id='word2vec_1', component_property='figure'),  
     [Input('plt1_button','n_clicks'),
      Input('wind_dd','value')],
     prevent_initial_call=False
@@ -1513,46 +1466,39 @@ def vocab_list(add,rem,clr,inp_1):
 
 def svd_user_inputs(plot_butt,window):
     
-    if window == 2:
+    if window == 100:
         # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
         # coocc_svd_matrix = coocc_svd_matrix_2
-        vocab_words_df=vocab_words_df_2
+        # vocab_words_df=vocab_words_df_2
+        tsne_df = tsne_100d_w5_df
 
-    elif window == 3:
+    elif window == 200:
         # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
         # coocc_svd_matrix = coocc_svd_matrix_3
-        vocab_words_df=vocab_words_df_3
+        # vocab_words_df=vocab_words_df_3
+        tsne_df = tsne_200d_w5_df
     
-    elif window ==4:
+    elif window ==300:
         # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
         # coocc_svd_matrix = coocc_svd_matrix_4
-        vocab_words_df=vocab_words_df_4
+        # vocab_words_df=vocab_words_df_4
+        tsne_df = tsne_300d_w5_df
     
     to_plot = vocab_plot_list
-        
-    # dict_to_plot = inst.vocab_ind_to_plot(to_plot)    
-    # data_list=[]
-    # for word, ind in dict_to_plot.items():
-    #     row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
-    #     data_list.append(row_list)
-    
-    # vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
-    
-    vocab_words_df_list = vocab_words_df[vocab_words_df['word'].isin(to_plot)]
-    fig = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
-    fig.update_traces(textposition='top center')
-    # fig.update_layout(
-    #     height=800,
-    #     title_text='Words in SVD matrix')
-    # fig.show() #Will open in a browser tab
-    
-    fig.update_layout(margin=dict(l=0, r=0))
-    # fig.update_xaxes(visible=False)
-    # fig.update_yaxes(visible=False)
-    
-    
+  
+    tsne_plot_df_1 = tsne_df[tsne_df['word'].isin(to_plot)]
 
-    return (fig)
+    fig_1 = px.scatter(tsne_plot_df_1, x="x", y="y", text="word", log_x=False, size_max=60)
+    fig_1.update_traces(textposition='top center')
+    
+      
+    # vocab_words_df_list = vocab_words_df[vocab_words_df['word'].isin(to_plot)]
+    # fig_1 = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
+    # fig_1.update_traces(textposition='top center')    
+    
+    # fig_1.update_layout(margin=dict(l=0, r=0))
+        
+    return (fig_1)
 
 
 ################################ Select all button ################################
