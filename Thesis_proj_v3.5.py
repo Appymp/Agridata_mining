@@ -13,9 +13,12 @@
         # No point displaying w2c for selected rows. Too congested.
     # Add multiple window sizes of TSNE dataframes
     # TSNE dataframe
-    # 100d: For 1k words takes 55 secs. Full vocab 40:32 mins
-    # 200d: For 1k words takes 47 secs. Full vocab 48:57 mins
-    # 300d: For 1k words takes 34 secs. Full vocab 45:21 mins
+    #100d_w5: For 1k words takes 55 secs. Full vocab 40:32 mins
+    #200d_w5: For 1k words takes 47 secs. Full vocab 48:57 mins
+    #300d_w5: For 1k words takes 34 secs. Full vocab 45:21 mins
+    #300d_w4: Full vocab 57:42 mins
+    #300d_w3: Full vocab 54:35 mins
+    #300d_w2: Full vocab 46:18 mins
     # Removed duplicate posts:
         # from 35131 of ad_6,ad_7 is reduced to 30240; Another 14.2% drop in the rows.
         
@@ -932,7 +935,7 @@ print("number of sentences is: ",len(words_rm_sw_lemt))
 train_sentences = words_rm_sw_lemt #list of lists sentences and words
 
 start=datetime.now()
-model = Word2Vec(sentences=train_sentences, sg=1,vector_size=300, window=5, min_count=1, workers=4)
+model = Word2Vec(sentences=train_sentences, sg=1,vector_size=300, window=2, min_count=1, workers=4)
 # model.save("thesis_word2vec.model") #save a part of the training
 # t=str(datetime.now()-start)
 # print("Time taken for Word2vec on full dataset is: ", t[:-5]) #28 secs for full dataset
@@ -996,7 +999,7 @@ def tsne_df(w2v):
      'y': y
     })
         
-    tsne_df.to_pickle("tsne_300d_w5_df.pkl", protocol=0)
+    # tsne_df.to_pickle("tsne_300d_w2_df.pkl", protocol=0)
     print("Time taken for TSNE: ",str(datetime.now()-start)[:-5])
     
 print("Creating new TSNE dataframe..") 
@@ -1006,7 +1009,9 @@ tsne_df(w2v)
 #100d_w5: For 1k words takes 55 secs. Full vocab 40:32 mins
 #200d_w5: For 1k words takes 47 secs. Full vocab 48:57 mins
 #300d_w5: For 1k words takes 34 secs. Full vocab 45:21 mins
-#300d_w4: For 1k words takes 33 secs. Full vocab  mins
+#300d_w4: Full vocab 57:42 mins
+#300d_w3: Full vocab 54:35 mins
+#300d_w2: Full vocab 46:18 mins
 
 
 # test_tsne_df=pd.read_pickle('tsne_100d_w5_df.pkl')
@@ -1094,6 +1099,9 @@ tsne_100d_w5_df = pd.read_pickle('tsne_100d_w5_df.pkl')
 tsne_200d_w5_df = pd.read_pickle('tsne_200d_w5_df.pkl')
 tsne_300d_w5_df = pd.read_pickle('tsne_300d_w5_df.pkl')
 
+tsne_300d_w4_df = pd.read_pickle('tsne_300d_w4_df.pkl')
+tsne_300d_w3_df = pd.read_pickle('tsne_300d_w3_df.pkl')
+tsne_300d_w2_df = pd.read_pickle('tsne_300d_w2_df.pkl')
 
 print("Dataframe loaded")
 t=datetime.now() - start 
@@ -1249,7 +1257,7 @@ app.layout = dbc.Container([
                 width={'size': 0.5}, style={'textAlign': "left"}),
             
             dbc.Col(
-                dcc.Dropdown(id='wind_dd', multi=False,
+                dcc.Dropdown(id='vector_dd_1', multi=False,
                       options=[{'label': x, 'value': x} for x in [100,200,300]],
                       value=100, #initial values to pass
                       className="mt-5 mr-2",
@@ -1260,22 +1268,22 @@ app.layout = dbc.Container([
             dbc.Col(html.H3("Word2vec rows"), width={'size':2}),
             
             dbc.Col(
-                dcc.Dropdown(id='wind_dd_2', multi=False,
+                dcc.Dropdown(id='vector_dd_2', multi=False,
                       options=[{'label': x, 'value': x} for x in [100,200,300]],
                       value=100, #initial values to pass
                       className="mt-5 mr-2",
                       style={'width':'150px'}
                       ),
-                width={'size':3, 'offset':1}, style={'textAlign': "left"}),
+                width={'size':2, 'offset':0}, style={'textAlign': "left"}),
             
             dbc.Col(
-                dcc.Dropdown(id='wind_dd_3', multi=False,
-                      options=[{'label': x, 'value': x} for x in [3,4,5]],
+                dcc.Dropdown(id='wind_dd_1', multi=False,
+                      options=[{'label': x, 'value': x} for x in [2,3,4,5]],
                       value=5, #initial values to pass
                       className="mt-5 mr-2",
                       style={'width':'150px'}
                       ),
-                width={'size':3, 'offset':1}, style={'textAlign': "left"}),
+                width={'size':2, 'offset':0}, style={'textAlign': "left"}),
             
             ], no_gutters=False),
 
@@ -1307,11 +1315,19 @@ app.layout = dbc.Container([
             # selectionDirection='', # the direction in which selection occurred
             # selectionStart='',     # the offset into the element's text content of the first selected character
             # selectionEnd='',       # the offset into the element's text content of the last selected character
-                ), width={'size': 6}, style={'textAlign': "left"}   
-            )
-            ],no_gutters=False),
+                ), width={'size': 3}, style={'textAlign': "left"}   #size was 6
+            ),
+            
 
-
+        # dbc.Col(
+        #         dcc.Dropdown(id='wind_dd_', multi=False,
+        #               options=[{'label': x, 'value': x} for x in [3,4,5]],
+        #               value=5, #initial values to pass
+        #               className="mt-5 mr-2",
+        #               style={'width':'150px'}
+        #               ),
+        #         width={'size':3, 'offset':1}, style={'textAlign': "left"})
+        ],no_gutters=False),
 
 
 ################################### ROW6-svd_graph_1  ###########################
@@ -1339,8 +1355,8 @@ app.layout = dbc.Container([
 ################################ SVD_2 graph ################################
 @app.callback(
     Output(component_id='word2vec_2', component_property='figure'), 
-    [Input('wind_dd_2','value'),
-     Input('wind_dd_3','value'),
+    [Input('vector_dd_2','value'),
+     Input('wind_dd_1','value'),
      Input(component_id='datatable_id',component_property='selected_rows')],
     # State('datatable_id', 'derived_virtual_data'),
     # Input(component_id='my-dropdown', component_property='value')],
@@ -1354,17 +1370,7 @@ def svd_graph_full(vectors,window,chosen_rows):
         # coocc_svd_matrix = coocc_svd_matrix_2
         # vocab_words_df=vocab_words_df_2
         tsne_df = tsne_100d_w5_df
-        
-        if window == 3:
-            
-        
-        if window == 4:
-            
-        
-        if window == 5:
-            
-        
-
+   
     elif vectors == 200:
         # coocc_svd_matrix = coocc_svd_matrix_3
         # vocab_words_df=vocab_words_df_3
@@ -1373,7 +1379,20 @@ def svd_graph_full(vectors,window,chosen_rows):
     elif vectors ==300:
         # coocc_svd_matrix = coocc_svd_matrix_4
         # vocab_words_df=vocab_words_df_4
-        tsne_df = tsne_300d_w5_df
+        # tsne_df = tsne_300d_w5_df
+        
+        if window == 2:
+            tsne_df = tsne_300d_w2_df
+        
+        if window == 3:
+            tsne_df = tsne_300d_w3_df
+        
+        if window == 4:
+            tsne_df = tsne_300d_w4_df
+        
+        if window == 5:
+            tsne_df = tsne_300d_w5_df
+            
 
 ###Interactive dash table selection            
     if len(chosen_rows) == 0:        
@@ -1460,29 +1479,42 @@ def vocab_list(add,rem,clr,inp_1):
 @app.callback(
     Output(component_id='word2vec_1', component_property='figure'),  
     [Input('plt1_button','n_clicks'),
-     Input('wind_dd','value')],
+     Input('wind_dd_1','value'),
+     Input('vector_dd_1','value')],
     prevent_initial_call=False
     )
 
-def svd_user_inputs(plot_butt,window):
+def svd_user_inputs(plot_butt,window,vector):
     
-    if window == 100:
+    if vector == 100:
         # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
         # coocc_svd_matrix = coocc_svd_matrix_2
         # vocab_words_df=vocab_words_df_2
         tsne_df = tsne_100d_w5_df
 
-    elif window == 200:
+    elif vector == 200:
         # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
         # coocc_svd_matrix = coocc_svd_matrix_3
         # vocab_words_df=vocab_words_df_3
         tsne_df = tsne_200d_w5_df
     
-    elif window ==300:
+    elif vector ==300:
         # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
         # coocc_svd_matrix = coocc_svd_matrix_4
         # vocab_words_df=vocab_words_df_4
-        tsne_df = tsne_300d_w5_df
+        # tsne_df = tsne_300d_w5_df
+        if window == 2:
+            tsne_df = tsne_300d_w2_df
+        
+        if window == 3:
+            tsne_df = tsne_300d_w3_df
+        
+        if window == 4:
+            tsne_df = tsne_300d_w4_df
+        
+        if window == 5:
+            tsne_df = tsne_300d_w5_df
+        
     
     to_plot = vocab_plot_list
   
