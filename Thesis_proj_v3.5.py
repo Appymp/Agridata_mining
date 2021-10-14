@@ -5,24 +5,9 @@
 
 ## ver 3.5
 
-##Sunday Oct 10th-evening. Tilburg Poonchs.
-    # Replace coocc svd graphs with word2vec. Comment to preserve previous code.
-    # Graph_1 to use input box and the 10 most similar
-    # Graph_2 area to have to abstract summarization with BERT for filtered rows
-        # And vector math input. 'this' + 'that' - 'something' = 'what'
-        # No point displaying w2c for selected rows. Too congested.
-    # Add multiple window sizes of TSNE dataframes
-    # TSNE dataframe
-    #100d_w5: For 1k words takes 55 secs. Full vocab 40:32 mins
-    #200d_w5: For 1k words takes 47 secs. Full vocab 48:57 mins
-    #300d_w5: For 1k words takes 34 secs. Full vocab 45:21 mins
-    #300d_w4: Full vocab 57:42 mins
-    #300d_w3: Full vocab 54:35 mins
-    #300d_w2: Full vocab 46:18 mins
-    # Removed duplicate posts:
-        # from 35131 of ad_6,ad_7 is reduced to 30240; Another 14.2% drop in the rows.
-        
-    
+##Thursday Oct 14th-evening.Strowis hostel
+    # Logic for similar words scatter plot.
+    # Make text align options in app. Input dd for similar words size.
     
 
 
@@ -1019,21 +1004,44 @@ tsne_df(w2v)
 
 
 # In[12]: Load tsne_df and plot only selected words
-
+# import plotly as
 import plotly.io as pio #To plot in browser
 pio.renderers.default='browser'
 
 vocab_to_plot = ['vanilla','organic','sustainable','cacao']
 tsne_df_full=pd.read_pickle('tsne_100d_w5_df.pkl')
+w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
+nearest_size = 10 #make input for nearestneighbor size
 
-tsne_plot_df = tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)]
-tsne_plot_df 
+tsne_df_full['type'] = 'Sel' 
 
-fig3 = px.scatter(tsne_plot_df, x="x", y="y", text="word", log_x=False, size_max=60)
+#index of input words
+ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  # 
+
+#index of closest 10 words
+clos_ten_out = []
+for word in vocab_to_plot: 
+    a=w2v.most_similar(word, topn = nearest_size)
+    clos_ten_in = [i[0] for i in a]
+    clos_ten_out.append(clos_ten_in)
+
+clos_ten_flat = [item for sublist in clos_ten_out for item in sublist]
+clos_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(clos_ten_flat)].index.values)  # 
+
+plot_index = ip_vocab_index + clos_ten_index
+indices = [0,1,3,6,10,15]
+tsne_df_full.loc[ip_vocab_index,'type'] = 'ip'
+tsne_df_full.loc[clos_ten_index,'type'] = 'near'
+
+tsne_plot_df = tsne_df_full.loc[plot_index]
+tsne_plot_df
+# tsne_plot_df = tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)] #filter to display
+
+fig3 = px.scatter(tsne_plot_df, x="x", y="y", text="word",color='type', log_x=False, size_max=60)
 fig3.update_traces(textposition='top center')
-    
+fig3.show()    
 
-
+#Make the text justify options to make viewing better in app
 
 # In[12]:
 ##Dashboard application Test shift to dbc.Container
