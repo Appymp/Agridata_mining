@@ -1003,19 +1003,21 @@ tsne_df(w2v)
 # test_tsne_df
 
 
-# In[12]: Load tsne_df and plot only selected words
+# In[12]: Scatter plot logic including hue.
 # import plotly as
 import plotly.io as pio #To plot in browser
 pio.renderers.default='browser'
 
+
 vocab_to_plot = ['vanilla','organic','sustainable','cacao']
 tsne_df_full=pd.read_pickle('tsne_100d_w5_df.pkl')
 w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
-nearest_size = 10 #make input for nearestneighbor size
 
-tsne_df_full['type'] = 'Sel' 
+nearest_size = 20  #make input for nearestneighbor size
 
 #index of input words
+
+tsne_df_full['type'] = 'Sel' 
 ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  # 
 
 #index of closest 10 words
@@ -1042,6 +1044,8 @@ fig3.update_traces(textposition='top center')
 fig3.show()    
 
 #Make the text justify options to make viewing better in app
+
+
 
 # In[12]:
 ##Dashboard application Test shift to dbc.Container
@@ -1110,6 +1114,8 @@ tsne_300d_w5_df = pd.read_pickle('tsne_300d_w5_df.pkl')
 tsne_300d_w4_df = pd.read_pickle('tsne_300d_w4_df.pkl')
 tsne_300d_w3_df = pd.read_pickle('tsne_300d_w3_df.pkl')
 tsne_300d_w2_df = pd.read_pickle('tsne_300d_w2_df.pkl')
+
+# w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt')
 
 print("Dataframe loaded")
 t=datetime.now() - start 
@@ -1347,12 +1353,36 @@ app.layout = dbc.Container([
             width={'size': 6}
                 ),
 
-################################### ROW7-svd_graph_2  ###########################
+################################### ROW6-svd_graph_2  ###########################
         dbc.Col(
             dcc.Graph(id='word2vec_2'), 
             width={'size': 6}
                 )
             ],no_gutters=False),
+################################### ROW7-range slider  ###########################    
+    dbc.Row([
+        dbc.Col(
+            dcc.Slider( 
+                id='my_slider',
+                min=0,
+                max=20,
+                step=1,
+                value=10,
+                marks={
+                    0: {'label': '0', 'style': {'color': '#77b0b1'}},
+                    5: {'label': '5'},
+                    10: {'label': '10'},
+                    15: {'label': '15', 'style': {'color': '#f50'}},
+                    20: {'label': '20'}
+                    }),                 
+            width={'size': 6}),
+
+        # dbc.Col(
+        #     dcc.Graph(id='word2vec_2'), 
+        #     width={'size': 6}
+        #         )
+            ],no_gutters=False),
+    
         ],fluid=True) #closes initial dbc container
 
 
@@ -1488,11 +1518,12 @@ def vocab_list(add,rem,clr,inp_1):
     Output(component_id='word2vec_1', component_property='figure'),  
     [Input('plt1_button','n_clicks'),
      Input('wind_dd_1','value'),
-     Input('vector_dd_1','value')],
+     Input('vector_dd_1','value'),
+     Input('my_slider','value')],
     prevent_initial_call=False
     )
 
-def svd_user_inputs(plot_butt,window,vector):
+def svd_user_inputs(plot_butt,window,vector,slider_val):
     
     if vector == 100:
         # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
@@ -1522,21 +1553,61 @@ def svd_user_inputs(plot_butt,window,vector):
         
         if window == 5:
             tsne_df = tsne_300d_w5_df
-        
-    
-    to_plot = vocab_plot_list
-  
-    tsne_plot_df_1 = tsne_df[tsne_df['word'].isin(to_plot)]
 
-    fig_1 = px.scatter(tsne_plot_df_1, x="x", y="y", text="word", log_x=False, size_max=60)
+      
+    
+    ####-------------
+    
+    # vocab_to_plot = ['vanilla','organic','sustainable','cacao']
+    vocab_to_plot = vocab_plot_list
+    
+    # tsne_df_full=pd.read_pickle('tsne_100d_w5_df.pkl')
+    tsne_df_full = tsne_df
+    
+    # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
+    print("Slider val: ",slider_val)
+    # nearest_size = 20  #make input for nearestneighbor size
+    nearest_size = slider_val   
+    #index of input words
+    
+    tsne_df_full['type'] = 'Sel' 
+    ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  
+    
+    print("vocab to plot of slider graph is: ",vocab_to_plot )
+    #index of closest 10 words
+    clos_ten_out = []
+    for word in vocab_to_plot: 
+        try:
+            a=w2v.most_similar(word, topn = nearest_size)
+            clos_ten_in = [i[0] for i in a]
+            clos_ten_out.append(clos_ten_in)
+        except ValueError:#Empty word None input
+            pass
+        except KeyError: #Word not in vocab
+            pass            
+    
+    clos_ten_flat = [item for sublist in clos_ten_out for item in sublist]
+    clos_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(clos_ten_flat)].index.values)  
+    
+    plot_index = ip_vocab_index + clos_ten_index
+    # indices = [0,1,3,6,10,15]
+    tsne_df_full.loc[ip_vocab_index,'type'] = 'ip'
+    tsne_df_full.loc[clos_ten_index,'type'] = 'near'
+    
+    tsne_plot_df = tsne_df_full.loc[plot_index]
+    # tsne_plot_df
+    # tsne_plot_df = tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)] #filter to display
+    
+    fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text="word",color='type', log_x=False, size_max=60)
     fig_1.update_traces(textposition='top center')
     
-      
+    
+    ####-------------    
     # vocab_words_df_list = vocab_words_df[vocab_words_df['word'].isin(to_plot)]
     # fig_1 = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
     # fig_1.update_traces(textposition='top center')    
     
-    # fig_1.update_layout(margin=dict(l=0, r=0))
+    fig_1.update_layout(margin=dict(l=0, r=0))
         
     return (fig_1)
 
