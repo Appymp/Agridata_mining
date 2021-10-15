@@ -5,8 +5,9 @@
 
 ## ver 3.5
 
-##Thursday Oct 14th-evening.Strowis hostel
-    # Logic for similar words scatter plot.
+##Friday Oct 15th-evening.Gys breakfast place
+    # Slider for most similar added.
+    # Create an adding/subtracting model for interaction on app.
     # Make text align options in app. Input dd for similar words size.
     
 
@@ -1005,6 +1006,8 @@ tsne_df(w2v)
 
 # In[12]: Scatter plot logic including hue.
 # import plotly as
+# Toggle text dislay on and off. Bold word name in hover text
+
 import plotly.io as pio #To plot in browser
 pio.renderers.default='browser'
 
@@ -1012,8 +1015,7 @@ pio.renderers.default='browser'
 vocab_to_plot = ['vanilla','organic','sustainable','cacao']
 tsne_df_full=pd.read_pickle('tsne_100d_w5_df.pkl')
 w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
-
-nearest_size = 20  #make input for nearestneighbor size
+nearest_size = 5  #make input for nearestneighbor size
 
 #index of input words
 
@@ -1039,7 +1041,10 @@ tsne_plot_df = tsne_df_full.loc[plot_index]
 tsne_plot_df
 # tsne_plot_df = tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)] #filter to display
 
-fig3 = px.scatter(tsne_plot_df, x="x", y="y", text="word",color='type', log_x=False, size_max=60)
+fig3 = px.scatter(tsne_plot_df, x="x", y="y", text="word",color='type', log_x=False, size_max=60,
+                  # trendline = "rolling",
+                  hover_name = 'word'
+                  )
 fig3.update_traces(textposition='top center')
 fig3.show()    
 
