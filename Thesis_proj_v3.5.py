@@ -6,7 +6,9 @@
 ## ver 3.5
 
 ##Friday Oct 15th-evening.Gys breakfast place
-    # Slider for most similar added.
+    # Plot respose for add, rem, clr, added
+    
+    
     # Create an adding/subtracting model for interaction on app.
     # Make text align options in app. Input dd for similar words size.
     
@@ -1143,7 +1145,7 @@ al=str(datetime.now() - app_launch_start) #start time logged at start of program
 print("Total time taken to launch app", al[:-5])
 
 #---------------------------------------------------------------
-
+#Initialising variables outside the callbacks
 
 
 
@@ -1151,6 +1153,7 @@ col_sels = ['description','hashtags','cap_mentions','web_links']   #values for d
 input_boxs = ['text','text']
 # vocab_plot_list=[]
 vocab_plot_list = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic'] #Default plot list for svd_1
+# text_disp = 'word'
 
 #---------------------------------------------------------------
 
@@ -1311,7 +1314,7 @@ app.layout = dbc.Container([
 #     print(type(i))
 #     print(i)    
  
-################################### ROW5-Input_boxs & window_slider  ###########################
+################################### ROW5-Input_boxs ###########################
     dbc.Row([
         # dbc.Col(html.Div(id='text_list1'), width={'size':2}),
         dbc.Col(
@@ -1330,13 +1333,16 @@ app.layout = dbc.Container([
             autoFocus=False,          # the element should be automatically focused after the page loaded
             n_blur=0,                # number of times the input lost focus
             n_blur_timestamp=-1,     # last time the input lost focus.
-            size="65"                # Width of box which can display placeholders
+            size="30"                # Width of box which can display placeholders
             # selectionDirection='', # the direction in which selection occurred
             # selectionStart='',     # the offset into the element's text content of the first selected character
             # selectionEnd='',       # the offset into the element's text content of the last selected character
-                ), width={'size': 3}, style={'textAlign': "left"}   #size was 6
+                ), width={'size': 4}, style={'textAlign': "left"}   #size was 6
             ),
             
+        dbc.Col(
+                dbc.Button(id='words_tog', n_clicks=0, children="words", className="mt-5 mr-2"),            
+                width={'size': 0.5}, style={'textAlign': "left"}),
 
         # dbc.Col(
         #         dcc.Dropdown(id='wind_dd_', multi=False,
@@ -1381,6 +1387,8 @@ app.layout = dbc.Container([
                     20: {'label': '20'}
                     }),                 
             width={'size': 6}),
+        
+        
 
         # dbc.Col(
         #     dcc.Graph(id='word2vec_2'), 
@@ -1521,14 +1529,18 @@ def vocab_list(add,rem,clr,inp_1):
 
 @app.callback(
     Output(component_id='word2vec_1', component_property='figure'),  
-    [Input('plt1_button','n_clicks'),
+    [Input('add1_button','n_clicks'),
+     Input('rem1_button','n_clicks'),
+     Input('clr1_button','n_clicks'),
+     Input('plt1_button','n_clicks'),
      Input('wind_dd_1','value'),
      Input('vector_dd_1','value'),
-     Input('my_slider','value')],
+     Input('my_slider','value'),
+     Input('words_tog','n_clicks')],
     prevent_initial_call=False
     )
 
-def svd_user_inputs(plot_butt,window,vector,slider_val):
+def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
     
     if vector == 100:
         # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
@@ -1562,6 +1574,8 @@ def svd_user_inputs(plot_butt,window,vector,slider_val):
       
     
     ####-------------
+    # Add lighter shade of the parent category for the discerning of which point is for which word.
+    # Then execute the Word math input fields.
     
     # vocab_to_plot = ['vanilla','organic','sustainable','cacao']
     vocab_to_plot = vocab_plot_list
@@ -1602,8 +1616,31 @@ def svd_user_inputs(plot_butt,window,vector,slider_val):
     tsne_plot_df = tsne_df_full.loc[plot_index]
     # tsne_plot_df
     # tsne_plot_df = tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)] #filter to display
-    
-    fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text="word",color='type', log_x=False, size_max=60)
+            
+    ctx = dash.callback_context
+    if ctx.triggered:
+        # print(ctx.triggered)
+        trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
+        print("trigger is: ", trigger)
+        print("word_tog nclick value is: ", word_tog)
+        if trigger == 'words_tog':
+            if (word_tog % 2) == 0:                
+                print("Words display toggled")
+                # text_disp = '' #pass the words col #Getting ref before ass error
+                # fig_1 = px.scatter(tsne_plot_df, x="x", y="y", color='type', log_x=False)
+                text_disp = 'word'
+                
+            else:
+                # fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word',color='type', log_x=False)
+                text_disp = None
+        
+
+    fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= text_disp, color='type', log_x=False)    
+    # fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text=text_disp, color='type', log_x=False,
+    #                    # color_discrete_map = {'ip': 'rgb(255,0,0)', 
+    #                    #                       'setosa': 'rgb(0,255,0)', 
+    #                    #                       'versicolor': 'rgb(0,0,255)'},
+    #                    size_max=60)
     fig_1.update_traces(textposition='top center')
     
     
