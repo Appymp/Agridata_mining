@@ -5,8 +5,10 @@
 
 ## ver 3.5
 
-##Friday Oct 15th-evening.Gys breakfast place
+##Sunday Oct 17th-evening. Kamela-Urecht
     # Plot respose for add, rem, clr, added
+    # Word toggle succesfully implemented
+        # if fig_1 is in the main program, "referenced before assignment" error.
     
     
     # Create an adding/subtracting model for interaction on app.
@@ -16,7 +18,7 @@
 
 
 #Wishlist:
-    # Sort out overlap of words. Done. Addressed with plotly.
+    # Sort out overlap of words. Word appear/disappear mode. Done
     # Drop downs and filters for visualizing the words.
     
 
@@ -1623,6 +1625,8 @@ def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
         trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
         print("trigger is: ", trigger)
         print("word_tog nclick value is: ", word_tog)
+        
+
         if trigger == 'words_tog':
             if (word_tog % 2) == 0:                
                 print("Words display toggled")
@@ -1633,9 +1637,19 @@ def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
             else:
                 # fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word',color='type', log_x=False)
                 text_disp = None
-        
-
-    fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= text_disp, color='type', log_x=False)    
+           
+                    
+           
+    try:    #if fig_1 is in the main program, "referenced before assignment" error.
+        fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= text_disp, color='type', log_x=False)    
+    
+    
+    except UnboundLocalError as e:
+        print (e)
+        fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word', color='type', log_x=False)
+        pass
+                
+    
     # fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text=text_disp, color='type', log_x=False,
     #                    # color_discrete_map = {'ip': 'rgb(255,0,0)', 
     #                    #                       'setosa': 'rgb(0,255,0)', 
