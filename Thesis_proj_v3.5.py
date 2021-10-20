@@ -5,10 +5,8 @@
 
 ## ver 3.5
 
-##Sunday Oct 17th-evening. Kamela-Urecht
-    # Plot respose for add, rem, clr, added
-    # Word toggle succesfully implemented
-        # if fig_1 is in the main program, "referenced before assignment" error.
+##Wednesday Oct 20th-afternoon. Tilburg
+    # Preserve axis zoom level functionality added.
     
     
     # Create an adding/subtracting model for interaction on app.
@@ -953,7 +951,8 @@ print("Time taken for creating model: ", str(datetime.now()-start)[:-5])
 
 
 # In[12]: Export Tsne dataframe by transforming w2c text files 
-##Note how before the saving the model, called as model.wv 
+# Note how before the saving the model, called as model.wv 
+# Takes 45-60 mins for full dataset.
 
 # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') # To load text file
 w2v = model.wv
@@ -996,21 +995,19 @@ print("Creating new TSNE dataframe..")
 start=datetime.now()
 tsne_df(w2v) 
 
-#100d_w5: For 1k words takes 55 secs. Full vocab 40:32 mins
-#200d_w5: For 1k words takes 47 secs. Full vocab 48:57 mins
-#300d_w5: For 1k words takes 34 secs. Full vocab 45:21 mins
-#300d_w4: Full vocab 57:42 mins
-#300d_w3: Full vocab 54:35 mins
-#300d_w2: Full vocab 46:18 mins
-
-
 # test_tsne_df=pd.read_pickle('tsne_100d_w5_df.pkl')
 # test_tsne_df
+# In[12]: Addition logic word2vec
+
+
+
+ 
 
 
 # In[12]: Scatter plot logic including hue.
 # import plotly as
-# Toggle text dislay on and off. Bold word name in hover text
+# Toggle text dislay on and off. 
+# Bold word name in hover text
 
 import plotly.io as pio #To plot in browser
 pio.renderers.default='browser'
@@ -1641,12 +1638,14 @@ def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
                     
            
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
-        fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= text_disp, color='type', log_x=False)    
+        fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= text_disp, color='type', 
+                           log_x=False, hover_name = 'word')    
     
     
     except UnboundLocalError as e:
         print (e)
-        fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word', color='type', log_x=False)
+        fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word', color='type', 
+                           hover_name = 'word', log_x=False)
         pass
                 
     
@@ -1663,7 +1662,7 @@ def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
     # fig_1 = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
     # fig_1.update_traces(textposition='top center')    
     
-    fig_1.update_layout(margin=dict(l=0, r=0))
+    fig_1.update_layout(margin=dict(l=0, r=0), uirevision = True)
         
     return (fig_1)
 
