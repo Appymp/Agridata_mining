@@ -5,12 +5,14 @@
 
 ## ver 3.5
 
-##Wednesday Oct 20th-afternoon. Tilburg
-    # Preserve axis zoom level functionality added.
-    
-    
+##Tuesday Oct 26th-afternoon. Tilburg
+    # Preserve axis zoom level functionality added.    
     # Create an adding/subtracting model for interaction on app.
     # Make text align options in app. Input dd for similar words size.
+    
+    # word2vec math logic operational. Code to be debugged
+    # dash table selected data flow commented out. Useful for future ref.
+    # Remove previusly commented out code blocks.
     
 
 
@@ -998,9 +1000,12 @@ tsne_df(w2v)
 # test_tsne_df=pd.read_pickle('tsne_100d_w5_df.pkl')
 # test_tsne_df
 # In[12]: Addition logic word2vec
+w2v.most_similar(positive=['king','woman'], negative= ['man'])
+w2v.most_similar(positive=['king','food'], negative= ['man'])
 
 
-
+w2v.most_similar(positive=['king','food'], negative= ['man'])
+w2v.most_similar(positive=['king','food'])
  
 
 
@@ -1089,10 +1094,9 @@ import os
 import re
 import time
 from gensim.models import Word2Vec
+from gensim.models import KeyedVectors #For loading the model
 
 ############
-
-
 app_launch_start=datetime.now() #Set start time for program start
 
 # dff=df_updated[view_extracts]
@@ -1102,7 +1106,6 @@ disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select
 print("Loading the dataframe..")
 start = datetime.now()
 
-# df_updated=pd.read_csv("App_dataframe_2.csv")
 df_updated=pd.read_pickle('App_dataframe_4.pkl')
 
 coocc_svd_matrix_2 = load('svd_arpack_w2.npy') 
@@ -1121,7 +1124,7 @@ tsne_300d_w4_df = pd.read_pickle('tsne_300d_w4_df.pkl')
 tsne_300d_w3_df = pd.read_pickle('tsne_300d_w3_df.pkl')
 tsne_300d_w2_df = pd.read_pickle('tsne_300d_w2_df.pkl')
 
-# w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt')
+# w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') #initialise once per app run
 
 print("Dataframe loaded")
 t=datetime.now() - start 
@@ -1131,11 +1134,10 @@ print("Execution time: ", s[:-5], "\n\n")
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
-### Instantiate outside the app for quick load in testing. Comment out after first run.
-# words_rm_sw_lemt=[row_list for row_list in df_updated['rm_sw_lemt']]
-# inst=CooccEmbedding(words_rm_sw_lemt) 
-# inst.vocabulary()
-###
+############
+
+
+
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 #the rows and columns from dbc worl only with an external stylesheet
@@ -1152,7 +1154,9 @@ col_sels = ['description','hashtags','cap_mentions','web_links']   #values for d
 input_boxs = ['text','text']
 # vocab_plot_list=[]
 vocab_plot_list = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic'] #Default plot list for svd_1
-# text_disp = 'word'
+# input_boxes1=['text','text','text','text']
+input_boxes1 = ('text','text','text')
+
 
 #---------------------------------------------------------------
 
@@ -1277,34 +1281,40 @@ app.layout = dbc.Container([
                 dbc.Button(id='plt1_button', n_clicks=0, children="Plot", className="mt-5 mr-2"),            
                 width={'size': 0.5}, style={'textAlign': "left"}),
             
-            dbc.Col(
-                dcc.Dropdown(id='vector_dd_1', multi=False,
-                      options=[{'label': x, 'value': x} for x in [100,200,300]],
-                      value=100, #initial values to pass
-                      className="mt-5 mr-2",
-                      style={'width':'150px'}
-                      ),
-                width={'size':2, 'offset':0}, style={'textAlign': "left"}),
-            
-            dbc.Col(html.H3("Word2vec rows"), width={'size':2}),
+            # dbc.Col(
+            #     dcc.Dropdown(id='vector_dd_1', multi=False,
+            #           options=[{'label': x, 'value': x} for x in [100,200,300]],
+            #           value=100, #initial values to pass
+            #           className="mt-5 mr-2",
+            #           style={'width':'150px'}
+            #           ),
+            #     width={'size':2, 'offset':0}, style={'textAlign': "left"}),
             
             dbc.Col(
-                dcc.Dropdown(id='vector_dd_2', multi=False,
-                      options=[{'label': x, 'value': x} for x in [100,200,300]],
-                      value=100, #initial values to pass
-                      className="mt-5 mr-2",
-                      style={'width':'150px'}
-                      ),
-                width={'size':2, 'offset':0}, style={'textAlign': "left"}),
+                dbc.Button(id='words_tog', n_clicks=0, children="words", className="mt-5 mr-2"),            
+                width={'size': 1, 'offset':1}, style={'textAlign': "left"}), #size 0.5
             
-            dbc.Col(
-                dcc.Dropdown(id='wind_dd_1', multi=False,
-                      options=[{'label': x, 'value': x} for x in [2,3,4,5]],
-                      value=5, #initial values to pass
-                      className="mt-5 mr-2",
-                      style={'width':'150px'}
-                      ),
-                width={'size':2, 'offset':0}, style={'textAlign': "left"}),
+            dbc.Col(html.H3("Word2vec math"), width={'size':5}, style={'textAlign': "center"}), #If the width of col breaks, then width parameter is ignored 
+            
+            
+            
+            # dbc.Col(
+            #     dcc.Dropdown(id='vector_dd_2', multi=False,
+            #           options=[{'label': x, 'value': x} for x in [100,200,300]],
+            #           value=100, #initial values to pass
+            #           className="mt-5 mr-2",
+            #           style={'width':'150px'}
+            #           ),
+            #     width={'size':2, 'offset':0}, style={'textAlign': "left"}),
+            
+            # dbc.Col(
+            #     dcc.Dropdown(id='wind_dd_1', multi=False,
+            #           options=[{'label': x, 'value': x} for x in [2,3,4,5]],
+            #           value=5, #initial values to pass
+            #           className="mt-5 mr-2",
+            #           style={'width':'150px'}
+            #           ),
+            #     width={'size':2, 'offset':0}, style={'textAlign': "left"}),
             
             ], no_gutters=False),
 
@@ -1315,13 +1325,12 @@ app.layout = dbc.Container([
  
 ################################### ROW5-Input_boxs ###########################
     dbc.Row([
-        # dbc.Col(html.Div(id='text_list1'), width={'size':2}),
         dbc.Col(
             dcc.Input(
             id='input_1',
             type='text',
             placeholder="",          #pass list vocab to display here   
-            debounce=True,           # changes to input are sent to Dash server only on enter or losing focus
+            debounce=False,           # changes to input are sent to Dash server only on enter or losing focus
             pattern=r"^[A-Za-z].*",  # Regex: string must start with letters only
             spellCheck=True,
             inputMode='latin',       # provides a hint to browser on type of data that might be entered by the user.
@@ -1333,24 +1342,82 @@ app.layout = dbc.Container([
             n_blur=0,                # number of times the input lost focus
             n_blur_timestamp=-1,     # last time the input lost focus.
             size="30"                # Width of box which can display placeholders
-            # selectionDirection='', # the direction in which selection occurred
-            # selectionStart='',     # the offset into the element's text content of the first selected character
-            # selectionEnd='',       # the offset into the element's text content of the last selected character
                 ), width={'size': 4}, style={'textAlign': "left"}   #size was 6
             ),
             
-        dbc.Col(
-                dbc.Button(id='words_tog', n_clicks=0, children="words", className="mt-5 mr-2"),            
-                width={'size': 0.5}, style={'textAlign': "left"}),
+        
 
-        # dbc.Col(
-        #         dcc.Dropdown(id='wind_dd_', multi=False,
-        #               options=[{'label': x, 'value': x} for x in [3,4,5]],
-        #               value=5, #initial values to pass
-        #               className="mt-5 mr-2",
-        #               style={'width':'150px'}
-        #               ),
-        #         width={'size':3, 'offset':1}, style={'textAlign': "left"})
+        #---------------Word2vec_2 math buttons-----------
+        
+        dbc.Col(
+            dcc.Input(
+                id='input_2',
+                type='text',
+                placeholder='king',  # A hint to the user of what can be entered in the control
+                debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
+                min=2015, max=2019, step=1,         # Ranges of numeric value. Step refers to increments
+                minLength=0, maxLength=50,          # Ranges for character length inside input box
+                autoComplete='on',
+                disabled=False,                     # Disable input box
+                readOnly=False,                     # Make input box read only
+                required=False,                     # Require user to insert something into input box
+                size="5",                          # Sets width of box. If exceeds col width then overrides it
+                ), width={'size': 1}, style={'textAlign': "left"}  #text size 5 corresponds to width size 0.75
+            ),
+        
+        dbc.Col(html.P("-"), width={'size':0.5}), #total width to be 0.6. Balance with offset. textAlign:center not working
+        
+        dbc.Col(
+            dcc.Input(
+                id='input_3',
+                type='text',
+                placeholder='man',  # A hint to the user of what can be entered in the control
+                debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
+                min=2015, max=2019, step=1,         # Ranges of numeric value. Step refers to increments
+                minLength=0, maxLength=50,          # Ranges for character length inside input box
+                autoComplete='on',
+                disabled=False,                     # Disable input box
+                readOnly=False,                     # Make input box read only
+                required=False,                     # Require user to insert something into input box
+                size="5",                          # Number of characters that will be visible inside box
+                ), width={'size': 1}, style={'textAlign': "left"} 
+            ),
+        
+        dbc.Col(html.P("+"),width={'size': 0.5}),
+
+        dbc.Col(
+            dcc.Input(
+                id='input_4',
+                type='text',
+                placeholder='woman',  # A hint to the user of what can be entered in the control
+                debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
+                min=2015, max=2019, step=1,         # Ranges of numeric value. Step refers to increments
+                minLength=0, maxLength=50,          # Ranges for character length inside input box
+                autoComplete='on',
+                disabled=False,                     # Disable input box
+                readOnly=False,                     # Make input box read only
+                required=False,                     # Require user to insert something into input box
+                size="5",                          # Number of characters that will be visible inside box
+                ), width={'size': 1}, style={'textAlign': "left"} 
+            ),
+        
+        dbc.Col(html.P("="),width={'size':0.5}),
+        
+        dbc.Col(
+            dcc.Input(
+                id='output_1',
+                type='text',
+                placeholder='queen',  # A hint to the user of what can be entered in the control
+                debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
+                min=2015, max=2019, step=1,         # Ranges of numeric value. Step refers to increments
+                minLength=0, maxLength=50,          # Ranges for character length inside input box
+                autoComplete='on',
+                disabled=True,                     # Disable input box
+                readOnly=False,                     # Make input box read only
+                required=False,                     # Require user to insert something into input box
+                size="5",                          # Number of characters that will be visible inside box
+                ), width={'size': 1}, style={'textAlign': "left"} 
+            ),
         ],no_gutters=False),
 
 
@@ -1363,7 +1430,7 @@ app.layout = dbc.Container([
             width={'size': 6}
                 ),
 
-################################### ROW6-svd_graph_2  ###########################
+################################### ROW6-word2vec_2  ###########################
         dbc.Col(
             dcc.Graph(id='word2vec_2'), 
             width={'size': 6}
@@ -1387,6 +1454,22 @@ app.layout = dbc.Container([
                     }),                 
             width={'size': 6}),
         
+        dbc.Col(
+            dcc.Slider( 
+                id='my_slider_2',
+                min=0,
+                max=20,
+                step=1,
+                value=10,
+                marks={
+                    0: {'label': '0', 'style': {'color': '#77b0b1'}},
+                    5: {'label': '5'},
+                    10: {'label': '10'},
+                    15: {'label': '15', 'style': {'color': '#f50'}},
+                    20: {'label': '20'}
+                    }),                 
+            width={'size': 6})
+        
         
 
         # dbc.Col(
@@ -1402,68 +1485,188 @@ app.layout = dbc.Container([
 ################################ App Callbacks ###################################################
 
 
-################################ SVD_2 graph ################################
+################################ word2vec_2 graph ################################
 @app.callback(
-    Output(component_id='word2vec_2', component_property='figure'), 
-    [Input('vector_dd_2','value'),
-     Input('wind_dd_1','value'),
-     Input(component_id='datatable_id',component_property='selected_rows')],
+    [Output(component_id='word2vec_2', component_property='figure'),
+    Output(component_id='output_1', component_property='placeholder')],
+    # [Input('vector_dd_2','value'),
+     # Input('wind_dd_1','value'),
+     [
+      # Input(component_id='datatable_id',component_property='selected_rows'),
+      Input('input_2','value'),
+      Input('input_3','value'),
+      Input('input_4','value'),
+      Input('my_slider_2','value'),
+      Input('words_tog','n_clicks')
+      ],
     # State('datatable_id', 'derived_virtual_data'),
     # Input(component_id='my-dropdown', component_property='value')],
     prevent_initial_call=False
     )
 
-def svd_graph_full(vectors,window,chosen_rows):    
-
-    
-    if vectors == 100:
-        # coocc_svd_matrix = coocc_svd_matrix_2
-        # vocab_words_df=vocab_words_df_2
-        tsne_df = tsne_100d_w5_df
+# def svd_graph_full(vectors,window,chosen_rows):
+# def svd_graph_full(chosen_rows):    
+    #-----------vector and drop down selection logic--------------
+    # if vectors == 100:
+    #     # coocc_svd_matrix = coocc_svd_matrix_2
+    #     # vocab_words_df=vocab_words_df_2
+    #     tsne_df = tsne_100d_w5_df
    
-    elif vectors == 200:
-        # coocc_svd_matrix = coocc_svd_matrix_3
-        # vocab_words_df=vocab_words_df_3
-        tsne_df = tsne_200d_w5_df
+    # elif vectors == 200:
+    #     # coocc_svd_matrix = coocc_svd_matrix_3
+    #     # vocab_words_df=vocab_words_df_3
+    #     tsne_df = tsne_200d_w5_df
     
-    elif vectors ==300:
-        # coocc_svd_matrix = coocc_svd_matrix_4
-        # vocab_words_df=vocab_words_df_4
-        # tsne_df = tsne_300d_w5_df
+    # elif vectors ==300:
+    #     # coocc_svd_matrix = coocc_svd_matrix_4
+    #     # vocab_words_df=vocab_words_df_4
+    #     # tsne_df = tsne_300d_w5_df
         
-        if window == 2:
-            tsne_df = tsne_300d_w2_df
+    #     if window == 2:
+    #         tsne_df = tsne_300d_w2_df
         
-        if window == 3:
-            tsne_df = tsne_300d_w3_df
+    #     if window == 3:
+    #         tsne_df = tsne_300d_w3_df
         
-        if window == 4:
-            tsne_df = tsne_300d_w4_df
+    #     if window == 4:
+    #         tsne_df = tsne_300d_w4_df
         
-        if window == 5:
-            tsne_df = tsne_300d_w5_df
+    #     if window == 5:
+    #         tsne_df = tsne_300d_w5_df
+    #-------------vector and drop down selection logic--------------
+
+    #-------------Interactive dash table selection------------------           
+    # if len(chosen_rows) == 0:        
+    #     raise dash.exceptions.PreventUpdate
+    
+    # main_table_index = chosen_rows
+    # rm_sw_lemt_ser=df_updated[df_updated.index.isin(main_table_index)].rm_sw_lemt
+
+    # flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list]
+
+    # unique_words = list(set(flat_rm_sw_lemt_ser))
+    # print("Number of unique words are: ",len(unique_words))   
+    # to_plot = unique_words #unique words from selected rows
+
+    # tsne_plot_df_2 = tsne_df[tsne_df['word'].isin(to_plot)]
+
+    # fig_2 = px.scatter(tsne_plot_df_2, x="x", y="y", text="word", log_x=False, size_max=60)
+    # fig_2.update_traces(textposition='top center')
+    #-------------Interactive dash table selection------------------
+    
+def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog): 
+    tsne_df_full = tsne_300d_w5_df
+    
+    vocab_plot_list_2 = [ip1,ip2,ip3]
+    print("vocab_plot_list is: ", vocab_plot_list_2)
+    vocab_to_plot = vocab_plot_list_2
+    
+    # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
+    print("Slider2 val: ",slider2_val)
+    # nearest_size = 20  #make input for nearestneighbor size
+    nearest_size = slider2_val 
+    #index of input words
+    
+    tsne_df_full['type'] = 'Sel' 
+    ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  
+    
+    print("vocab to plot of slider graph is: ",vocab_to_plot )
+    
+    # clos_ten_out = [] #index of closest 10 words
+    for word in vocab_to_plot: 
+        try:
+            a=w2v.most_similar(word, topn = nearest_size)
+            # clos_ten_in = [i[0] for i in a]
+            # clos_ten_out.append(clos_ten_in)
+            # clos_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(clos_ten_in)].index.values)  
             
-
-###Interactive dash table selection            
-    if len(chosen_rows) == 0:        
-        raise dash.exceptions.PreventUpdate
+            r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = nearest_size)
+            res_ten_in = [i[0] for i in r]
+            print("Res_ten words are: ", res_ten_in)
+            print("Top result for math operation is: ",res_ten_in[0] )
+            # res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
+            # print("res_ten index is: ",res_ten_index)
+        except ValueError as e:#Empty word None input
+            print(e)
+            pass
+        
+        except KeyError as e: #Word not in vocab
+            print(e)    
+            pass      
+        
+        except Exception as e:
+            print("Other error, maybe of result: ",e)
+            pass
     
-    # main_table_index = [row['ix'] for row in filtered_table]   #filtered table has its own index. So grab main table index from 'ix' 
-    main_table_index = chosen_rows
-    rm_sw_lemt_ser=df_updated[df_updated.index.isin(main_table_index)].rm_sw_lemt
+    clos_ten_in = [i[0] for i in a]
+    clos_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(clos_ten_in)].index.values)  
+    res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
+    
+    tsne_df_full.loc[ip_vocab_index,'type'] = 'ip' 
+    # tsne_df_full.loc[clos_ten_index,'type'] = 'near'
+    # tsne_df_full.loc[res_ten_index,'type'] = 'res'
+    
+    try:
+        tsne_df_full.loc[res_ten_index,'type'] = 'res'
+        tsne_df_full.loc[clos_ten_index,'type'] = 'near'
+        
+    except Exception as e:
+        print("res or clos index not defined: ", e)
+    #     plot_index = ip_vocab_index + clos_ten_index
+        pass
+    
+    # try:
+    #     plot_index = ip_vocab_index + clos_ten_index + res_ten_index
+        
+    # except Exception as e:
+    #     print("plot index not fully defined: ",e)
+    #     pass
+    
+    
+        
+    if len(vocab_to_plot) > 2:
+        plot_index = ip_vocab_index + clos_ten_index + res_ten_index 
+        
+    else:
+         plot_index = ip_vocab_index + clos_ten_index
+    
+    tsne_plot_df = tsne_df_full.loc[plot_index]
+        
+            
+    ctx = dash.callback_context
+    if ctx.triggered:
+        # print(ctx.triggered)
+        trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
+        print("trigger is: ", trigger)
+        print("word_tog nclick value is: ", word_tog)
+        
 
-    flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list]
+        if trigger == 'words_tog':
+            if (word_tog % 2) == 0:                
+                print("Words display toggled")
+                text_disp = 'word'
+                
+            else:
+                # fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word',color='type', log_x=False)
+                text_disp = None
+           
+                    
+           
+    try:    #if fig_1 is in the main program, "referenced before assignment" error.
+        fig_2 = px.scatter(tsne_plot_df, x="x", y="y", text= text_disp, color='type', 
+                           log_x=False, hover_name = 'word')    
+    
+    
+    except UnboundLocalError as e:
+        print (e)
+        fig_2 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word', color='type', 
+                           hover_name = 'word', log_x=False)
+        pass
 
-    unique_words = list(set(flat_rm_sw_lemt_ser))
-    print("Number of unique words are: ",len(unique_words))   
-    to_plot = unique_words #unique words from selected rows
-
-    tsne_plot_df_2 = tsne_df[tsne_df['word'].isin(to_plot)]
-
-    fig_2 = px.scatter(tsne_plot_df_2, x="x", y="y", text="word", log_x=False, size_max=60)
-    fig_2.update_traces(textposition='top center')
-
-    return (fig_2)
+    fig_2.update_traces(textposition='top center')      
+    fig_2.update_layout(margin=dict(l=0, r=0), uirevision = True)
+    
+    return (fig_2), res_ten_in[0]
 
 
 
@@ -1481,13 +1684,6 @@ def svd_graph_full(vectors,window,chosen_rows):
     )
 
 def vocab_list(add,rem,clr,inp_1):
-    
-    # print("Input word added: ",inp_1)
-    # vocab_plot_list.append(inp_1)
-    # print("vocab_list is: ",vocab_plot_list )
-    # value=''
-    # return vocab_plot_list, value
-    
     
     ctx = dash.callback_context
     if ctx.triggered:
@@ -1532,44 +1728,35 @@ def vocab_list(add,rem,clr,inp_1):
      Input('rem1_button','n_clicks'),
      Input('clr1_button','n_clicks'),
      Input('plt1_button','n_clicks'),
-     Input('wind_dd_1','value'),
-     Input('vector_dd_1','value'),
+     # Input('wind_dd_1','value'),
+     # Input('vector_dd_1','value'),
      Input('my_slider','value'),
-     Input('words_tog','n_clicks')],
+     Input('words_tog','n_clicks'),
+     Input('input_1', 'value')], #debounce of input box triggers callback of figure
     prevent_initial_call=False
     )
 
-def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
+# def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
+def svd_user_inputs(ad,rem,clr,plot_butt,slider_val,word_tog,ip_tog):    
     
-    if vector == 100:
-        # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode   
-        # coocc_svd_matrix = coocc_svd_matrix_2
-        # vocab_words_df=vocab_words_df_2
-        tsne_df = tsne_100d_w5_df
+    # if vector == 100:
+    #     tsne_df = tsne_100d_w5_df
 
-    elif vector == 200:
-        # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
-        # coocc_svd_matrix = coocc_svd_matrix_3
-        # vocab_words_df=vocab_words_df_3
-        tsne_df = tsne_200d_w5_df
+    # elif vector == 200:
+    #     tsne_df = tsne_200d_w5_df
     
-    elif vector ==300:
-        # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
-        # coocc_svd_matrix = coocc_svd_matrix_4
-        # vocab_words_df=vocab_words_df_4
-        # tsne_df = tsne_300d_w5_df
-        if window == 2:
-            tsne_df = tsne_300d_w2_df
+    # elif vector ==300:
+    #     if window == 2:
+    #         tsne_df = tsne_300d_w2_df
         
-        if window == 3:
-            tsne_df = tsne_300d_w3_df
+    #     if window == 3:
+    #         tsne_df = tsne_300d_w3_df
         
-        if window == 4:
-            tsne_df = tsne_300d_w4_df
+    #     if window == 4:
+    #         tsne_df = tsne_300d_w4_df
         
-        if window == 5:
-            tsne_df = tsne_300d_w5_df
-
+    #     if window == 5:
+    #         tsne_df = tsne_300d_w5_df
       
     
     ####-------------
@@ -1579,8 +1766,8 @@ def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
     # vocab_to_plot = ['vanilla','organic','sustainable','cacao']
     vocab_to_plot = vocab_plot_list
     
-    # tsne_df_full=pd.read_pickle('tsne_100d_w5_df.pkl')
-    tsne_df_full = tsne_df
+    # tsne_df_full = tsne_df
+    tsne_df_full = tsne_300d_w5_df
     
     # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
     print("Slider val: ",slider_val)
@@ -1592,24 +1779,25 @@ def svd_user_inputs(ad,rem,clr,plot_butt,window,vector,slider_val,word_tog):
     ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  
     
     print("vocab to plot of slider graph is: ",vocab_to_plot )
-    #index of closest 10 words
-    clos_ten_out = []
+    
+    clos_ten_out = [] #index of closest 10 words
     for word in vocab_to_plot: 
         try:
             a=w2v.most_similar(word, topn = nearest_size)
             clos_ten_in = [i[0] for i in a]
             clos_ten_out.append(clos_ten_in)
-        except ValueError:#Empty word None input
+        except ValueError as e:#Empty word None input
+            print(e)
             pass
-        except KeyError: #Word not in vocab
+        except KeyError as e: #Word not in vocab
+            print(e)    
             pass            
     
     clos_ten_flat = [item for sublist in clos_ten_out for item in sublist]
     clos_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(clos_ten_flat)].index.values)  
     
     plot_index = ip_vocab_index + clos_ten_index
-    # indices = [0,1,3,6,10,15]
-    tsne_df_full.loc[ip_vocab_index,'type'] = 'ip'
+    tsne_df_full.loc[ip_vocab_index,'type'] = 'ip' # indices = [0,1,3,6,10,15]
     tsne_df_full.loc[clos_ten_index,'type'] = 'near'
     
     tsne_plot_df = tsne_df_full.loc[plot_index]
