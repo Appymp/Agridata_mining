@@ -5,14 +5,9 @@
 
 ## ver 3.5
 
-##Tuesday Oct 26th-afternoon. Tilburg
-    # Preserve axis zoom level functionality added.    
-    # Create an adding/subtracting model for interaction on app.
-    # Make text align options in app. Input dd for similar words size.
-    
-    # word2vec math logic operational. Code to be debugged
-    # dash table selected data flow commented out. Useful for future ref.
-    # Remove previusly commented out code blocks.
+##Monday Nov 1st-evening. Tilburg
+    # Discrete color mapping for input and results.
+    # Fix null neighbors mapping in graph. 
     
 
 
@@ -1503,132 +1498,128 @@ app.layout = dbc.Container([
     # Input(component_id='my-dropdown', component_property='value')],
     prevent_initial_call=False
     )
-
-# def svd_graph_full(vectors,window,chosen_rows):
-# def svd_graph_full(chosen_rows):    
-    #-----------vector and drop down selection logic--------------
-    # if vectors == 100:
-    #     # coocc_svd_matrix = coocc_svd_matrix_2
-    #     # vocab_words_df=vocab_words_df_2
-    #     tsne_df = tsne_100d_w5_df
-   
-    # elif vectors == 200:
-    #     # coocc_svd_matrix = coocc_svd_matrix_3
-    #     # vocab_words_df=vocab_words_df_3
-    #     tsne_df = tsne_200d_w5_df
-    
-    # elif vectors ==300:
-    #     # coocc_svd_matrix = coocc_svd_matrix_4
-    #     # vocab_words_df=vocab_words_df_4
-    #     # tsne_df = tsne_300d_w5_df
-        
-    #     if window == 2:
-    #         tsne_df = tsne_300d_w2_df
-        
-    #     if window == 3:
-    #         tsne_df = tsne_300d_w3_df
-        
-    #     if window == 4:
-    #         tsne_df = tsne_300d_w4_df
-        
-    #     if window == 5:
-    #         tsne_df = tsne_300d_w5_df
-    #-------------vector and drop down selection logic--------------
-
-    #-------------Interactive dash table selection------------------           
-    # if len(chosen_rows) == 0:        
-    #     raise dash.exceptions.PreventUpdate
-    
-    # main_table_index = chosen_rows
-    # rm_sw_lemt_ser=df_updated[df_updated.index.isin(main_table_index)].rm_sw_lemt
-
-    # flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list]
-
-    # unique_words = list(set(flat_rm_sw_lemt_ser))
-    # print("Number of unique words are: ",len(unique_words))   
-    # to_plot = unique_words #unique words from selected rows
-
-    # tsne_plot_df_2 = tsne_df[tsne_df['word'].isin(to_plot)]
-
-    # fig_2 = px.scatter(tsne_plot_df_2, x="x", y="y", text="word", log_x=False, size_max=60)
-    # fig_2.update_traces(textposition='top center')
-    #-------------Interactive dash table selection------------------
     
 def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog): 
-    tsne_df_full = tsne_300d_w5_df
-    
+    tsne_df_full = tsne_300d_w5_df 
+    tsne_df_full.index
     vocab_plot_list_2 = [ip1,ip2,ip3]
-    print("vocab_plot_list is: ", vocab_plot_list_2)
+    print("\n\nvocab_plot_list is: ", vocab_plot_list_2)
     vocab_to_plot = vocab_plot_list_2
+    # vocab_to_plot = filter(None, vocab_plot_list_2)
     
+    print("Filtered vocab_to_plot is: ", vocab_to_plot)
     # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
     print("Slider2 val: ",slider2_val)
-    # nearest_size = 20  #make input for nearestneighbor size
+
     nearest_size = slider2_val 
-    #index of input words
     
     tsne_df_full['type'] = 'Sel' 
     ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  
     
     print("vocab to plot of slider graph is: ",vocab_to_plot )
     
+    
+    # tsne_df_full['type'] = 'Sel' 
+    
+    # nearest_size = 2
+    # vocab_to_plot = ['king','man','woman']
     # clos_ten_out = [] #index of closest 10 words
-    for word in vocab_to_plot: 
-        try:
+    # for i,word in enumerate(vocab_to_plot): 
+    #     try:
+    #         ix_word = tsne_df_full[tsne_df_full['word'].isin([word])].index.values
+    #         print(word,ix_word)
+    #         tsne_df_full.loc[ix_word,'type'] = "ip_{}".format(i)
+    #         a=w2v.most_similar(word, topn = nearest_size)
+    #         clos_ten_in = [i[0] for i in a]
+    #         clos_ten_out.append(clos_ten_in) #gather nearest neighbors in a single list
+
+    #     except ValueError as e:#Empty word None input
+    #         print("Value error: ",e)
+    #         pass
+        
+    #     except KeyError as e: #Word not in vocab
+    #         print("Key error. Mostly word not in vocab. Error: ",e)    
+    #         pass      
+        
+    #     except Exception as e:
+    #         print("Other error, maybe of result: ",e)
+    #         pass
+     
+    clos_ten_out = [] #index of closest 10 words
+    try:
+        for i,word in enumerate(vocab_to_plot): 
+            ix_word = tsne_df_full[tsne_df_full['word'].isin([word])].index.values
+            tsne_df_full.loc[ix_word,'type'] = "ip_{}".format(i)
             a=w2v.most_similar(word, topn = nearest_size)
-            # clos_ten_in = [i[0] for i in a]
-            # clos_ten_out.append(clos_ten_in)
-            # clos_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(clos_ten_in)].index.values)  
-            
-            r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = nearest_size)
-            res_ten_in = [i[0] for i in r]
-            print("Res_ten words are: ", res_ten_in)
-            print("Top result for math operation is: ",res_ten_in[0] )
-            # res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
-            # print("res_ten index is: ",res_ten_index)
-        except ValueError as e:#Empty word None input
+            clos_ten_in = [i[0] for i in a]
+            clos_ten_out.append(clos_ten_in) #gather nearest neighbors in a single list
+
+    except ValueError as e:#Empty word None input
             print(e)
             pass
-        
-        except KeyError as e: #Word not in vocab
+    except KeyError as e: #Word not in vocab
             print(e)    
-            pass      
+            pass 
+
+    ip_nearest=[]
+    clos_ten_dict={}
+    try:
+        for i,sub_list in enumerate(clos_ten_out):
+            clos_ten_dict[i] = list(tsne_df_full[tsne_df_full['word'].isin(sub_list)].index.values)  
+            tsne_df_full.loc[clos_ten_dict[i],'type'] = "near_ip_{}".format(i)
+            ip_nearest.append(clos_ten_dict[i])
         
-        except Exception as e:
-            print("Other error, maybe of result: ",e)
-            pass
+        
+    except Exception as e:
+            print("res or clos index not defined: ", e)
+        #     plot_index = ip_vocab_index + clos_ten_index
+            pass    
     
-    clos_ten_in = [i[0] for i in a]
-    clos_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(clos_ten_in)].index.values)  
+    ip_nearest_ix = [item for sublist in ip_nearest for item in sublist]
+    # ip_nearest_ix
+    
+    
+    
+    # ip1='king'
+    # ip2='man'
+    # ip3='woman'
+    
+    r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = nearest_size)
+    res_ten_in = [i[0] for i in r]
+    # res_ten_in[0]
+    
+    
+    print("Res_ten words are: ", res_ten_in)
+    # print("Top result for math operation is: ",res_ten_in[0])
     res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
-    
-    tsne_df_full.loc[ip_vocab_index,'type'] = 'ip' 
-    # tsne_df_full.loc[clos_ten_index,'type'] = 'near'
-    # tsne_df_full.loc[res_ten_index,'type'] = 'res'
+
+    # tsne_df_full.loc[ip_vocab_index,'type'] = 'ip' 
     
     try:
-        tsne_df_full.loc[res_ten_index,'type'] = 'res'
-        tsne_df_full.loc[clos_ten_index,'type'] = 'near'
+        tsne_df_full.loc[res_ten_index[0],'type'] = 'res'
+        tsne_df_full.loc[res_ten_index[1:],'type'] = 'near_res'
         
     except Exception as e:
         print("res or clos index not defined: ", e)
     #     plot_index = ip_vocab_index + clos_ten_index
         pass
     
-    # try:
-    #     plot_index = ip_vocab_index + clos_ten_index + res_ten_index
+    try:
+        plot_index = ip_vocab_index + ip_nearest_ix + res_ten_index
         
-    # except Exception as e:
-    #     print("plot index not fully defined: ",e)
-    #     pass
+    except Exception as e:
+        print("plot index not fully defined: ",e)
+        pass
     
+    print("ip_vocab_index, word, type is: ", ip_vocab_index, tsne_df_full.loc[ip_vocab_index,'word'],tsne_df_full.loc[ip_vocab_index,'type'])
+    print("ip_nearest_ix, word, type is: ", ip_nearest_ix,tsne_df_full.loc[ip_nearest_ix,'word'], tsne_df_full.loc[ip_nearest_ix,'type'])
+    print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
     
+    # if len(vocab_to_plot) > 2:
+    #     plot_index = ip_vocab_index + clos_ten_index + res_ten_index 
         
-    if len(vocab_to_plot) > 2:
-        plot_index = ip_vocab_index + clos_ten_index + res_ten_index 
-        
-    else:
-         plot_index = ip_vocab_index + clos_ten_index
+    # else:
+    #      plot_index = ip_vocab_index + clos_ten_index
     
     tsne_plot_df = tsne_df_full.loc[plot_index]
         
@@ -1654,12 +1645,30 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
            
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
         fig_2 = px.scatter(tsne_plot_df, x="x", y="y", text= text_disp, color='type', 
+                           color_discrete_map={
+                                "ip_0": "#4000ff", #blue
+                                "near_ip_0": "#2acaea",
+                                "ip_1": "#c0ff00", #green
+                                "near_ip_1": "#32e7c8",
+                                "ip_2": "#ff8000", #orange
+                                "near_ip_2": "#ffa500", 
+                                "res": "#baa3fc", #lilac
+                                "near_res": "#cac5fb"},
                            log_x=False, hover_name = 'word')    
     
     
     except UnboundLocalError as e:
         print (e)
         fig_2 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word', color='type', 
+                           color_discrete_map={
+                                "ip_0": "#4000ff", #blue
+                                "near_ip_0": "#2acaea",
+                                "ip_1": "#c0ff00", #green
+                                "near_ip_1": "#32e7c8",
+                                "ip_2": "#ff8000", #orange
+                                "near_ip_2": "#ffa500", 
+                                "res": "#baa3fc", #lilac
+                                "near_res": "#cac5fb"},
                            hover_name = 'word', log_x=False)
         pass
 
