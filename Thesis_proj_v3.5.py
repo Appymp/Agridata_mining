@@ -5,9 +5,10 @@
 
 ## ver 3.5
 
-##Monday Nov 1st-evening. Tilburg
-    # Discrete color mapping for input and results.
+##Saturday Nov 6th-morning. Tilburg
+    # Discrete color mapping for input and results. Done
     # Fix null neighbors mapping in graph. 
+    
     
 
 
@@ -1439,7 +1440,7 @@ app.layout = dbc.Container([
                 min=0,
                 max=20,
                 step=1,
-                value=10,
+                value=5,
                 marks={
                     0: {'label': '0', 'style': {'color': '#77b0b1'}},
                     5: {'label': '5'},
@@ -1455,7 +1456,7 @@ app.layout = dbc.Container([
                 min=0,
                 max=20,
                 step=1,
-                value=10,
+                value=2, #default value
                 marks={
                     0: {'label': '0', 'style': {'color': '#77b0b1'}},
                     5: {'label': '5'},
@@ -1638,28 +1639,38 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
                 text_disp = 'word'
                 
             else:
-                # fig_1 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word',color='type', log_x=False)
                 text_disp = None
            
-                    
+        #set order of legend by reordering df. color_discrete seq and cat_orders work for bar plots mainly.
+        order  = ["ip_0", "near_ip_0","ip_1", "near_ip_1","ip_2", "near_ip_2","res", "near_res"]
+        df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
+        df_ordered = df.T[order].T.reset_index()
+        # df_ordered
+        
+        
+        
            
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
-        fig_2 = px.scatter(tsne_plot_df, x="x", y="y", text= text_disp, color='type', 
-                           color_discrete_map={
-                                "ip_0": "#4000ff", #blue
-                                "near_ip_0": "#2acaea",
-                                "ip_1": "#c0ff00", #green
-                                "near_ip_1": "#32e7c8",
-                                "ip_2": "#ff8000", #orange
-                                "near_ip_2": "#ffa500", 
-                                "res": "#baa3fc", #lilac
-                                "near_res": "#cac5fb"},
-                           log_x=False, hover_name = 'word')    
+        fig_2 = px.scatter(df_ordered, x="x", y="y", text= text_disp, color='type', 
+                            color_discrete_map={
+                                 "ip_0": "#4000ff", #blue
+                                 "near_ip_0": "#2acaea",
+                                 "ip_1": "#c0ff00", #green
+                                 "near_ip_1": "#32e7c8",
+                                 "ip_2": "#ff8000", #orange
+                                 "near_ip_2": "#ffa500", 
+                                 "res": "#baa3fc", #lilac
+                                 "near_res": "#cac5fb"},
+                           # color_discrete_sequence=["#4000ff", "#2acaea", "#c0ff00", "#32e7c8", "#ff8000","#ffa500", "#baa3fc","#cac5fb" ],
+                           # category_orders={"type": ["ip_0", "near_ip_0","ip_1", "near_ip_1","ip_2", "near_ip_2","res", "near_res"]},
+                           log_x=False, hover_name = 'word') 
+        
+        
     
     
     except UnboundLocalError as e:
         print (e)
-        fig_2 = px.scatter(tsne_plot_df, x="x", y="y", text= 'word', color='type', 
+        fig_2 = px.scatter(df_ordered, x="x", y="y", text= 'word', color='type', 
                            color_discrete_map={
                                 "ip_0": "#4000ff", #blue
                                 "near_ip_0": "#2acaea",
@@ -1673,6 +1684,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         pass
 
     fig_2.update_traces(textposition='top center')      
+    fig_2.update_layout(legend_traceorder="normal")
     fig_2.update_layout(margin=dict(l=0, r=0), uirevision = True)
     
     return (fig_2), res_ten_in[0]
