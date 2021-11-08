@@ -5,9 +5,9 @@
 
 ## ver 3.5
 
-##Saturday Nov 6th-morning. Tilburg
-    # Discrete color mapping for input and results. Done
-    # Fix null neighbors mapping in graph. 
+##Monday Nov 8th-morning. Tilburg
+    # Fix null neighbors mapping in graph. Done.
+    # Comments preserved. Will be cleaned up in following commit. 
     
     
 
@@ -1440,7 +1440,7 @@ app.layout = dbc.Container([
                 min=0,
                 max=20,
                 step=1,
-                value=5,
+                value=1,
                 marks={
                     0: {'label': '0', 'style': {'color': '#77b0b1'}},
                     5: {'label': '5'},
@@ -1512,7 +1512,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
     print("Slider2 val: ",slider2_val)
 
-    nearest_size = slider2_val 
+    nearest_size = slider2_val #nearest size defined
     
     tsne_df_full['type'] = 'Sel' 
     ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  
@@ -1547,13 +1547,16 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     #         pass
      
     clos_ten_out = [] #index of closest 10 words
-    try:
-        for i,word in enumerate(vocab_to_plot): 
+    try:           
+        for i,word in enumerate(vocab_to_plot):
             ix_word = tsne_df_full[tsne_df_full['word'].isin([word])].index.values
             tsne_df_full.loc[ix_word,'type'] = "ip_{}".format(i)
-            a=w2v.most_similar(word, topn = nearest_size)
-            clos_ten_in = [i[0] for i in a]
-            clos_ten_out.append(clos_ten_in) #gather nearest neighbors in a single list
+            if nearest_size != 0:
+                a=w2v.most_similar(word, topn = nearest_size)
+                clos_ten_in = [i[0] for i in a] #grab vectors and not similarity probability
+                clos_ten_out.append(clos_ten_in) #gather words in a single list                
+            else:
+                 clos_ten_out = []
 
     except ValueError as e:#Empty word None input
             print(e)
@@ -1572,36 +1575,43 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         
         
     except Exception as e:
-            print("res or clos index not defined: ", e)
+            print("clos_ten_out is empty: ", e)
         #     plot_index = ip_vocab_index + clos_ten_index
             pass    
     
     ip_nearest_ix = [item for sublist in ip_nearest for item in sublist]
     # ip_nearest_ix
-    
-    
-    
     # ip1='king'
     # ip2='man'
     # ip3='woman'
     
-    r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = nearest_size)
+    r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = nearest_size+1)
     res_ten_in = [i[0] for i in r]
-    # res_ten_in[0]
-    
-    
-    print("Res_ten words are: ", res_ten_in)
-    # print("Top result for math operation is: ",res_ten_in[0])
+    print("Res words are: ", res_ten_in)
     res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
+       
+        
+
+       
+        
+       
+    # else:
+    #     #define just the first result word
+        
+    #     r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = 1)
+    #     res_ten_in = [i[0] for i in r]
+    #     res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
+        
 
     # tsne_df_full.loc[ip_vocab_index,'type'] = 'ip' 
+    # any dataframe errors seem to be breaking the app at the callback
     
     try:
         tsne_df_full.loc[res_ten_index[0],'type'] = 'res'
         tsne_df_full.loc[res_ten_index[1:],'type'] = 'near_res'
         
     except Exception as e:
-        print("res or clos index not defined: ", e)
+        print("res nearest not defined: ", e)
     #     plot_index = ip_vocab_index + clos_ten_index
         pass
     
@@ -1614,7 +1624,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     
     print("ip_vocab_index, word, type is: ", ip_vocab_index, tsne_df_full.loc[ip_vocab_index,'word'],tsne_df_full.loc[ip_vocab_index,'type'])
     print("ip_nearest_ix, word, type is: ", ip_nearest_ix,tsne_df_full.loc[ip_nearest_ix,'word'], tsne_df_full.loc[ip_nearest_ix,'type'])
-    print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
+    # print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
     
     # if len(vocab_to_plot) > 2:
     #     plot_index = ip_vocab_index + clos_ten_index + res_ten_index 
@@ -1642,10 +1652,25 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
                 text_disp = None
            
         #set order of legend by reordering df. color_discrete seq and cat_orders work for bar plots mainly.
-        order  = ["ip_0", "near_ip_0","ip_1", "near_ip_1","ip_2", "near_ip_2","res", "near_res"]
-        df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
-        df_ordered = df.T[order].T.reset_index()
-        # df_ordered
+    try:
+        if nearest_size != 0 :
+            order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
+            df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
+            df_ordered = df.T[order].T.reset_index()
+            
+        # elif nearest_size == 1 :
+        #     order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
+        #     df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
+        #     df_ordered = df.T[order].T.reset_index()
+        
+        else:
+            order  = ["ip_0", "ip_1", "ip_2", "res"]
+            df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
+            df_ordered = df.T[order].T.reset_index()
+
+    except KeyError as e:
+        print("Exception in df_ordered dataframe: ",e)
+        pass
         
         
         
@@ -1653,16 +1678,16 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
         fig_2 = px.scatter(df_ordered, x="x", y="y", text= text_disp, color='type', 
                             color_discrete_map={
-                                 "ip_0": "#4000ff", #blue
-                                 "near_ip_0": "#2acaea",
-                                 "ip_1": "#c0ff00", #green
-                                 "near_ip_1": "#32e7c8",
-                                 "ip_2": "#ff8000", #orange
-                                 "near_ip_2": "#ffa500", 
-                                 "res": "#baa3fc", #lilac
-                                 "near_res": "#cac5fb"},
-                           # color_discrete_sequence=["#4000ff", "#2acaea", "#c0ff00", "#32e7c8", "#ff8000","#ffa500", "#baa3fc","#cac5fb" ],
-                           # category_orders={"type": ["ip_0", "near_ip_0","ip_1", "near_ip_1","ip_2", "near_ip_2","res", "near_res"]},
+                                 "ip_0": "#7bc043", #green- most natural word by essence "concept1" 
+                                 "ip_1": "#fdf498", #yellow- noticeable contrast from "concept1"; "concept2a"                                
+                                 "ip_2": "#f37736", #orange- "concept2b"lighter contrast from "concept2a"; clear contrast from concept1 and noticeable difference from 2a
+                                 "res": "#ee4035", #red- attracts first attention; strange that it should make sense. result should be analagous to ip1. The largest perceived context for the user. 
+
+                                 "near_ip_0": "#339900", 
+                                 "near_ip_1": "#ffcc00",
+                                 "near_ip_2": "#ff9966",                                 
+                                 "near_res": "#cc3300"},
+                           
                            log_x=False, hover_name = 'word') 
         
         
@@ -1672,14 +1697,14 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         print (e)
         fig_2 = px.scatter(df_ordered, x="x", y="y", text= 'word', color='type', 
                            color_discrete_map={
-                                "ip_0": "#4000ff", #blue
-                                "near_ip_0": "#2acaea",
-                                "ip_1": "#c0ff00", #green
-                                "near_ip_1": "#32e7c8",
-                                "ip_2": "#ff8000", #orange
-                                "near_ip_2": "#ffa500", 
-                                "res": "#baa3fc", #lilac
-                                "near_res": "#cac5fb"},
+                                "ip_0": "#7bc043", #green- most natural word by essence "concept1" 
+                                 "ip_1": "#fdf498", #yellow- noticeable contrast from "concept1"; "concept2a"                                
+                                 "ip_2": "#f37736", #orange- "concept2b"lighter contrast from "concept2a"; clear contrast from concept1 and noticeable difference from 2a
+                                 "res": "#ee4035", #red- attracts first attention; strange that it should make sense. result should be analagous to ip1. The largest perceived context for the user. 
+                                 "near_ip_0": "#339900", 
+                                 "near_ip_1": "#ffcc00",
+                                 "near_ip_2": "#ff9966",                                 
+                                 "near_res": "#cc3300"},
                            hover_name = 'word', log_x=False)
         pass
 
