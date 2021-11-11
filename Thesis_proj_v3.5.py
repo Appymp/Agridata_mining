@@ -5,9 +5,10 @@
 
 ## ver 3.5
 
-##Monday Nov 8th-morning. Tilburg
-    # Fix null neighbors mapping in graph. Done.
-    # Comments preserved. Will be cleaned up in following commit. 
+##Thursday Nov 11th-morning. Bus France to Ams
+    # Created while loop to resolve common key error "near_res" and "near_ip_x".
+    # The error happens while ordering the dataframe for plotting.
+    # Checkpoint before possible crash due to while loop.
     
     
 
@@ -1440,7 +1441,7 @@ app.layout = dbc.Container([
                 min=0,
                 max=20,
                 step=1,
-                value=1,
+                value=0,
                 marks={
                     0: {'label': '0', 'style': {'color': '#77b0b1'}},
                     5: {'label': '5'},
@@ -1456,7 +1457,7 @@ app.layout = dbc.Container([
                 min=0,
                 max=20,
                 step=1,
-                value=2, #default value
+                value=0, #default value
                 marks={
                     0: {'label': '0', 'style': {'color': '#77b0b1'}},
                     5: {'label': '5'},
@@ -1518,34 +1519,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  
     
     print("vocab to plot of slider graph is: ",vocab_to_plot )
-    
-    
-    # tsne_df_full['type'] = 'Sel' 
-    
-    # nearest_size = 2
-    # vocab_to_plot = ['king','man','woman']
-    # clos_ten_out = [] #index of closest 10 words
-    # for i,word in enumerate(vocab_to_plot): 
-    #     try:
-    #         ix_word = tsne_df_full[tsne_df_full['word'].isin([word])].index.values
-    #         print(word,ix_word)
-    #         tsne_df_full.loc[ix_word,'type'] = "ip_{}".format(i)
-    #         a=w2v.most_similar(word, topn = nearest_size)
-    #         clos_ten_in = [i[0] for i in a]
-    #         clos_ten_out.append(clos_ten_in) #gather nearest neighbors in a single list
-
-    #     except ValueError as e:#Empty word None input
-    #         print("Value error: ",e)
-    #         pass
-        
-    #     except KeyError as e: #Word not in vocab
-    #         print("Key error. Mostly word not in vocab. Error: ",e)    
-    #         pass      
-        
-    #     except Exception as e:
-    #         print("Other error, maybe of result: ",e)
-    #         pass
-     
+ 
     clos_ten_out = [] #index of closest 10 words
     try:           
         for i,word in enumerate(vocab_to_plot):
@@ -1590,22 +1564,6 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     print("Res words are: ", res_ten_in)
     res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
        
-        
-
-       
-        
-       
-    # else:
-    #     #define just the first result word
-        
-    #     r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = 1)
-    #     res_ten_in = [i[0] for i in r]
-    #     res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
-        
-
-    # tsne_df_full.loc[ip_vocab_index,'type'] = 'ip' 
-    # any dataframe errors seem to be breaking the app at the callback
-    
     try:
         tsne_df_full.loc[res_ten_index[0],'type'] = 'res'
         tsne_df_full.loc[res_ten_index[1:],'type'] = 'near_res'
@@ -1624,13 +1582,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     
     print("ip_vocab_index, word, type is: ", ip_vocab_index, tsne_df_full.loc[ip_vocab_index,'word'],tsne_df_full.loc[ip_vocab_index,'type'])
     print("ip_nearest_ix, word, type is: ", ip_nearest_ix,tsne_df_full.loc[ip_nearest_ix,'word'], tsne_df_full.loc[ip_nearest_ix,'type'])
-    # print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
-    
-    # if len(vocab_to_plot) > 2:
-    #     plot_index = ip_vocab_index + clos_ten_index + res_ten_index 
-        
-    # else:
-    #      plot_index = ip_vocab_index + clos_ten_index
+    print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
     
     tsne_plot_df = tsne_df_full.loc[plot_index]
         
@@ -1650,19 +1602,15 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
                 
             else:
                 text_disp = None
-           
-        #set order of legend by reordering df. color_discrete seq and cat_orders work for bar plots mainly.
+                
+                
+    #accomodate edge cases of "near_ip_0" does not exist etc.       
     try:
         if nearest_size != 0 :
             order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
             df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
             df_ordered = df.T[order].T.reset_index()
-            
-        # elif nearest_size == 1 :
-        #     order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
-        #     df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
-        #     df_ordered = df.T[order].T.reset_index()
-        
+ 
         else:
             order  = ["ip_0", "ip_1", "ip_2", "res"]
             df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
@@ -1670,11 +1618,33 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
 
     except KeyError as e:
         print("Exception in df_ordered dataframe: ",e)
+        print("Entering the while loop")        
+        #Edge cases where same word is near multiple classifications like "near_res" and "near_ip_0".
+        #near_res must assume precedence. So drop the redundant types till no error. 
+        
+        
+        # grab the missing index from the error and remove from "order" list iteratively
+        # order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
+        # e =  "['near_ip_0'] not in index"#test case
+        s=e
+        rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list
+
+        error_res = 1 #set error resolve flag to active
+        while error_res == 1:
+            try:                
+                #can get next error value only after resolving first 
+                order.remove(rem_val)
+                df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
+                df_ordered = df.T[order].T.reset_index()    
+                break #break the loop on success
+            
+            except KeyError as e:                
+                s=e
+                rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list                
+                                
+                continue  #continue the loop and pass new rem_val            
         pass
-        
-        
-        
-           
+      
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
         fig_2 = px.scatter(df_ordered, x="x", y="y", text= text_disp, color='type', 
                             color_discrete_map={
@@ -1689,9 +1659,6 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
                                  "near_res": "#cc3300"},
                            
                            log_x=False, hover_name = 'word') 
-        
-        
-    
     
     except UnboundLocalError as e:
         print (e)
