@@ -5,11 +5,9 @@
 
 ## ver 3.5
 
-##Thursday Nov 11th-morning. Bus France to Ams
+##Friday Nov 12th-morning. Utrecht
     # Created while loop to resolve common key error "near_res" and "near_ip_x".
-    # The error happens while ordering the dataframe for plotting.
-    # Checkpoint before possible crash due to while loop.
-    
+    # error resolved.
     
 
 
@@ -1121,7 +1119,14 @@ tsne_300d_w4_df = pd.read_pickle('tsne_300d_w4_df.pkl')
 tsne_300d_w3_df = pd.read_pickle('tsne_300d_w3_df.pkl')
 tsne_300d_w2_df = pd.read_pickle('tsne_300d_w2_df.pkl')
 
-# w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') #initialise once per app run
+
+#try and except for quick reloading of the w2v object.
+# global w2v
+try:
+    w2v
+except:
+    w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') #initialise only once per app run
+
 
 print("Dataframe loaded")
 t=datetime.now() - start 
@@ -1621,28 +1626,40 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         print("Entering the while loop")        
         #Edge cases where same word is near multiple classifications like "near_res" and "near_ip_0".
         #near_res must assume precedence. So drop the redundant types till no error. 
-        
+        print("Initial order is: ", order)        
         
         # grab the missing index from the error and remove from "order" list iteratively
         # order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
         # e =  "['near_ip_0'] not in index"#test case
-        s=e
+        s=str(e)
         rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list
-
+        print("rem_val is: ", rem_val)
+        
+        # order.remove(rem_val)
+        # print("Order is now: ", order)
+        # df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
+        # df_ordered = df.T[order].T.reset_index() 
+        
+        # 
         error_res = 1 #set error resolve flag to active
         while error_res == 1:
             try:                
                 #can get next error value only after resolving first 
                 order.remove(rem_val)
+                print("Order is now: ", order)
                 df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
                 df_ordered = df.T[order].T.reset_index()    
-                break #break the loop on success
-            
-            except KeyError as e:                
-                s=e
+                            
+            except Exception as e:  
+                print("Error inside while loop is: ",e)
+                s=str(e)
                 rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list                
-                                
-                continue  #continue the loop and pass new rem_val            
+                print("rem_val is now: ", rem_val)
+                print("continuing the loop with new rem_val")             
+                continue  #continue the loop and pass new rem_val  
+                
+            else:
+                break #break the loop on success
         pass
       
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
