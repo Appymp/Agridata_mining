@@ -1141,7 +1141,10 @@ df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
 
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+# app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP]) #needs internet
+# app = dash.Dash(__name__, assets_url_path ='/assets/bootstrap.css') #loads any CSS directly added in the "assets" folder
+app = dash.Dash(__name__) #loads any CSS directly added in the "assets" folder
+
 #the rows and columns from dbc worl only with an external stylesheet
 
 al=str(datetime.now() - app_launch_start) #start time logged at start of program code
@@ -1166,7 +1169,7 @@ app.layout = dbc.Container([
 ################################### ROW1-Headers ########################### 
     
     dbc.Row([
-        dbc.Col(html.H3("Instagram data"), width={'size':3}),
+        dbc.Col(html.H2("Instagram data"), width={'size':3}),
         dbc.Col(
             # html.Button(id='sel-button', n_clicks=0, children="Sel_all"),
             dbc.Button(id='sel-button', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
@@ -1175,7 +1178,7 @@ app.layout = dbc.Container([
             dbc.Button(id='desel-button', n_clicks=0, children="Des_all", className="mt-5"),
             width={'size': 0.5}, style={'textAlign':"left"}),
         
-        dbc.Col(html.H3("Wordcloud"), width={'size':5, 'offset':2}, style={'textAlign' : "center"}),         
+        dbc.Col(html.H2("Wordcloud"), width={'size':5, 'offset':2}, style={'textAlign' : "center"}),         
         # dbc.Col([
         #     html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
         #     width={'size': 3}, style = {'textAlign' : "left"})
@@ -1265,7 +1268,7 @@ app.layout = dbc.Container([
 
 ################################### ROW4-Headers 2  ###########################
     dbc.Row([
-            dbc.Col(html.H3("Word2vec input"), width={'size':2}),
+            dbc.Col(html.H2("Word2vec input"), width={'size':2}),
             
             dbc.Col(
                 dbc.Button(id='add1_button', n_clicks=0, children="Add", className="mt-5 mr-2"),            
@@ -1296,7 +1299,7 @@ app.layout = dbc.Container([
                 dbc.Button(id='words_tog', n_clicks=0, children="words", className="mt-5 mr-2"),            
                 width={'size': 1, 'offset':1}, style={'textAlign': "left"}), #size 0.5
             
-            dbc.Col(html.H3("Word2vec math"), width={'size':5}, style={'textAlign': "center"}), #If the width of col breaks, then width parameter is ignored 
+            dbc.Col(html.H2("Word2vec math"), width={'size':5}, style={'textAlign': "center"}), #If the width of col breaks, then width parameter is ignored 
             
             
             
@@ -1363,7 +1366,7 @@ app.layout = dbc.Container([
                 disabled=False,                     # Disable input box
                 readOnly=False,                     # Make input box read only
                 required=False,                     # Require user to insert something into input box
-                size="5",                          # Sets width of box. If exceeds col width then overrides it
+                size="7",                          # Sets width of box. If exceeds col width then overrides it
                 ), width={'size': 1}, style={'textAlign': "left"}  #text size 5 corresponds to width size 0.75
             ),
         
@@ -1381,7 +1384,7 @@ app.layout = dbc.Container([
                 disabled=False,                     # Disable input box
                 readOnly=False,                     # Make input box read only
                 required=False,                     # Require user to insert something into input box
-                size="5",                          # Number of characters that will be visible inside box
+                size="7",                          # Number of characters that will be visible inside box
                 ), width={'size': 1}, style={'textAlign': "left"} 
             ),
         
@@ -1399,7 +1402,7 @@ app.layout = dbc.Container([
                 disabled=False,                     # Disable input box
                 readOnly=False,                     # Make input box read only
                 required=False,                     # Require user to insert something into input box
-                size="5",                          # Number of characters that will be visible inside box
+                size="7",                          # Number of characters that will be visible inside box
                 ), width={'size': 1}, style={'textAlign': "left"} 
             ),
         
@@ -1417,7 +1420,7 @@ app.layout = dbc.Container([
                 disabled=True,                     # Disable input box
                 readOnly=False,                     # Make input box read only
                 required=False,                     # Require user to insert something into input box
-                size="5",                          # Number of characters that will be visible inside box
+                size="7",                          # Number of characters that will be visible inside box
                 ), width={'size': 1}, style={'textAlign': "left"} 
             ),
         ],no_gutters=False),
@@ -1511,8 +1514,8 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     tsne_df_full.index
     vocab_plot_list_2 = [ip1,ip2,ip3]
     print("\n\nvocab_plot_list is: ", vocab_plot_list_2)
-    vocab_to_plot = vocab_plot_list_2
-    # vocab_to_plot = filter(None, vocab_plot_list_2)
+    # vocab_to_plot = vocab_plot_list_2
+    vocab_to_plot = filter(None, vocab_plot_list_2)
     
     print("Filtered vocab_to_plot is: ", vocab_to_plot)
     # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
@@ -1523,7 +1526,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     tsne_df_full['type'] = 'Sel' 
     ip_vocab_index=list(tsne_df_full[tsne_df_full['word'].isin(vocab_to_plot)].index.values)  
     
-    print("vocab to plot of slider graph is: ",vocab_to_plot )
+    # print("vocab to plot of slider graph is: ",vocab_to_plot )
  
     clos_ten_out = [] #index of closest 10 words
     try:           
@@ -1564,11 +1567,18 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     # ip2='man'
     # ip3='woman'
     
-    r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = nearest_size+1)
-    res_ten_in = [i[0] for i in r]
-    print("Res words are: ", res_ten_in)
-    res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
-       
+    #Try catches no input case
+    try:
+        r=w2v.most_similar(positive=[ip1,ip3], negative= [ip2], topn = nearest_size+1)
+        res_ten_in = [i[0] for i in r]
+        print("Res words are: ", res_ten_in)
+        res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
+  
+    except TypeError as e:        
+        print("Define all inputs: ", e)
+        pass
+        
+   
     try:
         tsne_df_full.loc[res_ten_index[0],'type'] = 'res'
         tsne_df_full.loc[res_ten_index[1:],'type'] = 'near_res'
@@ -1640,28 +1650,30 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         # df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
         # df_ordered = df.T[order].T.reset_index() 
         
-        # 
-        error_res = 1 #set error resolve flag to active
-        while error_res == 1:
-            try:                
-                #can get next error value only after resolving first 
-                order.remove(rem_val)
-                print("Order is now: ", order)
-                df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
-                df_ordered = df.T[order].T.reset_index()    
+        # ------------
+        # error_res = 1 #set error resolve flag to active
+        # while error_res == 1:
+        #     try:                
+        #         #can get next error value only after resolving first 
+        #         order.remove(rem_val)
+        #         print("Order is now: ", order)
+        #         df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
+        #         df_ordered = df.T[order].T.reset_index()    
                             
-            except Exception as e:  
-                print("Error inside while loop is: ",e)
-                s=str(e)
-                rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list                
-                print("rem_val is now: ", rem_val)
-                print("continuing the loop with new rem_val")             
-                continue  #continue the loop and pass new rem_val  
+        #     except Exception as e:  
+        #         print("Error inside while loop is: ",e)
+        #         s=str(e)
+        #         rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list                
+        #         print("rem_val is now: ", rem_val)
+        #         print("continuing the loop with new rem_val")             
+        #         continue  #continue the loop and pass new rem_val  
                 
-            else:
-                break #break the loop on success
-        pass
-      
+        #     else:
+        #         # print("")
+        #         break #break the loop on success
+        # pass
+        # ------------
+        
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
         fig_2 = px.scatter(df_ordered, x="x", y="y", text= text_disp, color='type', 
                             color_discrete_map={
