@@ -1051,7 +1051,39 @@ fig3.show()
 
 #Make the text justify options to make viewing better in app
 
+# In[13]: Classification of each post
 
+df_time_elaps = pd.read_pickle('App_dataframe_5.pkl') #duplicate caption posts removed. most recent df
+
+#
+#Attempt topic modelling using the descriptions. OR try dashtable manual classifications.
+
+
+disp1=['ix','caption_processed_4','hashtags','cap_mentions','postId','timestamp','web_links'] 
+
+df_time_elaps_1 = df_time_elaps[disp1]
+df_time_elaps_1.rename(columns={"caption_processed_4": "description"},inplace=True)
+
+
+
+
+
+df_time_elaps_2=df_disp_1[df_disp_1['cap_mentions']=='@dr_lulu_herbal_cure_'] #34    
+len(df_time_elaps_2['postId'].unique())
+
+#get the timestamp of sourcing and calc time elapsed. unitise likes per unit time.
+#logistic regression of this to obtain the classification 
+
+
+# In[13]: Classification: Topic modelling
+
+
+
+
+
+
+
+#In Dr_Lulu case, postIds are all uique but the timestamp have only 13 unique out of 34.
 
 # In[12]:
 ##Dashboard application Test shift to dbc.Container
@@ -1101,7 +1133,7 @@ disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select
 print("Loading the dataframe..")
 start = datetime.now()
 
-df_updated=pd.read_pickle('App_dataframe_4.pkl')
+df_updated=pd.read_pickle('App_dataframe_5.pkl') #duplicates removed
 
 coocc_svd_matrix_2 = load('svd_arpack_w2.npy') 
 coocc_svd_matrix_3 = load('svd_arpack_w3.npy') 
@@ -1136,6 +1168,16 @@ print("Execution time: ", s[:-5], "\n\n")
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
+clf_table=pd.read_csv("df_8hrs_norms_outs.csv") #outlier table
+clf_table['Inf_Non']='' #new entry columns
+clf_table['Domain']='' #new entry columns
+
+clf_view_6=['time_delta_hours','likeCount','commentCount','likes_pr_min','caption_processed_4','hashtags','username','fullName','Inf_Non', 'Domain']
+clf_dashtable=clf_table[clf_view_6]
+clf_dashtable.rename(columns={"caption_processed_4": "description"},inplace=True)
+
+
+
 ############
 
 
@@ -1155,7 +1197,8 @@ print("Total time taken to launch app", al[:-5])
 
 
 
-col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown
+col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown_1
+col_sels_2 = ['description','hashtags','web_links','cap_mentions','username','fullName']   #values for dropdown
 input_boxs = ['text','text']
 # vocab_plot_list=[]
 vocab_plot_list = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic'] #Default plot list for svd_1
@@ -1166,7 +1209,7 @@ input_boxes1 = ('text','text','text')
 #---------------------------------------------------------------
 
 app.layout = dbc.Container([    
-################################### ROW1-Headers ########################### 
+################################### ROW1-Instagram Data, Sel-Desel button_1,Wordcloud ########################### 
     
     dbc.Row([
         dbc.Col(html.H2("Instagram data"), width={'size':3}),
@@ -1426,7 +1469,7 @@ app.layout = dbc.Container([
         ],no_gutters=False),
 
 
-################################### ROW6-svd_graph_1  ###########################
+################################### ROW6-word2vec_1  ###########################
     dbc.Row([
         dbc.Col(
             # dcc.Graph(id='svd_1', figure={}, config={'displayModeBar': True},
@@ -1483,11 +1526,253 @@ app.layout = dbc.Container([
         #         )
             ],no_gutters=False),
     
+############################ ROW8-"Classification Dashtable", Sel-Desel #######################
+
+dbc.Row([
+    dbc.Col(html.H2("Classification Dashtable"), width={'size':2}),
+    
+    dbc.Col(
+        dbc.Button(id='sel-button_2', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
+                width={'size': 0.5}, style={'textAlign': "left"}), 
+    
+    dbc.Col(
+        dbc.Button(id='desel-button_2', n_clicks=0, children="Des_all", className="mt-5"),
+        width={'size': 0.5}, style={'textAlign':"left"}),
+    
+   
+    
+
+
+        ],no_gutters=False),
+
+############################ ROW9-Dropdown_2 ##############################
+
+
+        dbc.Row([
+        dbc.Col(
+            dcc.Dropdown(id='my-dropdown_2', multi=True,
+                      options=[{'label': x, 'value': x} for x in col_sels_2],
+                      value=["description"], #initial values to pass
+                      style={'width':'490px'}
+                        ), width={ 'offset':1})
+            ]),    
+    
+    
+    
+
+############################ ROW10-Clasification dashtable, WordCloud_2 ##############################
+ dbc.Row([     
+        dbc.Col(
+            dash_table.DataTable(
+                id='datatable_2',
+                data=clf_dashtable.to_dict('records'),
+                columns=[
+                    {"name": i, "id": i, "deletable": False, "selectable": True} for i in clf_dashtable.columns
+                ],
+                editable=True,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                row_selectable="multi",
+                row_deletable=False,
+                selected_rows=[], #this parameter gets updated by interactive selection
+                # column_selectable= "multi",
+                # selected_columns =[], # parameter updates by column selection
+                page_action="native",
+                page_current= 0,
+                page_size= 10,
+
+                fixed_rows={ 'headers': True, 'data': 0 }, #if the header style is not defined and this is True, then the widths are not properly aligned
+    #             virtualization=False,
+    #             page_action = 'none',
+
+                style_cell={ #creates a wrapping of the data to constrain column widths. applies to header and data cells
+                    'whiteSpace': 'normal',
+                    'height': 'auto',
+                    'minWidth': '50px', 'width' : '50px','maxwidth': '50px',  # minwidth of col.             
+                    #'overflow': 'hidden'
+                    },
+
+                style_table={ #For parameters of the table container
+                    'height': '600px', #was 300px
+                    'width': '690px',
+                    'overflowY': 'auto'
+                },
+                
+                export_format='xlsx',
+                
+            ),            
+            width={'size': 6}),   
+        
+         dbc.Col(
+            dcc.Graph(id='wordcloud_2', figure={}, config={'displayModeBar': True},
+                       style={'width':'600px' ,'height':'600px'}), #ht was 350px
+                )
+        #,width={'size': 6},  width = {'size': 5, 'offset':1}
+            ],no_gutters=False),    
+         # ],no_gutters=False),
+
         ],fluid=True) #closes initial dbc container
 
 
-################################ App Callbacks ###################################################
-################################ App Callbacks ###################################################
+################################ App Callbacks #########################################################
+################################ App Callbacks #########################################################
+
+################################ Clf_table word cloud ################################
+
+################################ Column highlighting Dashtable2 ################################
+
+@app.callback(
+    Output('datatable_2', 'style_data_conditional'),
+    # Input('datatable_id', 'selected_columns')
+    Input(component_id='my-dropdown_2', component_property='value')
+)
+
+def update_styles(selected_columns):
+    return [{
+        'if': { 'column_id': i },
+        'background_color': '#D2F3FF'
+    } for i in selected_columns]
+
+
+
+################################ Sel_Desel button_2 ################################
+
+@app.callback(
+    [Output('datatable_2', 'selected_rows')], #references ordered 0 to n index of larger table irrespective of actual index value.
+    [Input('sel-button_2', 'n_clicks'),
+    Input('desel-button_2', 'n_clicks')],
+    [State('datatable_2', 'derived_virtual_selected_rows'), #virtual selected row is what is selected.
+     State('datatable_2', 'derived_virtual_data')], #virtual_data is displayed table. Even after filtering. 
+    prevent_initial_call=True
+)
+
+def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
+    ctx = dash.callback_context
+    if ctx.triggered:
+        print(ctx.triggered)
+        trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
+        if trigger == 'sel-button_2':
+            print("\n\nSelect button clicked")
+            print("Length of Selected_rows is: ", len(selected_rows))
+            wc_list= []            
+            wc_list=[[row['ix'] for row in filtered_table]] 
+            wc_list = [[int(i) for i in wc_list[0]]] #convert to int for index reference
+           
+            print("Displayed table has:", len(filtered_table), 'rows')                
+            print("Wordcloud list contains:", len(wc_list[0]), "elements")
+
+            return wc_list
+        else:
+            print("\n\nDeselect button clicked")
+            print("Length of Selected_rows is: ", len(selected_rows))
+            return [[]]
+
+################################ Wordcloud_2  ################################
+
+@app.callback(
+    Output('wordcloud_2','figure'),
+    [Input(component_id='datatable_2',component_property='selected_rows'),
+    Input(component_id='my-dropdown_2', component_property='value')],
+    prevent_initial_call=False
+)
+
+# chosen_cols = 'description'
+def ren_wordcloud(chosen_rows, chosen_cols):
+    global fig_wordcloud1 #for try and except
+    if len(chosen_cols) > 0: #atleast 1 col to be selected
+        if len(chosen_rows)==0:                    
+            # df_filtered = df_disp_1[chosen_cols] #if no rows selected consider all rows
+            df_filtered = clf_dashtable[chosen_cols]
+            
+            try: #Try and except so that it loads only once.
+                fig_wordcloud2
+                
+                
+            except NameError:
+                print("Full Word cloud not initialised")
+                print("Initialising full word cloud..")
+                df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( #Combine multiple columns into a single series for wordcloud generation
+                    lambda x: ' '.join(x.dropna().astype(str)),        
+                    axis=1)
+            
+                en_stopwords = stopwords.words('english')
+                fr_stopwords = stopwords.words('french')
+                web_links_sw = ['www','http','https','com']
+                
+                combined_stopwords = en_stopwords + fr_stopwords + web_links_sw
+                
+                print("\nNo of rows in WC are: ",len(df_filtered))
+                wordcloud = WordCloud(max_words=100,    
+                                      stopwords= combined_stopwords,
+                                      collocations=False,
+                                      color_func=lambda *args, **kwargs: "orange",
+                                      background_color='white',
+                                      width=1700, #1200,1700    
+                                      height=1000, #1000
+                                      random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
+            
+                # print(' '.join(df_filtered['comb_cols']))
+            
+                fig_wordcloud2 = px.imshow(wordcloud, template='ggplot2',
+                                          ) #title="test wordcloud of eng and fr stopwords"
+            
+                fig_wordcloud2.update_layout(margin=dict(l=0, r=0,b=0,t=0))
+                fig_wordcloud2.update_xaxes(visible=False)
+                fig_wordcloud2.update_yaxes(visible=False)
+                return fig_wordcloud2
+                
+
+            else:
+                print("Full wordcloud already rendered. Display from cache")
+                return fig_wordcloud2
+            
+
+        elif len(chosen_rows) > 0 :
+            # df_filtered = df_disp_1.iloc[chosen_rows,[chosen_cols]] #filter by selected rows
+            df_filtered = clf_dashtable[chosen_cols]
+            df_filtered = df_filtered[df_filtered.index.isin(chosen_rows)]
+            #print("Atleast 1 col chosen and multiple rows selected type. Dataype of df_filtered is", type(df_filtered))
+            
+    elif len(chosen_cols) == 0:
+        raise dash.exceptions.PreventUpdate
+
+## load wordcloud only once
+    
+
+    df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( #Combine multiple columns into a single series for wordcloud generation
+        lambda x: ' '.join(x.dropna().astype(str)),        
+        axis=1)
+
+    en_stopwords = stopwords.words('english')
+    fr_stopwords = stopwords.words('french')
+    web_links_sw = ['www','http','https','com']
+    
+    combined_stopwords = en_stopwords + fr_stopwords + web_links_sw
+    
+    print("\nNo of rows in WC are: ",len(df_filtered))
+    wordcloud = WordCloud(max_words=100,    
+                          stopwords= combined_stopwords,
+                          collocations=False,
+                          color_func=lambda *args, **kwargs: "orange",
+                          background_color='white',
+                          width=1700, #1200,1700    
+                          height=1000, #1000
+                          random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
+
+    # print(' '.join(df_filtered['comb_cols']))
+
+    fig_wordcloud_2 = px.imshow(wordcloud, template='ggplot2',
+                              ) #title="test wordcloud of eng and fr stopwords"
+
+    fig_wordcloud_2.update_layout(margin=dict(l=0, r=0,b=0,t=0))
+    fig_wordcloud_2.update_xaxes(visible=False)
+    fig_wordcloud_2.update_yaxes(visible=False)
+
+    return fig_wordcloud_2
+
+
+
 
 
 ################################ word2vec_2 graph ################################
@@ -1515,7 +1800,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     vocab_plot_list_2 = [ip1,ip2,ip3]
     print("\n\nvocab_plot_list is: ", vocab_plot_list_2)
     # vocab_to_plot = vocab_plot_list_2
-    vocab_to_plot = filter(None, vocab_plot_list_2)
+    vocab_to_plot = list(filter(None, vocab_plot_list_2))
     
     print("Filtered vocab_to_plot is: ", vocab_to_plot)
     # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
@@ -1713,7 +1998,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
 
 
 
-################################ SVD_1 inputbox ################################
+################################ Arbitrary_graphing_inputbox ################################
 
 @app.callback(
     [Output(component_id='input_1', component_property='placeholder'),
@@ -1762,7 +2047,7 @@ def vocab_list(add,rem,clr,inp_1):
         
         
        
-################################ SVD_1 graph ################################
+################################ Arb_Word2vec_1 graph ################################
 
 @app.callback(
     Output(component_id='word2vec_1', component_property='figure'),  
