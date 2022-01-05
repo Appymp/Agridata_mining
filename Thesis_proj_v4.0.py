@@ -1163,7 +1163,8 @@ except:
     w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') #initialise only once per app run
 
 #Dashtables
-df_updated=pd.read_pickle('App_dataframe_5.pkl') #duplicates removed
+# df_updated=pd.read_pickle('App_dataframe_5.pkl') #duplicates removed
+df_updated = pd.read_csv("df_8hrs.csv") 
 disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select columns to display in the dashtable
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
@@ -1687,13 +1688,14 @@ def zscore_outliers(zscore):
 @app.callback(
     [Output('datatable_2', 'selected_rows')], #references ordered 0 to n index of larger table irrespective of actual index value.
     [Input('sel-button_2', 'n_clicks'),
-    Input('desel-button_2', 'n_clicks')],
+    Input('desel-button_2', 'n_clicks'),
+    Input('my_slider_zscore','value')],
     [State('datatable_2', 'derived_virtual_selected_rows'), #virtual selected row is what is selected.
      State('datatable_2', 'derived_virtual_data')], #virtual_data is displayed table. Even after filtering. 
     prevent_initial_call=True
 )
 
-def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
+def select_deselect(selbtn, deselbtn, z_score_trigger,selected_rows,filtered_table):
     ctx = dash.callback_context
     if ctx.triggered:
         print(ctx.triggered)
@@ -1744,9 +1746,30 @@ def ren_wordcloud(chosen_rows, chosen_cols,zscore):
 
             print("Full Word cloud not initialised")
             print("Initialising full word cloud..")
+            
+            
+            ####test for unique words per post
+            # df_filtered = clf_dashtable[['description', 'hashtags']].head(10)
+            
+            ####
             df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( #Combine multiple columns into a single series for wordcloud generation
                 lambda x: ' '.join(x.dropna().astype(str)),        
                 axis=1)
+            
+            #Use only unique words per post in wordcloud
+            df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
+                lambda x: ' '.join(set(x.split())))
+            
+            #####
+            # print("Type is", type(df_filtered['comb_cols'][0]))
+            # print("Number of words: ", len(df_filtered['comb_cols'][0].split()))
+            # print("Set of distinct words in the post",set(df_filtered['comb_cols'][0].split()))
+            # print("Type of set",type(set(df_filtered['comb_cols'][0].split())))
+            
+            # print("Distinct words in the post",df_filtered['comb_cols'][0])
+            # print("Number of distinct words in post",len(df_filtered['comb_cols'][0]))            
+            # print("Text corpus is: ",' '.join(df_filtered['comb_cols'][0]))
+            ####
         
             en_stopwords = stopwords.words('english')
             fr_stopwords = stopwords.words('french')
@@ -1791,6 +1814,10 @@ def ren_wordcloud(chosen_rows, chosen_cols,zscore):
     df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( #Combine multiple columns into a single series for wordcloud generation
         lambda x: ' '.join(x.dropna().astype(str)),        
         axis=1)
+    
+    #Use only unique words per post in wordcloud
+    df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
+        lambda x: ' '.join(set(x.split())))
 
     en_stopwords = stopwords.words('english')
     fr_stopwords = stopwords.words('french')
