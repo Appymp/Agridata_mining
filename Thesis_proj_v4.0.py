@@ -855,7 +855,7 @@ print(rm_sw_lemt_ser)
 
 ######Testing above code#######
 
-flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list]
+flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list] #flatten list of lists into a single list
 print("Total number of words in rows: ",len(flat_rm_sw_lemt_ser))
 # len(set(flat_rm_sw_lemt_ser))
 unique_words = list(set(flat_rm_sw_lemt_ser))
@@ -1126,6 +1126,8 @@ from gensim.models import KeyedVectors #For loading the model
 from scipy import stats # for zscore
 import numpy as np #with zscore
 
+from collections import Counter
+
 ############
 app_launch_start=datetime.now() #Set start time for program start
 
@@ -1164,12 +1166,12 @@ except:
 
 #Dashtables
 # df_updated=pd.read_pickle('App_dataframe_5.pkl') #duplicates removed
-df_updated = pd.read_csv("df_8hrs.csv") 
+df_updated = pd.read_pickle("df_8hrs.pkl") 
 disp1=['ix','caption_processed_4','hashtags','cap_mentions','web_links'] #select columns to display in the dashtable
 df_disp_1 = df_updated[disp1]
 df_disp_1.rename(columns={"caption_processed_4": "description"},inplace=True)
 
-clf_table=pd.read_csv("df_8hrs.csv") #outlier table
+clf_table=pd.read_pickle("df_8hrs.pkl") #outlier table
 clf_table['Inf_Non']='' #new entry columns
 clf_table['Domain']='' #new entry columns
 
@@ -1532,27 +1534,27 @@ app.layout = dbc.Container([
     
 ############################ ROW8-"Classification Dashtable", Sel-Desel #######################
 
-dbc.Row([
-    dbc.Col(html.H2("Classification Dashtable"), width={'size':2}),
+    dbc.Row([
+        dbc.Col(html.H2("Classification Dashtable"), width={'size':2}),
+        
+        dbc.Col(
+            dbc.Button(id='sel-button_2', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
+                    width={'size': 0.5}, style={'textAlign': "left"}), 
+        
+        dbc.Col(
+            dbc.Button(id='desel-button_2', n_clicks=0, children="Des_all", className="mt-5"),
+            width={'size': 0.5}, style={'textAlign':"left"}),
+        
+       
+        
     
-    dbc.Col(
-        dbc.Button(id='sel-button_2', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
-                width={'size': 0.5}, style={'textAlign': "left"}), 
     
-    dbc.Col(
-        dbc.Button(id='desel-button_2', n_clicks=0, children="Des_all", className="mt-5"),
-        width={'size': 0.5}, style={'textAlign':"left"}),
-    
-   
-    
-
-
-        ],no_gutters=False),
+            ],no_gutters=False),
 
 ############################ ROW9-Dropdown_2 ##############################
 
 
-        dbc.Row([
+    dbc.Row([
         dbc.Col(
             dcc.Dropdown(id='my-dropdown_2', multi=True,
                       options=[{'label': x, 'value': x} for x in col_sels_2],
@@ -1581,75 +1583,209 @@ dbc.Row([
     
 
 ############################ ROW10-Clasification dashtable, WordCloud_2 ##############################
- dbc.Row([     
-        dbc.Col(
-            dash_table.DataTable(
-                id='datatable_2',
-                data=clf_dashtable.to_dict('records'),
-                columns=[
-                    {"name": i, "id": i, "deletable": False, "selectable": True} for i in clf_dashtable.columns
-                ],
-                editable=True,
-                filter_action="native",
-                sort_action="native",
-                sort_mode="multi",
-                row_selectable="multi",
-                row_deletable=False,
-                selected_rows=[], #this parameter gets updated by interactive selection
-                # column_selectable= "multi",
-                # selected_columns =[], # parameter updates by column selection
-                page_action="native",
-                page_current= 0,
-                page_size= 10,
-
-                fixed_rows={ 'headers': True, 'data': 0 }, #if the header style is not defined and this is True, then the widths are not properly aligned
-    #             virtualization=False,
-    #             page_action = 'none',
-
-                style_cell={ #creates a wrapping of the data to constrain column widths. applies to header and data cells
-                    'whiteSpace': 'normal',
-                    'height': 'auto',
-                    'minWidth': '50px', 'width' : '50px','maxwidth': '50px',  # minwidth of col.             
-                    #'overflow': 'hidden'
+    dbc.Row([    
+            dbc.Col(
+                dash_table.DataTable(
+                    id='datatable_2',
+                    data=clf_dashtable.to_dict('records'),
+                    columns=[
+                        {"name": i, "id": i, "deletable": False, "selectable": True} for i in clf_dashtable.columns
+                    ],
+                    editable=True,
+                    filter_action="native",
+                    sort_action="native",
+                    sort_mode="multi",
+                    row_selectable="multi",
+                    row_deletable=False,
+                    selected_rows=[], #this parameter gets updated by interactive selection
+                    # column_selectable= "multi",
+                    # selected_columns =[], # parameter updates by column selection
+                    page_action="native",
+                    page_current= 0,
+                    page_size= 10,
+    
+                    fixed_rows={ 'headers': True, 'data': 0 }, #if the header style is not defined and this is True, then the widths are not properly aligned
+        #             virtualization=False,
+        #             page_action = 'none',
+    
+                    style_cell={ #creates a wrapping of the data to constrain column widths. applies to header and data cells
+                        'whiteSpace': 'normal',
+                        'height': 'auto',
+                        'minWidth': '50px', 'width' : '50px','maxwidth': '50px',  # minwidth of col.             
+                        #'overflow': 'hidden'
+                        },
+    
+                    style_table={ #For parameters of the table container
+                        'height': '600px', #was 300px
+                        'width': '690px',
+                        'overflowY': 'auto'
                     },
+                    
+                    style_cell_conditional=[
+    
+                        {'if': {'column_id': 'description'},
+                         'width': '200px', 'textAlign': 'left'},
+                    ],
+                    export_format='xlsx',
+                    
+                ),            
+                width={'size': 6}),   
+            
+             dbc.Col(
+                dcc.Graph(id='wordcloud_2', figure={}, config={'displayModeBar': True},
+                           style={'width':'600px' ,'height':'600px'}), #ht was 350px
+                    )
+            #,width={'size': 6},  width = {'size': 5, 'offset':1}
+                ],no_gutters=False),
 
-                style_table={ #For parameters of the table container
-                    'height': '600px', #was 300px
-                    'width': '690px',
-                    'overflowY': 'auto'
-                },
-                
-                style_cell_conditional=[
 
-                    {'if': {'column_id': 'description'},
-                     'width': '200px', 'textAlign': 'left'},
-                ],
-                export_format='xlsx',
-                
-            ),            
-            width={'size': 6}),   
+############################ ROW11-Header "Posts count of unique words"  ##############################    
+
+    dbc.Row([
+        dbc.Col(html.H2("Posts count of distinct words"), width={'size':2}),
         
-         dbc.Col(
-            dcc.Graph(id='wordcloud_2', figure={}, config={'displayModeBar': True},
-                       style={'width':'600px' ,'height':'600px'}), #ht was 350px
-                )
-        #,width={'size': 6},  width = {'size': 5, 'offset':1}
-            ],no_gutters=False),    
-         # ],no_gutters=False),
+        # dbc.Col(
+        #     dbc.Button(id='sel-button_2', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
+        #             width={'size': 0.5}, style={'textAlign': "left"}), 
+        
+        # dbc.Col(
+        #     dbc.Button(id='desel-button_2', n_clicks=0, children="Des_all", className="mt-5"),
+        #     width={'size': 0.5}, style={'textAlign':"left"}),    
+            ],no_gutters=False),
 
+############################ ROW12-Slider for most common ##############################    
+    dbc.Row([
+        dbc.Col(
+            dcc.Slider( 
+                id='my_slider_mc',
+                min=10,
+                max=30,
+                step=1,
+                value=10,
+                marks={
+                    10: {'label': '10', 'style': {'color': '#77b0b1'}},
+                    20: {'label': '20'},
+                    30: {'label': '30'},
+                    40: {'label': '40', 'style': {'color': '#f50'}},
+                    }),                 
+            width={'size': 2}),
+            ]),  
+
+############################ ROW13-Bar_chart for distinct word count ##############################    
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(id='bar_chart_1'), 
+            width={'size': 6}
+                )
+            ],no_gutters=False),
         ],fluid=True) #closes initial dbc container
 
 
+
 ################################ App Callbacks #########################################################
+         ############           #CALLBACKS         ############
 ################################ App Callbacks #########################################################
 
-################################ Clf_table word cloud ################################
+################################ Barchart_1 post count distinct words ################################
+
+@app.callback(
+    Output(component_id='bar_chart_1', component_property='figure'),
+    [Input(component_id='datatable_2', component_property='selected_rows'),
+    Input(component_id='my-dropdown_2', component_property='value'),
+    Input(component_id='my_slider_zscore', component_property='value'),
+    Input(component_id='my_slider_mc', component_property='value')],
+    prevent_initial_call=False,
+)
+
+def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
+    z = np.abs(stats.zscore(clf_dashtable[['time_delta_hours','likes_pr_min']])) #assign z-score to bivariate   
+    view_rm_lm= ['rm_sw_lemt']
+    view_rm_lm = clf_view_6 + view_rm_lm
+    clf_dashtable_z=clf_table[view_rm_lm].iloc[np.unique(np.where(z > zscore)[0])] #table should have rm_sw_lm  
+   
+    #clean up index for "select_all" functionality
+    clf_dashtable_z.drop(['ix'], axis=1, inplace = True) #drop any older 'ix' columns
+    clf_dashtable_z.reset_index(inplace= True,drop=True) #reset and drop old index
+    clf_dashtable_z.reset_index(inplace= True) #create new ix column
+    clf_dashtable_z.rename(columns={"index": "ix"},inplace=True) 
+
+    if len(chosen_cols) > 0: #consider rm_sw_lemt instead
+        if 'description' in chosen_cols:
+            chosen_cols.remove('description')
+            chosen_cols.append('rm_sw_lemt')
+            print("Chosen cols now contain",chosen_cols)#atleast 1 col to be selected
+            
+        if len(chosen_rows)==0: #if no rows selected consider all rows of z score filtered table-defined again                   
+            df_filtered = clf_dashtable_z[chosen_cols]
+
+            #Combine multiple columns into a single series for wordcloud generation
+            df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( 
+                lambda x: ' '.join(x.dropna().astype(str)),        
+                axis=1)
+            
+            #Use only unique words per post in wordcloud
+            df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
+                lambda x: ' '.join(set(x.split())))
+            
+            #Create word counts dataframe
+            flat_list = [item for row_list in df_filtered['comb_cols'] for item in row_list.split()]
+            counts = dict(Counter(flat_list).most_common(mostcomm))
+            labels, values = zip(*counts.items())
+            indSort = np.argsort(values)[::-1] # sort your values in descending order
+            labels = np.array(labels)[indSort]
+            values = np.array(values)[indSort]
+            indexes = np.arange(len(labels))
+            
+            word_count_df = pd.DataFrame({'label': labels, 'values': values}, columns=['label', 'values'])  
+            
+            fig_br1 = px.bar(word_count_df, x="values", y="label", title="Number of posts by unique word", orientation = 'h')
+            fig_br1.update_layout(yaxis=dict(autorange="reversed"))
+            
+            return (fig_br1)
+
+            
+
+        elif len(chosen_rows) > 0 :
+            df_filtered = clf_dashtable_z[chosen_cols]
+            df_filtered = df_filtered[df_filtered.index.isin(chosen_rows)]
+
+            
+    elif len(chosen_cols) == 0:
+        raise dash.exceptions.PreventUpdate
+
+    ##figure logic repeated for row selections
+    #Combine multiple columns into a single series for wordcloud generation
+    df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( 
+        lambda x: ' '.join(x.dropna().astype(str)),        
+        axis=1)
+    
+    #Use only unique words per post in wordcloud
+    df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
+        lambda x: ' '.join(set(x.split())))
+    
+    #Create word counts dataframe
+    flat_list = [item for row_list in df_filtered['comb_cols'] for item in row_list.split()]
+    counts = dict(Counter(flat_list).most_common(mostcomm))
+    labels, values = zip(*counts.items())
+    indSort = np.argsort(values)[::-1] # sort your values in descending order
+    labels = np.array(labels)[indSort]
+    values = np.array(values)[indSort]
+    indexes = np.arange(len(labels))
+    
+    word_count_df = pd.DataFrame({'label': labels, 'values': values}, columns=['label', 'values'])  
+    
+    fig_br1 = px.bar(word_count_df, x="values", y="label", title="Number of posts by unique word", orientation = 'h')
+    fig_br1.update_layout(yaxis=dict(autorange="reversed"))
+    return (fig_br1)
+
+
+
+
 
 ################################ Column highlighting Dashtable2 ################################
 
 @app.callback(
     Output('datatable_2', 'style_data_conditional'),
-    # Input('datatable_id', 'selected_columns')
     Input(component_id='my-dropdown_2', component_property='value')
 )
 
@@ -1669,7 +1805,7 @@ def update_styles(selected_columns):
 
 def zscore_outliers(zscore):
     z = np.abs(stats.zscore(clf_dashtable[['time_delta_hours','likes_pr_min']])) #assign z-score to bivariate 
-    clf_dashtable_z=clf_dashtable.iloc[np.where(z > zscore)[0]] #create outlier table
+    clf_dashtable_z=clf_dashtable.iloc[np.unique(np.where(z > zscore)[0])] #create outlier table
     
     #clean up index for "select_all" functionality
     clf_dashtable_z.drop(['ix'], axis=1, inplace = True) #drop any older 'ix' columns
@@ -1731,7 +1867,7 @@ def ren_wordcloud(chosen_rows, chosen_cols,zscore):
     global fig_wordcloud1 #for try and except
     
     z = np.abs(stats.zscore(clf_dashtable[['time_delta_hours','likes_pr_min']])) #assign z-score to bivariate 
-    clf_dashtable_z=clf_dashtable.iloc[np.where(z > zscore)[0]] #create outlier table    
+    clf_dashtable_z=clf_dashtable.iloc[np.unique(np.where(z > zscore)[0])] #create outlier table    
     #clean up index for "select_all" functionality
     clf_dashtable_z.drop(['ix'], axis=1, inplace = True) #drop any older 'ix' columns
     clf_dashtable_z.reset_index(inplace= True,drop=True) #reset and drop old index
@@ -1760,17 +1896,6 @@ def ren_wordcloud(chosen_rows, chosen_cols,zscore):
             df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
                 lambda x: ' '.join(set(x.split())))
             
-            #####
-            # print("Type is", type(df_filtered['comb_cols'][0]))
-            # print("Number of words: ", len(df_filtered['comb_cols'][0].split()))
-            # print("Set of distinct words in the post",set(df_filtered['comb_cols'][0].split()))
-            # print("Type of set",type(set(df_filtered['comb_cols'][0].split())))
-            
-            # print("Distinct words in the post",df_filtered['comb_cols'][0])
-            # print("Number of distinct words in post",len(df_filtered['comb_cols'][0]))            
-            # print("Text corpus is: ",' '.join(df_filtered['comb_cols'][0]))
-            ####
-        
             en_stopwords = stopwords.words('english')
             fr_stopwords = stopwords.words('french')
             web_links_sw = ['www','http','https','com']
@@ -1856,9 +1981,7 @@ def ren_wordcloud(chosen_rows, chosen_cols,zscore):
     Output(component_id='output_1', component_property='placeholder')],
     # [Input('vector_dd_2','value'),
      # Input('wind_dd_1','value'),
-     [
-      # Input(component_id='datatable_id',component_property='selected_rows'),
-      Input('input_2','value'),
+     [Input('input_2','value'),
       Input('input_3','value'),
       Input('input_4','value'),
       Input('my_slider_2','value'),
@@ -2417,10 +2540,9 @@ if __name__ == '__main__':
 
 
 # In[14]:
-
-
-
-
+view_rm_lm= ['rm_sw_lemt']
+view_rm_lm = clf_view_6 + view_rm_lm
+print(view_rm_lm)
 # In[15]:
 
     
