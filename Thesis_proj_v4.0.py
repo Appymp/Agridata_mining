@@ -1812,8 +1812,8 @@ def zscore_outliers(zscore):
     clf_dashtable_z.reset_index(inplace= True,drop=True) #reset and drop old index
     clf_dashtable_z.reset_index(inplace= True) #create new ix column
     clf_dashtable_z.rename(columns={"index": "ix"},inplace=True) 
-    
-    
+    print("\nZscore slider value is: ", zscore)
+    print("No of rows are: ", len(clf_dashtable_z))    
     return clf_dashtable_z.to_dict('records')
 
 
@@ -1994,14 +1994,14 @@ def ren_wordcloud(chosen_rows, chosen_cols,zscore):
     
 def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog): 
     tsne_df_full = tsne_300d_w5_df 
-    tsne_df_full.index
+    # tsne_df_full.index
     vocab_plot_list_2 = [ip1,ip2,ip3]
     print("\n\nvocab_plot_list is: ", vocab_plot_list_2)
     # vocab_to_plot = vocab_plot_list_2
     vocab_to_plot = list(filter(None, vocab_plot_list_2))
     
-    print("Filtered vocab_to_plot is: ", vocab_to_plot)
-    # w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') 
+    print("Filtered vocab_to_plot is: ", vocab_to_plot) #Only non-empty inputs
+   
     print("Slider2 val: ",slider2_val)
 
     nearest_size = slider2_val #nearest size defined
@@ -2036,7 +2036,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         for i,sub_list in enumerate(clos_ten_out):
             clos_ten_dict[i] = list(tsne_df_full[tsne_df_full['word'].isin(sub_list)].index.values)  
             tsne_df_full.loc[clos_ten_dict[i],'type'] = "near_ip_{}".format(i)
-            ip_nearest.append(clos_ten_dict[i])
+            ip_nearest.append(clos_ten_dict[i]) #index values
         
         
     except Exception as e:
@@ -2057,18 +2057,33 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         print("Res words are: ", res_ten_in)
         res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
   
-    except TypeError as e:        
-        print("Define all inputs: ", e)
-        pass
-        
-   
+    except Exception as e:      #TypeError   
+        print("Trying addition ")
+        try:
+            r=w2v.most_similar(positive=[ip1,ip3], topn = nearest_size+1)
+            res_ten_in = [i[0] for i in r]
+            print("Res words of addition: ", res_ten_in)
+            res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
+            
+        except Exception as e:        
+            print("Trying subtraction: ")
+            try:
+                r=w2v.most_similar(positive=[ip1], negative= [ip2], topn = nearest_size+1)
+                res_ten_in = [i[0] for i in r]
+                print("Res words of subtraction: ", res_ten_in)
+                res_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(res_ten_in)].index.values)
+            
+                
+            except Exception as e:
+                print("Insufficient inputs",e)
+                pass
+            
     try:
         tsne_df_full.loc[res_ten_index[0],'type'] = 'res'
         tsne_df_full.loc[res_ten_index[1:],'type'] = 'near_res'
         
     except Exception as e:
         print("res nearest not defined: ", e)
-    #     plot_index = ip_vocab_index + clos_ten_index
         pass
     
     try:
@@ -2076,6 +2091,8 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         
     except Exception as e:
         print("plot index not fully defined: ",e)
+        # plot_index = list(filter(None, plot_index))
+        # print("After filtering, plot_index now is: ", plot_index)
         pass
     
     print("ip_vocab_index, word, type is: ", ip_vocab_index, tsne_df_full.loc[ip_vocab_index,'word'],tsne_df_full.loc[ip_vocab_index,'type'])
@@ -2102,60 +2119,40 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
                 text_disp = None
                 
                 
-    #accomodate edge cases of "near_ip_0" does not exist etc.       
-    try:
-        if nearest_size != 0 :
-            order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
-            df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
-            df_ordered = df.T[order].T.reset_index()
+    #accomodate edge cases where input ex"near_ip_0" does not exist etc.    
+    # Unique values in the column
+    types_available= tsne_plot_df.type.unique()
+    
+    if nearest_size != 0 :
+        order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
  
-        else:
-            order  = ["ip_0", "ip_1", "ip_2", "res"]
+    else:
+        order  = ["ip_0", "ip_1", "ip_2", "res"]
+       
+    pop_list_flag = 1
+    while pop_list_flag == 1:
+        try:
             df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
             df_ordered = df.T[order].T.reset_index()
-
-    except KeyError as e:
-        print("Exception in df_ordered dataframe: ",e)
-        print("Entering the while loop")        
-        #Edge cases where same word is near multiple classifications like "near_res" and "near_ip_0".
-        #near_res must assume precedence. So drop the redundant types till no error. 
-        print("Initial order is: ", order)        
-        
-        # grab the missing index from the error and remove from "order" list iteratively
-        # order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
-        # e =  "['near_ip_0'] not in index"#test case
-        s=str(e)
-        rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list
-        print("rem_val is: ", rem_val)
-        
-        # order.remove(rem_val)
-        # print("Order is now: ", order)
-        # df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
-        # df_ordered = df.T[order].T.reset_index() 
-        
-        # ------------
-        # error_res = 1 #set error resolve flag to active
-        # while error_res == 1:
-        #     try:                
-        #         #can get next error value only after resolving first 
-        #         order.remove(rem_val)
-        #         print("Order is now: ", order)
-        #         df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
-        #         df_ordered = df.T[order].T.reset_index()    
-                            
-        #     except Exception as e:  
-        #         print("Error inside while loop is: ",e)
-        #         s=str(e)
-        #         rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list                
-        #         print("rem_val is now: ", rem_val)
-        #         print("continuing the loop with new rem_val")             
-        #         continue  #continue the loop and pass new rem_val  
-                
-        #     else:
-        #         # print("")
-        #         break #break the loop on success
-        # pass
-        # ------------
+    
+        except KeyError as e:
+            print("Exception in df_ordered dataframe: ",e)
+            print("Entering while loop to remove items from order list")        
+            #Edge cases where same word is near multiple classifications like "near_res" and "near_ip_0".
+            #near_res must assume precedence. So drop the redundant types till no error. 
+            print("Initial order is: ", order)        
+            
+            # grab the missing index from the error and remove from "order" list iteratively
+            # order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
+            # e =  "['near_ip_0'] not in index"#test case
+            s=str(e)
+            rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list
+            print("rem_val is: ", rem_val)
+            order.remove(rem_val)
+            print("order is now: ", order)
+            
+        else:
+            pop_list_flag =0
         
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
         fig_2 = px.scatter(df_ordered, x="x", y="y", text= text_disp, color='type', 
@@ -2540,9 +2537,7 @@ if __name__ == '__main__':
 
 
 # In[14]:
-view_rm_lm= ['rm_sw_lemt']
-view_rm_lm = clf_view_6 + view_rm_lm
-print(view_rm_lm)
+
 # In[15]:
 
     
