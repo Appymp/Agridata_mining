@@ -5,8 +5,9 @@
 
 ## New version 4!-Final stretch additions
 
-##Wednesday Jan 5th-morning. The Steel Box
-    # 2 word clouds rendered. One with a zscore slider for influencer classification.
+## Saturday Jan 8th-night. Ammathi
+    # Multiple input word2vec math ready
+    # Error handling resolved.
     
 
     
@@ -1128,6 +1129,8 @@ import numpy as np #with zscore
 
 from collections import Counter
 
+import ast
+
 ############
 app_launch_start=datetime.now() #Set start time for program start
 
@@ -1407,7 +1410,7 @@ app.layout = dbc.Container([
             dcc.Input(
                 id='input_2',
                 type='text',
-                placeholder='king',  # A hint to the user of what can be entered in the control
+                placeholder='',  # A hint to the user of what can be entered in the control
                 debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
                 min=2015, max=2019, step=1,         # Ranges of numeric value. Step refers to increments
                 minLength=0, maxLength=50,          # Ranges for character length inside input box
@@ -1416,16 +1419,16 @@ app.layout = dbc.Container([
                 readOnly=False,                     # Make input box read only
                 required=False,                     # Require user to insert something into input box
                 size="7",                          # Sets width of box. If exceeds col width then overrides it
-                ), width={'size': 1}, style={'textAlign': "left"}  #text size 5 corresponds to width size 0.75
+                ), width={'size': 1, 'offset' : 2}, style={'textAlign': "center"}  #text size 5 corresponds to width size 0.75
             ),
         
-        dbc.Col(html.P("-"), width={'size':0.5}), #total width to be 0.6. Balance with offset. textAlign:center not working
+        dbc.Col(html.H3("-"), width={'size':0.5}, style={'textAlign' : "center"}), #total width to be 0.6. Balance with offset. textAlign:center not working
         
         dbc.Col(
             dcc.Input(
                 id='input_3',
                 type='text',
-                placeholder='man',  # A hint to the user of what can be entered in the control
+                placeholder='',  # A hint to the user of what can be entered in the control
                 debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
                 min=2015, max=2019, step=1,         # Ranges of numeric value. Step refers to increments
                 minLength=0, maxLength=50,          # Ranges for character length inside input box
@@ -1434,16 +1437,16 @@ app.layout = dbc.Container([
                 readOnly=False,                     # Make input box read only
                 required=False,                     # Require user to insert something into input box
                 size="7",                          # Number of characters that will be visible inside box
-                ), width={'size': 1}, style={'textAlign': "left"} 
+                ), width={'size': 1}, style={'textAlign': "center"} 
             ),
         
-        dbc.Col(html.P("+"),width={'size': 0.5}),
+        dbc.Col(html.H3("+"),width={'size': 0.5}, style={'textAlign' : "center"}),
 
         dbc.Col(
             dcc.Input(
                 id='input_4',
                 type='text',
-                placeholder='woman',  # A hint to the user of what can be entered in the control
+                placeholder='',  # A hint to the user of what can be entered in the control
                 debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
                 min=2015, max=2019, step=1,         # Ranges of numeric value. Step refers to increments
                 minLength=0, maxLength=50,          # Ranges for character length inside input box
@@ -1452,16 +1455,16 @@ app.layout = dbc.Container([
                 readOnly=False,                     # Make input box read only
                 required=False,                     # Require user to insert something into input box
                 size="7",                          # Number of characters that will be visible inside box
-                ), width={'size': 1}, style={'textAlign': "left"} 
+                ), width={'size': 1}, style={'textAlign': "center"} 
             ),
         
-        dbc.Col(html.P("="),width={'size':0.5}),
+        dbc.Col(html.H3("="),width={'size':0.5}, style={'textAlign' : "center"}),
         
         dbc.Col(
             dcc.Input(
                 id='output_1',
                 type='text',
-                placeholder='queen',  # A hint to the user of what can be entered in the control
+                placeholder='',  # A hint to the user of what can be entered in the control
                 debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
                 min=2015, max=2019, step=1,         # Ranges of numeric value. Step refers to increments
                 minLength=0, maxLength=50,          # Ranges for character length inside input box
@@ -1470,7 +1473,7 @@ app.layout = dbc.Container([
                 readOnly=False,                     # Make input box read only
                 required=False,                     # Require user to insert something into input box
                 size="7",                          # Number of characters that will be visible inside box
-                ), width={'size': 1}, style={'textAlign': "left"} 
+                ), width={'size': 1}, style={'textAlign': "center"} 
             ),
         ],no_gutters=False),
 
@@ -2097,10 +2100,12 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     
     print("ip_vocab_index, word, type is: ", ip_vocab_index, tsne_df_full.loc[ip_vocab_index,'word'],tsne_df_full.loc[ip_vocab_index,'type'])
     print("ip_nearest_ix, word, type is: ", ip_nearest_ix,tsne_df_full.loc[ip_nearest_ix,'word'], tsne_df_full.loc[ip_nearest_ix,'type'])
-    print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
-    
-    tsne_plot_df = tsne_df_full.loc[plot_index]
-        
+    # print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
+    try:
+        tsne_plot_df = tsne_df_full.loc[plot_index]
+    except UnboundLocalError as e:
+        print(e)
+        pass
             
     ctx = dash.callback_context
     if ctx.triggered:
@@ -2116,21 +2121,17 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
                 text_disp = 'word'
                 
             else:
-                text_disp = None
-                
-                
-    #accomodate edge cases where input ex"near_ip_0" does not exist etc.    
-    # Unique values in the column
-    types_available= tsne_plot_df.type.unique()
+                text_disp = None        
     
     if nearest_size != 0 :
         order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
  
     else:
         order  = ["ip_0", "ip_1", "ip_2", "res"]
-       
+        
+    #accomodate edge cases where input ex"near_ip_0" does not exist etc.        
     pop_list_flag = 1
-    while pop_list_flag == 1:
+    while pop_list_flag == 1: #To iteratively remove undefined inputs
         try:
             df = tsne_plot_df.set_index('type') #set as index so that order can be specified 
             df_ordered = df.T[order].T.reset_index()
@@ -2142,16 +2143,30 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
             #near_res must assume precedence. So drop the redundant types till no error. 
             print("Initial order is: ", order)        
             
-            # grab the missing index from the error and remove from "order" list iteratively
-            # order  = ["ip_0", "ip_1", "ip_2", "res","near_ip_0", "near_ip_1", "near_ip_2", "near_res"]
-            # e =  "['near_ip_0'] not in index"#test case
+            #-----------
+            # import ast
+            # e="['ip_2', 'near_ip_2'] not in index"
             s=str(e)
-            rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list
-            print("rem_val is: ", rem_val)
-            order.remove(rem_val)
-            print("order is now: ", order)
+            # rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list
             
-        else:
+            rem_val=s[s.find("["):s.find("]")+1]
+            # print("initial type of rem_val is: ", type(rem_val))
+            
+            rem_val = ast.literal_eval(rem_val)
+            # print("final type of rem_val is: ", type(rem_val))
+            # print("1st element of rem_val is: ", rem_val[0])
+            # print("rem_val is: ", rem_val)
+            
+            
+            order.remove(rem_val[0])
+            print("order is now: ", order)
+        
+        except UnboundLocalError as e:
+            print(e)
+            pop_list_flag =0 #Else it continues in an endless while loop
+            break
+        
+        else: #if try is succesful, end the while loop.s
             pop_list_flag =0
         
     try:    #if fig_1 is in the main program, "referenced before assignment" error.
@@ -2171,26 +2186,42 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     
     except UnboundLocalError as e:
         print (e)
-        fig_2 = px.scatter(df_ordered, x="x", y="y", text= 'word', color='type', 
-                           color_discrete_map={
-                                "ip_0": "#7bc043", #green- most natural word by essence "concept1" 
-                                 "ip_1": "#fdf498", #yellow- noticeable contrast from "concept1"; "concept2a"                                
-                                 "ip_2": "#f37736", #orange- "concept2b"lighter contrast from "concept2a"; clear contrast from concept1 and noticeable difference from 2a
-                                 "res": "#ee4035", #red- attracts first attention; strange that it should make sense. result should be analagous to ip1. The largest perceived context for the user. 
-                                 "near_ip_0": "#339900", 
-                                 "near_ip_1": "#ffcc00",
-                                 "near_ip_2": "#ff9966",                                 
-                                 "near_res": "#cc3300"},
-                           hover_name = 'word', log_x=False)
-        pass
-
-    fig_2.update_traces(textposition='top center')      
-    fig_2.update_layout(legend_traceorder="normal")
-    fig_2.update_layout(margin=dict(l=0, r=0), uirevision = True)
+        try:
+            fig_2 = px.scatter(df_ordered, x="x", y="y", text= 'word', color='type', 
+                               color_discrete_map={
+                                    "ip_0": "#7bc043", #green- most natural word by essence "concept1" 
+                                     "ip_1": "#fdf498", #yellow- noticeable contrast from "concept1"; "concept2a"                                
+                                     "ip_2": "#f37736", #orange- "concept2b"lighter contrast from "concept2a"; clear contrast from concept1 and noticeable difference from 2a
+                                     "res": "#ee4035", #red- attracts first attention; strange that it should make sense. result should be analagous to ip1. The largest perceived context for the user. 
+                                     "near_ip_0": "#339900", 
+                                     "near_ip_1": "#ffcc00",
+                                     "near_ip_2": "#ff9966",                                 
+                                     "near_res": "#cc3300"},
+                               hover_name = 'word', log_x=False)
+        
+        except UnboundLocalError as e:
+            print(e)
+            pass
     
-    return (fig_2), res_ten_in[0]
-
-
+    
+    try:
+        fig_2.update_traces(textposition='top center')      
+        fig_2.update_layout(legend_traceorder="normal")
+        fig_2.update_layout(margin=dict(l=0, r=0), uirevision = True)
+        return (fig_2), res_ten_in[0]
+    
+    except Exception as e:
+        print("No return values. Error: ",e)
+        raise dash.exceptions.PreventUpdate
+        pass
+    
+    
+    # try:    
+    #     return (fig_2), res_ten_in[0]
+    # except UnboundLocalError as e:
+    #     print(e)
+    #     return (), res_ten_in[0]
+    #     pass
 
 
 ################################ Arbitrary_graphing_inputbox ################################
