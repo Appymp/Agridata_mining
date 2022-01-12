@@ -5,9 +5,8 @@
 
 ## New version 4!-Final stretch additions
 
-## Saturday Jan 8th-night. Ammathi
-    # Multiple input word2vec math ready
-    # Error handling resolved.
+## Wedesday Jan 12th-evening. TSB
+    # Some code reordering. cleanup. 
     
 
     
@@ -306,6 +305,8 @@ print("Execution time ", s[:-5])
 
 # In[9]: Language countplot
 ##visualise the new transformations
+df_updated = pd.read_csv('App_dataframe.csv')
+
 print("Making countplot..")
 plt.figure(figsize=(16,6))
 ax= sns.countplot(x= 'det_lang', data=df_updated, order = df_updated['det_lang'].value_counts(ascending=False).index)
@@ -342,14 +343,16 @@ ex_row_list.append(3) #add exemplar accents in differnt language
 print("\nLoading test Word Cloud..")
 start=datetime.now()
 
-word_string = ""
-for ind,row in df_updated.iterrows():
-    word_string += (row['web_links']+" ")
-    
+# df_updated['clean_captions'][10] #test individual rows
+
+word_string = " ".join(df_updated['clean_captions'].dropna().astype(str)) #which column to generate WC for
+# print(word_string[10:1000])
+
+
 #Define stopwords
 # type(STOPWORDS) #set
 # len(STOPWORDS) #192
-en_stopwords = stopwords.words('english') #179
+en_stopwords = stopwords.words('english') #179ii
 fr_stopwords = stopwords.words('french') #157
 web_links_sw = ['www','http','https','com']
 
@@ -390,16 +393,21 @@ print("Reading in dataframe for app with filters and duplicate removal..")
 ad_1=pd.read_csv("App_dataframe.csv")
 ad_1.shape
 ad_2=ad_1[ad_1['det_lang']=='en'] #filter only english, removes appr 33%
+print("Only English posts",len(ad_2))
+
 ad_3=ad_2[ad_2['query']=='#organic'] #filter only #organic scrape query, removes 33%
+print("Only organic posts: ", len(ad_3))
+
 ad_4=ad_3.drop_duplicates(subset=['postId']) #remove dupl posts, removes 12.5% 
+print("After duplicate removal: ", len(ad_4))
 
 ad_4.drop(['Unnamed: 0','ix','Unnamed: 0.1'],axis =1,inplace=True)
 
-#Create new index for proper selection of the filtered table in app
+#Create new index for proper selection of the filtered table in appl
 ad_4.reset_index(inplace= True,drop=True)
 ad_4.reset_index(inplace= True)
 ad_4.rename(columns={"index": "ix"},inplace=True) #replace index so that can keep proper ref after dropping rows
-ad_4['ix']=comb_df['ix'].astype(str) #convert to string type
+ad_4['ix']=ad_4['ix'].astype(str) #convert to string type
 
 #ad_4.to_csv("App_dataframe_2.csv", index_label = False)
 
@@ -413,14 +421,6 @@ import preprocessor as p
 
 ad_4= pd.read_csv("App_dataframe_2.csv")
 
-def remove_stop_words(data): #takes 5:25 mins for the full dataset
-    """
-    Split/tokenize the words first. Create a list of tokens for each.
-    Iterate each token removing stop words from text. 
-    """
-    row_tokens = data.split()
-    return [word for word in row_tokens if not word in stopwords.words("english")] # 25 s for 100return the word only if not in the stop words list
-    # return [word for word in row_tokens if not word in set(stopwords.words("english"))] 
 
 #define function to remove newly identified punctuations/encodings
 def addi_treatment(s): #Move this to the main preprocessing block if required
@@ -434,6 +434,16 @@ def addi_treatment(s): #Move this to the main preprocessing block if required
 def preprocess_tweet(row):
     text = p.clean(row) # removes hashtags,emojis,urls, mentions, smileys
     return text
+
+def remove_stop_words(data): #takes 5:25 mins for the full dataset
+    """
+    Split/tokenize the words first. Create a list of tokens for each.
+    Iterate each token removing stop words from text. 
+    """
+    row_tokens = data.split()
+    return [word for word in row_tokens if not word in stopwords.words("english")] # 25 s for 100return the word only if not in the stop words list
+    # return [word for word in row_tokens if not word in set(stopwords.words("english"))] 
+
 
 
 
@@ -670,7 +680,7 @@ def co_occ_windows(sentences, window_size):
             vocab.add(token)  # add to vocab
             # print("vocab set now contains: ",vocab)
             
-            coocc_window = text[i+1 : i+1+window_size] #Rolling window scope; sparse
+            coocc_window = text[i+1 : i+1+window_size] #Rolling ahead window scope; sparse
             # coocc_window = text # full post scope; dense; takes too long
             # coocc_window = text[i-1-window_size : i+1+window_size] #Rolling bidirectional window.redundant.
             # print("coocc_window is: ",coocc_window) #test
