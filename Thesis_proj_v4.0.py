@@ -1324,13 +1324,13 @@ app.layout = dbc.Container([
             dcc.Graph(id='wordcloud', figure={}, config={'displayModeBar': True},
                        style={'width':'600px' ,'height':'350px'}),
                 )
-        #,width={'size': 6},  width = {'size': 5, 'offset':1}
             ],no_gutters=False),
     
 
 ################################### ROW4-Headers 2  ###########################
     dbc.Row([
-            dbc.Col(html.H2("Word2vec input"), width={'size':2}),
+            dbc.Col(html.H2("Vector exploration"), width={'size':2}),
+            
             
             dbc.Col(
                 dbc.Button(id='add1_button', n_clicks=0, children="Add", className="mt-5 mr-2"),            
@@ -1348,47 +1348,16 @@ app.layout = dbc.Container([
                 dbc.Button(id='plt1_button', n_clicks=0, children="Plot", className="mt-5 mr-2"),            
                 width={'size': 0.5}, style={'textAlign': "left"}),
             
-            # dbc.Col(
-            #     dcc.Dropdown(id='vector_dd_1', multi=False,
-            #           options=[{'label': x, 'value': x} for x in [100,200,300]],
-            #           value=100, #initial values to pass
-            #           className="mt-5 mr-2",
-            #           style={'width':'150px'}
-            #           ),
-            #     width={'size':2, 'offset':0}, style={'textAlign': "left"}),
-            
             dbc.Col(
                 dbc.Button(id='words_tog', n_clicks=0, children="words", className="mt-5 mr-2"),            
                 width={'size': 1, 'offset':1}, style={'textAlign': "left"}), #size 0.5
             
-            dbc.Col(html.H2("Word2vec math"), width={'size':5}, style={'textAlign': "center"}), #If the width of col breaks, then width parameter is ignored 
             
-            
-            
-            # dbc.Col(
-            #     dcc.Dropdown(id='vector_dd_2', multi=False,
-            #           options=[{'label': x, 'value': x} for x in [100,200,300]],
-            #           value=100, #initial values to pass
-            #           className="mt-5 mr-2",
-            #           style={'width':'150px'}
-            #           ),
-            #     width={'size':2, 'offset':0}, style={'textAlign': "left"}),
-            
-            # dbc.Col(
-            #     dcc.Dropdown(id='wind_dd_1', multi=False,
-            #           options=[{'label': x, 'value': x} for x in [2,3,4,5]],
-            #           value=5, #initial values to pass
-            #           className="mt-5 mr-2",
-            #           style={'width':'150px'}
-            #           ),
-            #     width={'size':2, 'offset':0}, style={'textAlign': "left"}),
+            dbc.Col(html.H2("Vector math"), width={'size':5}, style={'textAlign': "center"}), #If the width of col breaks, then width parameter is ignored 
+           
             
             ], no_gutters=False),
 
-
-# for i in [100,200,300]:
-#     print(type(i))
-#     print(i)    
  
 ################################### ROW5-Input_boxs ###########################
     dbc.Row([
@@ -2108,9 +2077,17 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         # print("After filtering, plot_index now is: ", plot_index)
         pass
     
-    print("ip_vocab_index, word, type is: ", ip_vocab_index, tsne_df_full.loc[ip_vocab_index,'word'],tsne_df_full.loc[ip_vocab_index,'type'])
-    print("ip_nearest_ix, word, type is: ", ip_nearest_ix,tsne_df_full.loc[ip_nearest_ix,'word'], tsne_df_full.loc[ip_nearest_ix,'type'])
-    # print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
+    # print("ip_vocab_index, word, type is: ", ip_vocab_index, tsne_df_full.loc[ip_vocab_index,'word'],tsne_df_full.loc[ip_vocab_index,'type'])
+    # print("ip_nearest_ix, word, type is: ", ip_nearest_ix,tsne_df_full.loc[ip_nearest_ix,'word'], tsne_df_full.loc[ip_nearest_ix,'type'])
+    
+    
+    try:
+        print("res_ten_index, word, type is: ", res_ten_index,tsne_df_full.loc[res_ten_index,'word'], tsne_df_full.loc[res_ten_index,'type'])
+    except UnboundLocalError as e:
+        print(e)
+        pass
+    
+    
     try:
         tsne_plot_df = tsne_df_full.loc[plot_index]
     except UnboundLocalError as e:
@@ -2139,7 +2116,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
     else:
         order  = ["ip_0", "ip_1", "ip_2", "res"]
         
-    #accomodate edge cases where input ex"near_ip_0" does not exist etc.        
+    #accomodate edge cases where input ex "near_ip_0" does not exist etc.        
     pop_list_flag = 1
     while pop_list_flag == 1: #To iteratively remove undefined inputs
         try:
@@ -2152,22 +2129,13 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
             #Edge cases where same word is near multiple classifications like "near_res" and "near_ip_0".
             #near_res must assume precedence. So drop the redundant types till no error. 
             print("Initial order is: ", order)        
-            
-            #-----------
-            # import ast
-            # e="['ip_2', 'near_ip_2'] not in index"
+
             s=str(e)
-            # rem_val=s[s.find("[")+2:s.find("]")-1] #find term to remove from the order list
             
             rem_val=s[s.find("["):s.find("]")+1]
-            # print("initial type of rem_val is: ", type(rem_val))
             
             rem_val = ast.literal_eval(rem_val)
-            # print("final type of rem_val is: ", type(rem_val))
-            # print("1st element of rem_val is: ", rem_val[0])
-            # print("rem_val is: ", rem_val)
-            
-            
+           
             order.remove(rem_val[0])
             print("order is now: ", order)
         
@@ -2190,8 +2158,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
                                  "near_ip_0": "#339900", 
                                  "near_ip_1": "#ffcc00",
                                  "near_ip_2": "#ff9966",                                 
-                                 "near_res": "#cc3300"},
-                           
+                                 "near_res": "#cc3300"},                           
                            log_x=False, hover_name = 'word') 
     
     except UnboundLocalError as e:
@@ -2224,15 +2191,7 @@ def word2vec_math(ip1,ip2,ip3,slider2_val,word_tog):
         print("No return values. Error: ",e)
         raise dash.exceptions.PreventUpdate
         pass
-    
-    
-    # try:    
-    #     return (fig_2), res_ten_in[0]
-    # except UnboundLocalError as e:
-    #     print(e)
-    #     return (), res_ten_in[0]
-    #     pass
-
+  
 
 ################################ Arbitrary_graphing_inputbox ################################
 
@@ -2349,6 +2308,8 @@ def svd_user_inputs(ad,rem,clr,plot_butt,slider_val,word_tog,ip_tog):
             a=w2v.most_similar(word, topn = nearest_size)
             clos_ten_in = [i[0] for i in a]
             clos_ten_out.append(clos_ten_in)
+            # clos_ten_words = [i[1] for i in a]
+            print("close_ten_words are: ",clos_ten_out)
         except ValueError as e:#Empty word None input
             print(e)
             pass
