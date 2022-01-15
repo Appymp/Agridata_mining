@@ -650,27 +650,47 @@ print("rm_sw_lemt counting time: ", t[:-5]) #1:48 mins
 
 #ad_5.to_pickle("App_dataframe_4.pkl", protocol=0) #with 2 new columns stemming and lemmatization
 #make sure to export the new dataframe with the stemming and lemmatization
+# In[12.b]: #More filtering of the dataframe App_dataframe_4->App_dataframe_5
 
+ ##Filter out duplicate posts and create another pickle App_dataframe_5
+
+ad_6=pd.read_pickle('App_dataframe_4.pkl')
+len(ad_6) # 35131
+
+ad_7 = ad_6.drop_duplicates(subset=['caption_processed_4'])
+len(ad_7) # from 35131 of ad_6, ad_7 is reduced to 30240; Another 14.2% drop in the rows.
+
+ad7.drop(['ix'], axis=1, inplace = True) #drop any older 'ix' columns
+ad7.reset_index(inplace= True,drop=True) #reset and drop old index
+ad7.reset_index(inplace= True) #create new ix column
+ad7.rename(columns={"index": "ix"},inplace=True) 
+
+# ad7.to_pickle("App_dataframe_5.pkl", protocol=0)
+
+len(ad_7)
 
 # In[12]: #Window cooccurence matrix; save('co_occ_arr.npy'); choose 'rm_sw_lemt'
 # Takes a long time. Run this only for new datasets.
 
 from collections import defaultdict
 
-ad_6=pd.read_pickle('App_dataframe_4.pkl')
+# ad_6=pd.read_pickle('App_dataframe_4.pkl')
+ad_6=pd.read_pickle('App_dataframe_5.pkl') #duplicate posts removed. 
 
 words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']] #row_list represents each words in each row
 print("Bag of words created..")
-words_rm_sw_lemt
-text=words_rm_sw_lemt #full dataset around 11 mins?. window 2 [shape 45925]
-# text=words_rm_sw_lemt[:100] #1:20 mins for coocc output shape 1920
-# text=words_rm_sw_lemt[:200] # is it linear? yes 3:10 mins shape 2230; 8.5 to 9hr for full. 3:10 mins on colab too
+len(words_rm_sw_lemt)
+words_rm_sw_lemt[:10]
+
+text=words_rm_sw_lemt #full dataset 
+# text=words_rm_sw_lemt[:1000] #4862secs 6584 shape 
+# text=words_rm_sw_lemt[:200] \
 # text=words_rm_sw_lemt[:1000]
 
 # text = words_rm_sw_lemt[5:6]
 text
 def co_occ_windows(sentences, window_size):
-    d = defaultdict(int)
+    d = defaultdict(int) #gives default vaue for non-existing keys
     vocab = set()
     for text in sentences: #text is each post within full bag
         print(text)
@@ -690,11 +710,12 @@ def co_occ_windows(sentences, window_size):
                 key = tuple( sorted([t, token]) )
                 # print("key is: ",key)
                 d[key] += 1 #at the tuple key, increase the value by 1
-                print("default dict value at key is: ",d[key]) #Each key is a tuple and is unique. added with 1. And these will sum over themselves for other posts. 
+                # print("default dict value at key is: ",d[key]) #Each key is a tuple and is unique. added with 1. And these will sum over themselves for other posts. 
     
     
     # formulate the dictionary into dataframe
     vocab = sorted(vocab) # sort vocab
+    # print("Sorted vocab at index is", vocab[0])
     df = pd.DataFrame(data=np.zeros((len(vocab), len(vocab)), dtype=np.int16),
                       index=vocab,
                       columns=vocab) #Initialise a dataframe of zeroes
@@ -713,17 +734,19 @@ print("Time for execution: ", t[:-5])
 co_occ_arr =co_occ_df.to_numpy() #convert to an array
 co_occ_arr 
 from numpy import save #Have to import explicitly to save array as binary
-save('co_occ_arr_w4.npy', co_occ_arr)
+# save('ad5_co_occ_arr_w4.npy', co_occ_arr)
 
 
 # In[12]Perform Singular Value Decomposition on the array. SVD_matrix.npy
 
 from numpy import load
-# co_occ_arr = load('co_occ_arr_w2.npy')
-co_occ_arr = load('co_occ_arr_w4.npy')
+# co_occ_arr = load('co_occ_arr_w2.npy') #41526
+co_occ_arr = load('ad5_co_occ_arr_w4.npy') #shape 41526
 
-ad_6=pd.read_pickle('App_dataframe_4.pkl')
+print("shape of co-occ matrix is: ", co_occ_arr.shape)
 
+# ad_6=pd.read_pickle('App_dataframe_4.pkl')
+ad_6=pd.read_pickle('App_dataframe_5.pkl') #duplicate posts removed. 
 
 from sklearn.decomposition import TruncatedSVD    
 
@@ -748,8 +771,8 @@ print(type(Coocc_svd_matrix))
 
 from numpy import save 
 # save('svd_rand_w2.npy', Coocc_svd_matrix) #Randomised svd done here
-save('svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
-
+# save('svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
+# save('ad5_svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
 
 
 # In[12]: Matplotlib text plot. Looks primitive. Do not use.
@@ -786,31 +809,48 @@ save('svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
 # #plt.savefig('svd_arpack_w3.png')
 
 
-# In[12]: Create df for plotting with plotly 
+# In[12]: Co-occurrence plot with plotly
 ########## For specific word list.
 
 
 # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
 # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
-coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
+coocc_svd_matrix = load('ad5_svd_arpack_w4.npy') #Load arpack mode
 
-# # instantiate words only once
-# ad_6=pd.read_pickle('App_dataframe_4.pkl')
+# # -----instantiate this block only once
+# ad_6=pd.read_pickle('App_dataframe_5.pkl') #df_8hrs is converted to string for col combining in app
+# # ad_6= pd.read_pickle("df_8hrs.pkl") 
+# ad_6['rm_sw_lemt']
 # words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
+
+# print("Number of rows are: ", len(words_rm_sw_lemt))
+
+
+# print(words_rm_sw_lemt[1])
+# len(words_rm_sw_lemt[1])
+
 # inst=CooccEmbedding(words_rm_sw_lemt) 
 # print("instantiating vocab..")
 # vocab_full=inst.vocabulary()#3:02 mins. keep instantiated before app start
 # print("vocab initiated")
+## ------
 
-vocab_to_plot = vocab_full #entire word vocab. Common for all window sizes 
+len(vocab_full) #41526
+
+# vocab_to_plot = vocab_full #entire word vocab. Common for all window sizes 
 # len(vocab_full) #41526
 # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
+certs = ['gots','oeko','cosmos','ecocert','fsc'] #certifications
+fruits = ['apple', 'orange']
+rel_concs = ['fruits', 'certification','textile']
 
+vocab_to_plot = certs + fruits + rel_concs
 
 print("Making dict_to_plot..")
 start=datetime.now()
 dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
-# dict_to_plot
+print("Dict_to_plot is ",dict_to_plot)
+
 wl1=str(datetime.now()-start)
 print("Time to make dict_to_plot: ", wl1[:-5])
 
@@ -821,6 +861,8 @@ for word, ind in dict_to_plot.items():
     data_list.append(row_list)
     
 # print(data_list)
+type(coocc_svd_matrix)
+print(coocc_svd_matrix.shape)
 
 vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
 wl2=str(datetime.now()-start)
@@ -830,21 +872,36 @@ vocab_words_df.dtypes
 
 # vocab_words_df.to_pickle("vocab_words_svd_w2.pkl", protocol=0)
 # vocab_words_df.to_pickle("vocab_words_svd_w3.pkl", protocol=0)
-vocab_words_df.to_pickle("vocab_words_svd_w4.pkl", protocol=0)
+# vocab_words_df.to_pickle("vocab_words_svd_w4.pkl", protocol=0)
+# vocab_words_df.to_pickle("ad5_vocab_words_svd_w4.pkl", protocol=0)
+print(vocab_words_df)
+
+# In[12]: Visualise plotly scatter  (run previous cell for plot words update)
+import plotly.io as pio #To plot in browser
+pio.renderers.default='browser' 
+# pio.renderers.default='svg' #inside spyder. not working
+# pio.renderers
+fig = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60,
+                  # trendline = "rolling",
+                  hover_name = 'word'
+                  )
+fig.update_traces(textposition='top center')
+fig.show()    
 
 
 
-# In[12]: Visualise plotly scatter  
+# In[12]: Simulate app plotly scatter  
 #Plot the scatter
 
 # vocab_words_df=pd.read_pickle("vocab_words_svd_w2.pkl") #Has to be stored as pickle. Otherwise does not plot when read back.
 # vocab_words_df=pd.read_pickle("vocab_words_svd_w3.pkl")
-vocab_words_df=pd.read_pickle("vocab_words_svd_w4.pkl")
-
+# vocab_words_df=pd.read_pickle("vocab_words_svd_w4.pkl")
+vocab_words_df=pd.read_pickle("ad5_vocab_words_svd_w4.pkl")
 
 ######################Simultate app control flow#######################
 
-df_updated=pd.read_pickle('App_dataframe_4.pkl')
+# df_updated=pd.read_pickle('App_dataframe_4.pkl')
+df_updated=pd.read_pickle('App_dataframe_5.pkl')
 df_updated.rename(columns={"caption_processed_4": "description"},inplace=True)
 
 ###Interactive dash table selection            
@@ -891,26 +948,8 @@ fig2.update_layout(margin=dict(l=0, r=0))
 
 return (fig2)
 
-# In[12]: ##Filter out duplicate posts and create another pickle App_dataframe_5
-
-ad_6=pd.read_pickle('App_dataframe_4.pkl')
-len(ad_6) # 35131
-
-ad_7 = ad_6.drop_duplicates(subset=['caption_processed_4'])
-len(ad_7) # from 35131 of ad_6, ad_7 is reduced to 30240; Another 14.2% drop in the rows.
-
-ad7.drop(['ix'], axis=1, inplace = True) #drop any older 'ix' columns
-ad7.reset_index(inplace= True,drop=True) #reset and drop old index
-ad7.reset_index(inplace= True) #create new ix column
-ad7.rename(columns={"index": "ix"},inplace=True) 
-
-ad7.to_pickle("App_dataframe_5.pkl", protocol=0)
-
-
-len(ad_7)
-
     
-# In[12]: ## Word2vec model and saving glove.txt files
+# In[12]: ## Word2vec model and saving .txt files
 import os
 import re
 import time
@@ -1015,7 +1054,7 @@ w2v.most_similar(positive=['king','food'])
  
 
 
-# In[12]: Scatter plot logic including hue.
+# In[12]: w2v Scatter plot logic including hue.
 # import plotly as
 # Toggle text dislay on and off. 
 # Bold word name in hover text
@@ -1086,16 +1125,6 @@ len(df_time_elaps_2['postId'].unique())
 #logistic regression of this to obtain the classification 
 
 
-# In[13]: Classification: Topic modelling
-
-
-
-
-
-
-
-#In Dr_Lulu case, postIds are all uique but the timestamp have only 13 unique out of 34.
-
 # In[12]:
 ##Dashboard application Test shift to dbc.Container
 print("\nStarting dashboard app...")
@@ -1153,13 +1182,13 @@ start = datetime.now()
 
 
 #Other supporting dataframes
-coocc_svd_matrix_2 = load('svd_arpack_w2.npy') 
-coocc_svd_matrix_3 = load('svd_arpack_w3.npy') 
-coocc_svd_matrix_4 = load('svd_arpack_w4.npy') 
+# coocc_svd_matrix_2 = load('svd_arpack_w2.npy') 
+# coocc_svd_matrix_3 = load('svd_arpack_w3.npy') 
+# coocc_svd_matrix_4 = load('svd_arpack_w4.npy') 
 
-vocab_words_df_2 = pd.read_pickle('vocab_words_svd_w2.pkl')    
-vocab_words_df_3 = pd.read_pickle('vocab_words_svd_w3.pkl')      
-vocab_words_df_4 = pd.read_pickle('vocab_words_svd_w4.pkl')  
+# vocab_words_df_2 = pd.read_pickle('vocab_words_svd_w2.pkl')    
+# vocab_words_df_3 = pd.read_pickle('vocab_words_svd_w3.pkl')      
+# vocab_words_df_4 = pd.read_pickle('vocab_words_svd_w4.pkl')  
 
 tsne_100d_w5_df = pd.read_pickle('tsne_100d_w5_df.pkl')
 tsne_200d_w5_df = pd.read_pickle('tsne_200d_w5_df.pkl')
@@ -2213,11 +2242,20 @@ def vocab_list(add,rem,clr,inp_1):
         trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
         
         if trigger == 'add1_button':
-            print("Input word added: ",inp_1)
-            vocab_plot_list.append(inp_1)
-            print("vocab_list is: ",vocab_plot_list )
-            value=''
-            return vocab_plot_list, value
+            if ',' in inp_1: #if typing a list directly split into its words
+                inp_1=inp_1.replace(" ", "") #remove whitespace
+                split_words=inp_1.split(',')
+                print("Input words added are: ",split_words)
+                vocab_plot_list.extend(split_words)
+                value=''
+                return vocab_plot_list, value
+            
+            else:
+                print("Input word added: ",inp_1)
+                vocab_plot_list.append(inp_1)
+                print("vocab_list is: ",vocab_plot_list )
+                value=''
+                return vocab_plot_list, value
         
         
         if trigger == 'rem1_button':   
@@ -2309,14 +2347,14 @@ def svd_user_inputs(ad,rem,clr,plot_butt,slider_val,word_tog,ip_tog):
             clos_ten_in = [i[0] for i in a]
             clos_ten_out.append(clos_ten_in)
             # clos_ten_words = [i[1] for i in a]
-            print("close_ten_words are: ",clos_ten_out)
+            
         except ValueError as e:#Empty word None input
             print(e)
             pass
         except KeyError as e: #Word not in vocab
             print(e)    
             pass            
-    
+    print("close_ten_words are: ",clos_ten_out)
     clos_ten_flat = [item for sublist in clos_ten_out for item in sublist]
     clos_ten_index = list(tsne_df_full[tsne_df_full['word'].isin(clos_ten_flat)].index.values)  
     
