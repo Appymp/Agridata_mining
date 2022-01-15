@@ -5,8 +5,9 @@
 
 ## New version 4!-Final stretch additions
 
-## Wedesday Jan 12th-evening. TSB
-    # Some code reordering. cleanup. 
+## Saturday Jan 15th-evening. TSB
+    # Deleted old matplotlib graph
+    
     
 
     
@@ -669,7 +670,7 @@ ad7.rename(columns={"index": "ix"},inplace=True)
 
 len(ad_7)
 
-# In[12]: #Window cooccurence matrix; save('co_occ_arr.npy'); choose 'rm_sw_lemt'
+# In[12]: #Cooccurence array; save('co_occ_arr.npy'); choose 'rm_sw_lemt'
 # Takes a long time. Run this only for new datasets.
 
 from collections import defaultdict
@@ -680,10 +681,10 @@ ad_6=pd.read_pickle('App_dataframe_5.pkl') #duplicate posts removed.
 words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']] #row_list represents each words in each row
 print("Bag of words created..")
 len(words_rm_sw_lemt)
-words_rm_sw_lemt[:10]
+# words_rm_sw_lemt
 
 text=words_rm_sw_lemt #full dataset 
-# text=words_rm_sw_lemt[:1000] #4862secs 6584 shape 
+# text=words_rm_sw_lemt[:1000] #4862secs 6584 shape; 3.7 secs for 1000
 # text=words_rm_sw_lemt[:200] \
 # text=words_rm_sw_lemt[:1000]
 
@@ -715,6 +716,9 @@ def co_occ_windows(sentences, window_size):
     
     # formulate the dictionary into dataframe
     vocab = sorted(vocab) # sort vocab
+    global custom_vocab
+    custom_vocab = vocab #test object
+    
     # print("Sorted vocab at index is", vocab[0])
     df = pd.DataFrame(data=np.zeros((len(vocab), len(vocab)), dtype=np.int16),
                       index=vocab,
@@ -726,22 +730,29 @@ def co_occ_windows(sentences, window_size):
     
 #Test out the function
 start=datetime.now()
-co_occ_df = co_occ_windows(text,4) #full array w4 takes 24:25 mins
+# co_occ_df = co_occ_windows(text,4) #full array w4 takes 24:25 mins
+co_occ_df = co_occ_windows(text,5) #full array w5 takes  mins
 print("shape of co_occ matrix is: ",co_occ_df.shape)
 t=str(datetime.now() - start)
 print("Time for execution: ", t[:-5])
-   
+
+print("Custom vocab shape: ", custom_vocab)
+print("First 10 vocab shape: ", custom_vocab[:10])
+    
+
 co_occ_arr =co_occ_df.to_numpy() #convert to an array
 co_occ_arr 
 from numpy import save #Have to import explicitly to save array as binary
 # save('ad5_co_occ_arr_w4.npy', co_occ_arr)
-
+# save('ad5_co_occ_arr_w5.npy', co_occ_arr)
 
 # In[12]Perform Singular Value Decomposition on the array. SVD_matrix.npy
 
 from numpy import load
 # co_occ_arr = load('co_occ_arr_w2.npy') #41526
-co_occ_arr = load('ad5_co_occ_arr_w4.npy') #shape 41526
+# co_occ_arr = load('ad5_co_occ_arr_w4.npy') #shape 41526
+co_occ_arr = load('ad5_co_occ_arr_w5.npy') #shape 41526
+
 
 print("shape of co-occ matrix is: ", co_occ_arr.shape)
 
@@ -773,41 +784,7 @@ from numpy import save
 # save('svd_rand_w2.npy', Coocc_svd_matrix) #Randomised svd done here
 # save('svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
 # save('ad5_svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
-
-
-# In[12]: Matplotlib text plot. Looks primitive. Do not use.
-# #Direct call in the app from here below
-# # coocc_svd_matrix = load('svd_rand_w2.npy') #Load randomised mode
-# # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
-# coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
-# # coocc_svd_matrix = load('svd_arpack_w4.npy') #Load arpack mode
-
-
-# vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
-# dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
-# dict_to_plot
-
-# # x_lim_min= min()
-# x_lim_range=[]
-# y_lim_range=[]
-# for word, ind in dict_to_plot.items():
-#     print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-#     x_lim_range.append(coocc_svd_matrix[ind, 0])
-#     y_lim_range.append(coocc_svd_matrix[ind, 1])    
-#     # x_buffer=(max(x_lim_range)-min(x_lim_range))/20
-#     # y_buffer
-    
-#     plt.xlim(min(x_lim_range)-0.06,max(x_lim_range)+0.1)
-#     plt.ylim(min(y_lim_range)-0.02,max(y_lim_range)+0.02)
-#     plt.text(coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1], word) #plot at this index the 1st and 2nd vector of svd
-#     # plt.title("For window size 2 cocurence svd_randomised")
-#     plt.title("For window size 3 coocurence svd_arpack")
-    
-    
-# # print("Range of x_limits: ",max(x_lim_range)-min(x_lim_range))
-# # print("Range of y_limits: ",max(y_lim_range)-min(y_lim_range))
-# #plt.savefig('svd_arpack_w3.png')
-
+# save('ad5_svd_arpack_w5.npy', Coocc_svd_matrix) #arpack algo used
 
 # In[12]: Co-occurrence plot with plotly
 ########## For specific word list.
@@ -815,40 +792,42 @@ from numpy import save
 
 # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
 # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
-coocc_svd_matrix = load('ad5_svd_arpack_w4.npy') #Load arpack mode
+# coocc_svd_matrix = load('ad5_svd_arpack_w4.npy') #Load arpack mode
+coocc_svd_matrix = load('ad5_svd_arpack_w5.npy') #Load arpack mode
 
-# # -----instantiate this block only once
-# ad_6=pd.read_pickle('App_dataframe_5.pkl') #df_8hrs is converted to string for col combining in app
-# # ad_6= pd.read_pickle("df_8hrs.pkl") 
-# ad_6['rm_sw_lemt']
-# words_rm_sw_lemt=[row_list for row_list in ad_6['rm_sw_lemt']]
+ad_6=pd.read_pickle('App_dataframe_5.pkl') #df_8hrs is converted to string for col combining in app
 
-# print("Number of rows are: ", len(words_rm_sw_lemt))
-
-
-# print(words_rm_sw_lemt[1])
-# len(words_rm_sw_lemt[1])
-
-# inst=CooccEmbedding(words_rm_sw_lemt) 
-# print("instantiating vocab..")
-# vocab_full=inst.vocabulary()#3:02 mins. keep instantiated before app start
-# print("vocab initiated")
-## ------
-
-len(vocab_full) #41526
-
-# vocab_to_plot = vocab_full #entire word vocab. Common for all window sizes 
+print("Custom vocab head 10: ",custom_vocab[:10])
+# print("Coocc vocab head 10: ",coocc_vocab[:10])
+custom_vocab[-10:-1]
+cust_vocab = custom_vocab #entire word vocab. Common for all window sizes 
 # len(vocab_full) #41526
 # vocab_to_plot = ['packaging', 'vanilla', 'coffee','cacao', 'sustainable','skincare','aroma']
 certs = ['gots','oeko','cosmos','ecocert','fsc'] #certifications
 fruits = ['apple', 'orange']
 rel_concs = ['fruits', 'certification','textile']
 
-vocab_to_plot = certs + fruits + rel_concs
+# vocab_to_plot = certs + fruits + rel_concs
+vocab_to_plot = cust_vocab #full vocab
 
 print("Making dict_to_plot..")
 start=datetime.now()
-dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot)
+
+#custom_vocab and co_occ vocab are indexed differently. coocc mat is based on custom(sorted) vocab
+# dict_to_plot = inst.vocab_ind_to_plot(vocab_to_plot) #with above finding instantiating coocc class is redundant.
+
+#dict_to_plot for the custom_vocab 
+def vocab_ind_to_plot(cust_vocab, vocab_to_plot):
+        """
+        Takes in the a list of full vocabulary and list to plot and returns a dictionary in the form of
+        {word:index} which is a subeset of the vocabulary.
+        """
+        vocab_dict = dict(zip(cust_vocab, range(len(cust_vocab)))) #custom vocab is sorted
+        dic_to_plot = {key:value for key, value in vocab_dict.items() if key in vocab_to_plot} #Returns index of original vocab for each word in the vocab to plot.
+        return dic_to_plot
+
+dict_to_plot = vocab_ind_to_plot(cust_vocab, cust_vocab)
+
 print("Dict_to_plot is ",dict_to_plot)
 
 wl1=str(datetime.now()-start)
@@ -857,7 +836,8 @@ print("Time to make dict_to_plot: ", wl1[:-5])
 data_list=[]
 for word, ind in dict_to_plot.items():
     # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-    row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
+    #coocc mat does not have words. And it is indexed in vocab sorted.
+    row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]] 
     data_list.append(row_list)
     
 # print(data_list)
@@ -866,21 +846,30 @@ print(coocc_svd_matrix.shape)
 
 vocab_words_df= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
 wl2=str(datetime.now()-start)
-print("Time till vocab_words_df ready: ", wl2[:-5])
+print("Time till vocab_words_df ready: ", wl2[:-5]) #55secs for full vocab 41526 words
 vocab_words_df
 vocab_words_df.dtypes
 
 # vocab_words_df.to_pickle("vocab_words_svd_w2.pkl", protocol=0)
 # vocab_words_df.to_pickle("vocab_words_svd_w3.pkl", protocol=0)
 # vocab_words_df.to_pickle("vocab_words_svd_w4.pkl", protocol=0)
-# vocab_words_df.to_pickle("ad5_vocab_words_svd_w4.pkl", protocol=0)
-print(vocab_words_df)
+# vocab_words_df.to_pickle("ad5_vocab_words_svd_w5.pkl", protocol=0)
+# print(vocab_words_df)
 
-# In[12]: Visualise plotly scatter  (run previous cell for plot words update)
+# In[12]: Visualise plotly scatter  - Coocc SVD vectors
 import plotly.io as pio #To plot in browser
 pio.renderers.default='browser' 
 # pio.renderers.default='svg' #inside spyder. not working
 # pio.renderers
+vocab_words_df_full=pd.read_pickle('ad5_vocab_words_svd_w5.pkl') #full vocab index
+certs = ['gots','oeko','cosmos','ecocert','fsc'] #certifications
+fruits = ['apple', 'orange']
+rel_concs = ['fruits', 'certification','textile', 'cosmetics']
+vocab_to_plot = certs + fruits + rel_concs
+
+#filtered plot df
+vocab_words_df = vocab_words_df_full[vocab_words_df_full['word'].isin(vocab_to_plot)]
+
 fig = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60,
                   # trendline = "rolling",
                   hover_name = 'word'
@@ -2324,7 +2313,8 @@ def svd_user_inputs(ad,rem,clr,plot_butt,slider_val,word_tog,ip_tog):
     # Then execute the Word math input fields.
     
     # vocab_to_plot = ['vanilla','organic','sustainable','cacao']
-    vocab_to_plot = vocab_plot_list
+    # vocab_to_plot = vocab_plot_list #initialised at the start of program
+    vocab_to_plot = vocab_full#initialised in Co-occ code chunk ()
     
     # tsne_df_full = tsne_df
     tsne_df_full = tsne_300d_w5_df
