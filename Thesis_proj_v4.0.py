@@ -701,9 +701,15 @@ def co_occ_windows(sentences, window_size):
             vocab.add(token)  # add to vocab
             # print("vocab set now contains: ",vocab)
             
-            coocc_window = text[i+1 : i+1+window_size] #Rolling ahead window scope; sparse
-            # coocc_window = text # full post scope; dense; takes too long
-            # coocc_window = text[i-1-window_size : i+1+window_size] #Rolling bidirectional window.redundant.
+            # #test----
+            # text=['1','2','3','4','5','6','7']
+            # i= 1
+            # window_size =2
+            # #test----
+            
+            
+            # coocc_window = text[i+1 : i+1+window_size] #Rolling ahead window scope; sparse
+            coocc_window = text[i-window_size : i] + text[i+1 : i+1+window_size]  #Rolling bidirectional window. Blind spots at start and end.
             # print("coocc_window is: ",coocc_window) #test
             
                         
@@ -730,8 +736,8 @@ def co_occ_windows(sentences, window_size):
     
 #Test out the function
 start=datetime.now()
-# co_occ_df = co_occ_windows(text,4) #full array w4 takes 24:25 mins
-co_occ_df = co_occ_windows(text,5) #full array w5 takes  mins
+# co_occ_df = co_occ_windows(text,5) #full array w4 takes 24:25 mins rolling ahead 
+co_occ_df = co_occ_windows(text,2) #bidrectional. Effective window size is 5 takes  mins
 print("shape of co_occ matrix is: ",co_occ_df.shape)
 t=str(datetime.now() - start)
 print("Time for execution: ", t[:-5])
@@ -745,14 +751,15 @@ co_occ_arr
 from numpy import save #Have to import explicitly to save array as binary
 # save('ad5_co_occ_arr_w4.npy', co_occ_arr)
 # save('ad5_co_occ_arr_w5.npy', co_occ_arr)
+# save('ad5_co_occ_arr_w5_bi.npy', co_occ_arr)
 
 # In[12]Perform Singular Value Decomposition on the array. SVD_matrix.npy
 
 from numpy import load
 # co_occ_arr = load('co_occ_arr_w2.npy') #41526
 # co_occ_arr = load('ad5_co_occ_arr_w4.npy') #shape 41526
-co_occ_arr = load('ad5_co_occ_arr_w5.npy') #shape 41526
-
+# co_occ_arr = load('ad5_co_occ_arr_w5.npy') #shape 41526
+co_occ_arr = load('ad5_co_occ_arr_w5_bi.npy') #shape 41526
 
 print("shape of co-occ matrix is: ", co_occ_arr.shape)
 
@@ -785,6 +792,7 @@ from numpy import save
 # save('svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
 # save('ad5_svd_arpack_w4.npy', Coocc_svd_matrix) #arpack algo used
 # save('ad5_svd_arpack_w5.npy', Coocc_svd_matrix) #arpack algo used
+# save('ad5_svd_arpack_w5_bi.npy', Coocc_svd_matrix) #arpack algo used
 
 # In[12]: Co-occurrence plot with plotly
 ########## For specific word list.
@@ -793,7 +801,8 @@ from numpy import save
 # coocc_svd_matrix = load('svd_arpack_w2.npy') #Load arpack mode
 # coocc_svd_matrix = load('svd_arpack_w3.npy') #Load arpack mode
 # coocc_svd_matrix = load('ad5_svd_arpack_w4.npy') #Load arpack mode
-coocc_svd_matrix = load('ad5_svd_arpack_w5.npy') #Load arpack mode
+# coocc_svd_matrix = load('ad5_svd_arpack_w5.npy') #Load arpack mode
+coocc_svd_matrix = load('ad5_svd_arpack_w5_bi.npy') #Load arpack mode
 
 ad_6=pd.read_pickle('App_dataframe_5.pkl') #df_8hrs is converted to string for col combining in app
 
@@ -854,6 +863,7 @@ vocab_words_df.dtypes
 # vocab_words_df.to_pickle("vocab_words_svd_w3.pkl", protocol=0)
 # vocab_words_df.to_pickle("vocab_words_svd_w4.pkl", protocol=0)
 # vocab_words_df.to_pickle("ad5_vocab_words_svd_w5.pkl", protocol=0)
+# vocab_words_df.to_pickle("ad5_vocab_words_svd_w5_bi.pkl", protocol=0)
 # print(vocab_words_df)
 
 # In[12]: Visualise plotly scatter  - Coocc SVD vectors
@@ -861,81 +871,24 @@ import plotly.io as pio #To plot in browser
 pio.renderers.default='browser' 
 # pio.renderers.default='svg' #inside spyder. not working
 # pio.renderers
-vocab_words_df_full=pd.read_pickle('ad5_vocab_words_svd_w5.pkl') #full vocab index
+# vocab_words_df_full=pd.read_pickle('ad5_vocab_words_svd_w5.pkl') #corrected word index
+vocab_words_df_full=pd.read_pickle('ad5_vocab_words_svd_w5_bi.pkl') #corrected word index
+
 certs = ['gots','oeko','cosmos','ecocert','fsc'] #certifications
-fruits = ['apple', 'orange']
+fruits = ['apple', 'orange', 'vanilla','cacao']
+consc = ['sustainably', 'ethically']
 rel_concs = ['fruits', 'certification','textile', 'cosmetics']
 vocab_to_plot = certs + fruits + rel_concs
 
 #filtered plot df
 vocab_words_df = vocab_words_df_full[vocab_words_df_full['word'].isin(vocab_to_plot)]
 
-fig = px.scatter(vocab_words_df, x="x", y="y", text="word", log_x=False, size_max=60,
+fig = px.scatter(vocab_words_df_full, x="x", y="y", text="word", log_x=False, size_max=60,
                   # trendline = "rolling",
                   hover_name = 'word'
                   )
 fig.update_traces(textposition='top center')
 fig.show()    
-
-
-
-# In[12]: Simulate app plotly scatter  
-#Plot the scatter
-
-# vocab_words_df=pd.read_pickle("vocab_words_svd_w2.pkl") #Has to be stored as pickle. Otherwise does not plot when read back.
-# vocab_words_df=pd.read_pickle("vocab_words_svd_w3.pkl")
-# vocab_words_df=pd.read_pickle("vocab_words_svd_w4.pkl")
-vocab_words_df=pd.read_pickle("ad5_vocab_words_svd_w4.pkl")
-
-######################Simultate app control flow#######################
-
-# df_updated=pd.read_pickle('App_dataframe_4.pkl')
-df_updated=pd.read_pickle('App_dataframe_5.pkl')
-df_updated.rename(columns={"caption_processed_4": "description"},inplace=True)
-
-###Interactive dash table selection            
-if len(chosen_rows) == 0:        
-    raise dash.exceptions.PreventUpdate
-
-
-# main_table_index = [row['ix'] for row in filtered_table]   #filtered table has its own index. So grab main table index from 'ix' 
-main_table_index = chosen_rows
-
-print("Main table index is: ", main_table_index)
-
-rm_sw_lemt_ser=df_updated[df_updated.index.isin(main_table_index)].rm_sw_lemt
-# type(rm_sw_lemt_ser)
-
-print(rm_sw_lemt_ser)
-# len(set(rm_sw_lemt_ser[4]))
-# print(set(rm_sw_lemt_ser))
-
-######Testing above code#######
-
-flat_rm_sw_lemt_ser=[item for row_list in rm_sw_lemt_ser for item in row_list] #flatten list of lists into a single list
-print("Total number of words in rows: ",len(flat_rm_sw_lemt_ser))
-# len(set(flat_rm_sw_lemt_ser))
-unique_words = list(set(flat_rm_sw_lemt_ser))
-print("Number of unique words are: ",len(unique_words))
-print("Unique words are: ",unique_words)    
-to_plot = unique_words #pass list of unique words from dash table filter selection.
-         
-dict_to_plot = inst.vocab_ind_to_plot(to_plot)
-
-data_list=[]
-for word, ind in dict_to_plot.items():
-    # print(word, coocc_svd_matrix[ind, 0],coocc_svd_matrix[ind, 1])
-    row_list=[word, coocc_svd_matrix[ind, 0], coocc_svd_matrix[ind, 1]]
-    data_list.append(row_list)
-
-vocab_words_df_list= pd.DataFrame.from_records(data_list, columns=['word','x','y'])  
-
-fig2 = px.scatter(vocab_words_df_list, x="x", y="y", text="word", log_x=False, size_max=60)
-fig2.update_traces(textposition='top center')
-
-fig2.update_layout(margin=dict(l=0, r=0))
-
-return (fig2)
 
     
 # In[12]: ## Word2vec model and saving .txt files
@@ -1090,28 +1043,6 @@ fig3.show()
 
 #Make the text justify options to make viewing better in app
 
-# In[13]: Classification of each post
-
-df_time_elaps = pd.read_pickle('App_dataframe_5.pkl') #duplicate caption posts removed. most recent df
-
-#
-#Attempt topic modelling using the descriptions. OR try dashtable manual classifications.
-
-
-disp1=['ix','caption_processed_4','hashtags','cap_mentions','postId','timestamp','web_links'] 
-
-df_time_elaps_1 = df_time_elaps[disp1]
-df_time_elaps_1.rename(columns={"caption_processed_4": "description"},inplace=True)
-
-
-
-
-
-df_time_elaps_2=df_disp_1[df_disp_1['cap_mentions']=='@dr_lulu_herbal_cure_'] #34    
-len(df_time_elaps_2['postId'].unique())
-
-#get the timestamp of sourcing and calc time elapsed. unitise likes per unit time.
-#logistic regression of this to obtain the classification 
 
 
 # In[12]:
@@ -1237,11 +1168,14 @@ col_sels = ['description','hashtags','cap_mentions','web_links']   #values for d
 col_sels_2 = ['description','hashtags','web_links','cap_mentions','username','fullName']   #values for dropdown
 
 input_boxs = ['text','text']
-# vocab_plot_list=[]
-vocab_plot_list = ['vanilla', 'cacao', 'sustainable', 'agriculture', 'pharma','aroma','beauty','organic'] #Default plot list for svd_1
-# input_boxes1=['text','text','text','text']
 input_boxes1 = ('text','text','text')
 
+#Default vocab to plot
+certs = ['gots','oeko','cosmos','ecocert','fsc'] #certifications
+fruits = ['apple', 'orange', 'vanilla','cacao']
+consc = ['sustainably', 'ethically']
+rel_concs = ['fruits', 'certification','textile', 'cosmetics']
+vocab_plot_list = certs + fruits + rel_concs
 
 #---------------------------------------------------------------
 
@@ -2314,7 +2248,7 @@ def svd_user_inputs(ad,rem,clr,plot_butt,slider_val,word_tog,ip_tog):
     
     # vocab_to_plot = ['vanilla','organic','sustainable','cacao']
     # vocab_to_plot = vocab_plot_list #initialised at the start of program
-    vocab_to_plot = vocab_full#initialised in Co-occ code chunk ()
+    # vocab_to_plot = vocab_full#initialised in Co-occ code chunk ()
     
     # tsne_df_full = tsne_df
     tsne_df_full = tsne_300d_w5_df
