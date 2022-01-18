@@ -794,7 +794,7 @@ from numpy import save
 # save('ad5_svd_arpack_w5.npy', Coocc_svd_matrix) #arpack algo used
 # save('ad5_svd_arpack_w5_bi.npy', Coocc_svd_matrix) #arpack algo used
 
-# In[12]: Co-occurrence plot with plotly
+# In[12]: svd array->plotting dataframe
 ########## For specific word list.
 
 
@@ -1042,7 +1042,37 @@ fig3.update_traces(textposition='top center')
 fig3.show()    
 
 #Make the text justify options to make viewing better in app
+# In[13]: co-occurrence visualisations
+#instantiate the sorted vocab in the co-occ code block
+#
+from numpy import load 
+co_occ_arr = load('ad5_co_occ_arr_w5_bi.npy') #shape 41526
+# clf_table=pd.read_pickle("df_8hrs.pkl") #str col for rm_sw_lemt. but not unique words
+clf_table = pd.read_pickle("App_dataframe_5.pkl") #list col rm_sw_lemt
 
+# flat_list = [item for row_str in clf_table['rm_sw_lemt'] for item in row_str.split()] #str col
+flat_list = [item for row_list in clf_table['rm_sw_lemt'] for item in row_list] #list col
+len(flat_list) #total words in the corpus 799068 (df_8hr), 813922(App_dataframe_5)
+len(set(flat_list)) #41526 (AD_5)
+
+vocab = sorted(set(flat_list))
+
+co_occ_df = pd.DataFrame(data = co_occ_arr, 
+                        index = vocab, 
+                        columns = vocab)
+
+co_occ_df
+# co_occ_df.to_pickle("co_occ_df.pkl", protocol=0) #hangs the kernel
+
+#datastructure for bar chart
+type(co_occ_df['organic'])
+word = 'textile'
+co_occ_plot = co_occ_df[word].sort_values(ascending=False).head(30)
+co_occ_plot = co_occ_plot.reset_index()
+mapping = {co_occ_plot.columns[0]:'word', co_occ_plot.columns[1]: 'counts'}
+co_occ_plot = co_occ_plot.rename(columns=mapping)
+
+co_occ_plot
 
 
 # In[12]:
@@ -1110,13 +1140,13 @@ start = datetime.now()
 # vocab_words_df_3 = pd.read_pickle('vocab_words_svd_w3.pkl')      
 # vocab_words_df_4 = pd.read_pickle('vocab_words_svd_w4.pkl')  
 
-tsne_100d_w5_df = pd.read_pickle('tsne_100d_w5_df.pkl')
-tsne_200d_w5_df = pd.read_pickle('tsne_200d_w5_df.pkl')
+# tsne_100d_w5_df = pd.read_pickle('tsne_100d_w5_df.pkl')
+# tsne_200d_w5_df = pd.read_pickle('tsne_200d_w5_df.pkl')
 tsne_300d_w5_df = pd.read_pickle('tsne_300d_w5_df.pkl')
 
-tsne_300d_w4_df = pd.read_pickle('tsne_300d_w4_df.pkl')
-tsne_300d_w3_df = pd.read_pickle('tsne_300d_w3_df.pkl')
-tsne_300d_w2_df = pd.read_pickle('tsne_300d_w2_df.pkl')
+# tsne_300d_w4_df = pd.read_pickle('tsne_300d_w4_df.pkl')
+# tsne_300d_w3_df = pd.read_pickle('tsne_300d_w3_df.pkl')
+# tsne_300d_w2_df = pd.read_pickle('tsne_300d_w2_df.pkl')
 
 
 #try and except for quick reloading of the w2v object.
@@ -1140,6 +1170,19 @@ clf_table['Domain']='' #new entry columns
 clf_view_6=['ix','time_delta_hours','likeCount','commentCount','likes_pr_min','caption_processed_4','Inf_Non', 'Domain','hashtags','username','fullName']
 clf_dashtable=clf_table[clf_view_6]
 clf_dashtable.rename(columns={"caption_processed_4": "description"},inplace=True)
+
+
+#------get vocab & initialise dataframe
+co_occ_table = pd.read_pickle("App_dataframe_5.pkl") #list col rm_sw_lemt
+flat_list_co_occ = [item for row_list in co_occ_table['rm_sw_lemt'] for item in row_list] #list col
+vocab = sorted(set(flat_list))
+
+co_occ_arr = load('ad5_co_occ_arr_w5_bi.npy') #shape 41526
+co_occ_df = pd.DataFrame(data = co_occ_arr, 
+                        index = vocab, 
+                        columns = vocab)
+#------
+
 
 print("Dataframes loaded")
 t=datetime.now() - start 
@@ -1511,7 +1554,9 @@ app.layout = dbc.Container([
                     4: {'label': '4'}
                     }),                 
             width={'size': 2}),
-            ]),    
+        
+        
+            ], no_gutters = False),    
     
     
     
@@ -1577,14 +1622,8 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col(html.H2("Posts count of distinct words"), width={'size':2}),
-        
-        # dbc.Col(
-        #     dbc.Button(id='sel-button_2', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
-        #             width={'size': 0.5}, style={'textAlign': "left"}), 
-        
-        # dbc.Col(
-        #     dbc.Button(id='desel-button_2', n_clicks=0, children="Des_all", className="mt-5"),
-        #     width={'size': 0.5}, style={'textAlign':"left"}),    
+         
+        dbc.Col(html.H2("Co-occurrence counts"), width={'size':2, 'offset':4}),
             ],no_gutters=False),
 
 ############################ ROW12-Slider for most common ##############################    
@@ -1603,14 +1642,50 @@ app.layout = dbc.Container([
                     40: {'label': '40', 'style': {'color': '#f50'}},
                     }),                 
             width={'size': 2}),
-            ]),  
+       
+        dbc.Col(
+            dcc.Input(
+                id='co_occ_ip',
+                type='text',
+                placeholder='',  # A hint to the user of what can be entered in the control
+                debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
+                minLength=0, maxLength=50,          # Ranges for character length inside input box
+                autoComplete='on',
+                disabled=False,                     # Disable input box
+                readOnly=False,                     # Make input box read only
+                required=False,                     # Require user to insert something into input box
+                size="7",                          # Sets width of box. If exceeds col width then overrides it
+                ), width={'size': 2, 'offset' : 4}, style={'textAlign': "center"}),  #text size 5 corresponds to width size 0.75
+        dbc.Col(
+            dcc.Slider( 
+                id='slider_co_occ',
+                min=10,
+                max=40,
+                step=1,
+                value=10,
+                marks={
+                    10: {'label': '10', 'style': {'color': '#77b0b1'}},
+                    20: {'label': '20'},
+                    30: {'label': '30'},
+                    40: {'label': '40', 'style': {'color': '#f50'}},
+                    }),                 
+            width={'size': 2})
+        
+        
+        
+            ], no_gutters=False),  
 
 ############################ ROW13-Bar_chart for distinct word count ##############################    
     dbc.Row([
         dbc.Col(
             dcc.Graph(id='bar_chart_1'), 
             width={'size': 6}
-                )
+                ),
+        dbc.Col(
+            dcc.Graph(id='bar_chart_2'), 
+            width={'size': 6}
+                ),
+        
             ],no_gutters=False),
         ],fluid=True) #closes initial dbc container
 
@@ -1620,7 +1695,33 @@ app.layout = dbc.Container([
          ############           #CALLBACKS         ############
 ################################ App Callbacks #########################################################
 
-################################ Barchart_1 post count distinct words ################################
+################################ Barcharts co-occ counts################################
+
+@app.callback(
+    Output(component_id='bar_chart_2', component_property='figure'),
+    [Input(component_id='co_occ_ip', component_property='value'),
+    Input(component_id='slider_co_occ', component_property='value')],
+    prevent_initial_call=True,
+)
+
+
+def barchart_2(co_occ_ip,slider):
+    
+    word = co_occ_ip
+    head_values = slider
+    co_occ_plot = co_occ_df[word].sort_values(ascending=False).head(head_values)
+    co_occ_plot = co_occ_plot.reset_index()
+
+    mapping = {co_occ_plot.columns[0]:'word', co_occ_plot.columns[1]: 'counts'}
+    co_occ_plot = co_occ_plot.rename(columns=mapping)
+
+
+    fig_br2 = px.bar(co_occ_plot, x="counts", y="word", title="Count of co-occurences", orientation = 'h')
+    fig_br2.update_layout(yaxis=dict(autorange="reversed"))
+    return fig_br2
+
+################################ Barcharts distinct words ###############
+
 
 @app.callback(
     Output(component_id='bar_chart_1', component_property='figure'),
@@ -1670,9 +1771,9 @@ def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
             values = np.array(values)[indSort]
             indexes = np.arange(len(labels))
             
-            word_count_df = pd.DataFrame({'label': labels, 'values': values}, columns=['label', 'values'])  
+            word_count_df = pd.DataFrame({'word': labels, 'posts_count': values}, columns=['word', 'posts_count'])  
             
-            fig_br1 = px.bar(word_count_df, x="values", y="label", title="Number of posts by unique word", orientation = 'h')
+            fig_br1 = px.bar(word_count_df, x="posts_count", y="word", title="Number of posts by unique word", orientation = 'h')
             fig_br1.update_layout(yaxis=dict(autorange="reversed"))
             
             return (fig_br1)
@@ -2247,7 +2348,7 @@ def svd_user_inputs(ad,rem,clr,plot_butt,slider_val,word_tog,ip_tog):
     # Then execute the Word math input fields.
     
     # vocab_to_plot = ['vanilla','organic','sustainable','cacao']
-    # vocab_to_plot = vocab_plot_list #initialised at the start of program
+    vocab_to_plot = vocab_plot_list #initialised at the start of program
     # vocab_to_plot = vocab_full#initialised in Co-occ code chunk ()
     
     # tsne_df_full = tsne_df
