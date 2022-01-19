@@ -1709,16 +1709,26 @@ def barchart_2(co_occ_ip,slider):
     
     word = co_occ_ip
     head_values = slider
-    co_occ_plot = co_occ_df[word].sort_values(ascending=False).head(head_values)
-    co_occ_plot = co_occ_plot.reset_index()
+    
+    try:
+        co_occ_plot = co_occ_df[word].sort_values(ascending=False).head(head_values)
+        co_occ_plot = co_occ_plot.reset_index()
 
-    mapping = {co_occ_plot.columns[0]:'word', co_occ_plot.columns[1]: 'counts'}
-    co_occ_plot = co_occ_plot.rename(columns=mapping)
+    except KeyError as e:
+        print("\n word not in vocab: ", e)
 
+    try:
+        mapping = {co_occ_plot.columns[0]:'word', co_occ_plot.columns[1]: 'counts'}
+        co_occ_plot = co_occ_plot.rename(columns=mapping)
+        fig_br2 = px.bar(co_occ_plot, x="counts", y="word", title="Count of co-occurences", orientation = 'h')
+        fig_br2.update_layout(yaxis=dict(autorange="reversed"))
+        return fig_br2
 
-    fig_br2 = px.bar(co_occ_plot, x="counts", y="word", title="Count of co-occurences", orientation = 'h')
-    fig_br2.update_layout(yaxis=dict(autorange="reversed"))
-    return fig_br2
+    except UnboundLocalError as e:
+        print(e)
+        raise dash.exceptions.PreventUpdate
+
+    
 
 ################################ Barcharts distinct words ###############
 
