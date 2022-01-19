@@ -1206,7 +1206,7 @@ print("Total time taken to launch app", al[:-5])
 #---------------------------------------------------------------
 #Initialising variables outside the callbacks
 
-#for fropdowns
+#for dropdowns
 col_sels = ['description','hashtags','cap_mentions','web_links']   #values for dropdown_1
 col_sels_2 = ['description','hashtags','web_links','cap_mentions','username','fullName']   #values for dropdown
 
@@ -1220,6 +1220,8 @@ consc = ['sustainably', 'ethically']
 rel_concs = ['fruits', 'certification','textile', 'cosmetics']
 vocab_plot_list = certs + fruits + rel_concs
 
+z_init = 5 #arbitrary init
+z_init2 = 5 #arbitrary init
 #---------------------------------------------------------------
 
 app.layout = dbc.Container([    
@@ -1545,7 +1547,7 @@ app.layout = dbc.Container([
                 min=0,
                 max=4,
                 step=0.25,
-                value=3,
+                value=0,
                 marks={
                     0: {'label': '0', 'style': {'color': '#77b0b1'}},
                     1: {'label': '1'},
@@ -1730,7 +1732,7 @@ def barchart_2(co_occ_ip,slider):
 
     
 
-################################ Barcharts distinct words ###############
+################################ Barcharts distinct words per post ###############
 
 
 @app.callback(
@@ -1743,6 +1745,7 @@ def barchart_2(co_occ_ip,slider):
 )
 
 def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
+    global z_init2, fig_br1 #
     z = np.abs(stats.zscore(clf_dashtable[['time_delta_hours','likes_pr_min']])) #assign z-score to bivariate   
     view_rm_lm= ['rm_sw_lemt']
     view_rm_lm = clf_view_6 + view_rm_lm
@@ -1761,32 +1764,44 @@ def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
             print("Chosen cols now contain",chosen_cols)#atleast 1 col to be selected
             
         if len(chosen_rows)==0: #if no rows selected consider all rows of z score filtered table-defined again                   
-            df_filtered = clf_dashtable_z[chosen_cols]
+            
+            #-----fast render optimization
+            if z_init2 == zscore: #if no change in the score return same object. random init at app start.
+                print("\nz_init2 is equal to zscore, z_init2 value is: ", z_init2)
+                return (fig_br1)
+                
+            else: #initialise object and set z_init value
+                print("\nElse block reached, z_init2 value is; ", z_init2)
+                z_init2 = zscore
+                print("z_init2 value updated to: ", z_init2) 
+            #-----
 
-            #Combine multiple columns into a single series for wordcloud generation
-            df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( 
-                lambda x: ' '.join(x.dropna().astype(str)),        
-                axis=1)
-            
-            #Use only unique words per post in wordcloud
-            df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
-                lambda x: ' '.join(set(x.split())))
-            
-            #Create word counts dataframe
-            flat_list = [item for row_list in df_filtered['comb_cols'] for item in row_list.split()]
-            counts = dict(Counter(flat_list).most_common(mostcomm))
-            labels, values = zip(*counts.items())
-            indSort = np.argsort(values)[::-1] # sort your values in descending order
-            labels = np.array(labels)[indSort]
-            values = np.array(values)[indSort]
-            indexes = np.arange(len(labels))
-            
-            word_count_df = pd.DataFrame({'word': labels, 'posts_count': values}, columns=['word', 'posts_count'])  
-            
-            fig_br1 = px.bar(word_count_df, x="posts_count", y="word", title="Number of posts by unique word", orientation = 'h')
-            fig_br1.update_layout(yaxis=dict(autorange="reversed"))
-            
-            return (fig_br1)
+                df_filtered = clf_dashtable_z[chosen_cols]
+    
+                #Combine multiple columns into a single series for wordcloud generation
+                df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( 
+                    lambda x: ' '.join(x.dropna().astype(str)),        
+                    axis=1)
+                
+                #Use only unique words per post in wordcloud
+                df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
+                    lambda x: ' '.join(set(x.split())))
+                
+                #Create word counts dataframe
+                flat_list = [item for row_list in df_filtered['comb_cols'] for item in row_list.split()]
+                counts = dict(Counter(flat_list).most_common(mostcomm))
+                labels, values = zip(*counts.items())
+                indSort = np.argsort(values)[::-1] # sort your values in descending order
+                labels = np.array(labels)[indSort]
+                values = np.array(values)[indSort]
+                indexes = np.arange(len(labels))
+                
+                word_count_df = pd.DataFrame({'word': labels, 'posts_count': values}, columns=['word', 'posts_count'])  
+                
+                fig_br1 = px.bar(word_count_df, x="posts_count", y="word", title="Number of posts by unique word", orientation = 'h')
+                fig_br1.update_layout(yaxis=dict(autorange="reversed"))
+                
+                return (fig_br1)
 
             
 
@@ -1819,9 +1834,9 @@ def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
     
     word_count_df = pd.DataFrame({'label': labels, 'values': values}, columns=['label', 'values'])  
     
-    fig_br1 = px.bar(word_count_df, x="values", y="label", title="Number of posts by unique word", orientation = 'h')
-    fig_br1.update_layout(yaxis=dict(autorange="reversed"))
-    return (fig_br1)
+    fig_br_1 = px.bar(word_count_df, x="values", y="label", title="Number of posts by unique word", orientation = 'h')
+    fig_br_1.update_layout(yaxis=dict(autorange="reversed"))
+    return (fig_br_1) #note change in return object name
 
 
 
@@ -1908,8 +1923,8 @@ def select_deselect(selbtn, deselbtn, z_score_trigger,selected_rows,filtered_tab
 )
 
 # chosen_cols = 'description'
-def ren_wordcloud(chosen_rows, chosen_cols,zscore):
-    global fig_wordcloud1 #for try and except
+def ren_wordcloud(chosen_rows, chosen_cols, zscore):
+    global z_init, fig_wordcloud2 #for try and except. otherwise destroyed at end of callback.
     
     z = np.abs(stats.zscore(clf_dashtable[['time_delta_hours','likes_pr_min']])) #assign z-score to bivariate 
     clf_dashtable_z=clf_dashtable.iloc[np.unique(np.where(z > zscore)[0])] #create outlier table    
@@ -1919,53 +1934,67 @@ def ren_wordcloud(chosen_rows, chosen_cols,zscore):
     clf_dashtable_z.reset_index(inplace= True) #create new ix column
     clf_dashtable_z.rename(columns={"index": "ix"},inplace=True) 
     
+    # try:
+    #     z_init
+    # except:
+    #     z_init = 5 #arbitrary initiatialisation
     
     if len(chosen_cols) > 0: #atleast 1 col to be selected
-        if len(chosen_rows)==0:                    
-            #if no rows selected consider all rows of z score filtered table-defined again            
-            df_filtered = clf_dashtable_z[chosen_cols]
-
-            print("Full Word cloud not initialised")
-            print("Initialising full word cloud..")
+        if len(chosen_rows)==0:       
+            #if zscore changed then initilaise the wordcloud to updated df
             
+            #-----fast render optimization
+            if z_init == zscore: #if no change in the score return same object. random init at app start.
+                print("\nz_init is equal to zscore, z_init value is: ", z_init)
+                return fig_wordcloud2
+                
+            else: #initialise object and set z_init value
+                print("\nElse block reached, z_init value is; ", z_init)
+                z_init=zscore
+                print("z_init value updated to: ", z_init) 
+            #-----
             
-            ####test for unique words per post
-            # df_filtered = clf_dashtable[['description', 'hashtags']].head(10)
+                #if no rows selected consider all rows of z score filtered table-defined again            
+                df_filtered = clf_dashtable_z[chosen_cols]
+    
+                print("Full Word cloud not initialised")
+                print("Initialising full word cloud..")
+               
+                df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( #Combine multiple columns into a single series for wordcloud generation
+                    lambda x: ' '.join(x.dropna().astype(str)),        
+                    axis=1)
+                
+                #Use only unique words per post in wordcloud
+                df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
+                    lambda x: ' '.join(set(x.split())))
+                
+                en_stopwords = stopwords.words('english')
+                fr_stopwords = stopwords.words('french')
+                web_links_sw = ['www','http','https','com']
+                
+                combined_stopwords = en_stopwords + fr_stopwords + web_links_sw
+                
+                print("\nNo of rows in WC are: ",len(df_filtered))
+                wordcloud = WordCloud(max_words=100,    
+                                      stopwords= combined_stopwords,
+                                      collocations=False,
+                                      color_func=lambda *args, **kwargs: "orange",
+                                      background_color='white',
+                                      width=1200, #1200,1700    
+                                      height=1000, #1000
+                                      random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
             
-            ####
-            df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( #Combine multiple columns into a single series for wordcloud generation
-                lambda x: ' '.join(x.dropna().astype(str)),        
-                axis=1)
+                # print(' '.join(df_filtered['comb_cols']))
             
-            #Use only unique words per post in wordcloud
-            df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
-                lambda x: ' '.join(set(x.split())))
+                fig_wordcloud2 = px.imshow(wordcloud, template='ggplot2',
+                                          ) #title="test wordcloud of eng and fr stopwords"
             
-            en_stopwords = stopwords.words('english')
-            fr_stopwords = stopwords.words('french')
-            web_links_sw = ['www','http','https','com']
-            
-            combined_stopwords = en_stopwords + fr_stopwords + web_links_sw
-            
-            print("\nNo of rows in WC are: ",len(df_filtered))
-            wordcloud = WordCloud(max_words=100,    
-                                  stopwords= combined_stopwords,
-                                  collocations=False,
-                                  color_func=lambda *args, **kwargs: "orange",
-                                  background_color='white',
-                                  width=1200, #1200,1700    
-                                  height=1000, #1000
-                                  random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
-        
-            # print(' '.join(df_filtered['comb_cols']))
-        
-            fig_wordcloud2 = px.imshow(wordcloud, template='ggplot2',
-                                      ) #title="test wordcloud of eng and fr stopwords"
-        
-            fig_wordcloud2.update_layout(margin=dict(l=0, r=0,b=0,t=0))
-            fig_wordcloud2.update_xaxes(visible=False)
-            fig_wordcloud2.update_yaxes(visible=False)
-            return fig_wordcloud2
+                fig_wordcloud2.update_layout(margin=dict(l=0, r=0,b=0,t=0))
+                fig_wordcloud2.update_xaxes(visible=False)
+                fig_wordcloud2.update_yaxes(visible=False)
+                
+                
+                return fig_wordcloud2
 
             
 
@@ -2499,7 +2528,7 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
 
 # chosen_cols = 'description'
 def ren_wordcloud(chosen_rows, chosen_cols):
-    global fig_wordcloud1 #for try and except
+    global fig_wordcloud1 #global for pre-app saving of the object
     if len(chosen_cols) > 0: #atleast 1 col to be selected
         if len(chosen_rows)==0:                    
             df_filtered = df_disp_1[chosen_cols] #if no rows selected consider all rows
