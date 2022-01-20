@@ -912,7 +912,7 @@ print("number of sentences is: ",len(words_rm_sw_lemt))
 train_sentences = words_rm_sw_lemt #list of lists sentences and words
 
 start=datetime.now()
-model = Word2Vec(sentences=train_sentences, sg=1,vector_size=300, window=2, min_count=1, workers=4)
+model = Word2Vec(sentences=train_sentences, sg=1,vector_size=300, window=5, min_count=1, workers=4)
 # model.save("thesis_word2vec.model") #save a part of the training
 # t=str(datetime.now()-start)
 # print("Time taken for Word2vec on full dataset is: ", t[:-5]) #28 secs for full dataset
@@ -929,7 +929,7 @@ model = Word2Vec(sentences=train_sentences, sg=1,vector_size=300, window=2, min_
 # model.wv.most_similar(['agriculture','agritech','coffee'])
 # model.wv.most_similar(['agriculture','sustainable','coffee','labour'])
 
-# model.wv.save_word2vec_format('organic_glove_300d_w4.txt') 
+# model.wv.save_word2vec_format('organic_glove_300d_w5.txt') 
 #After training full dataset save in the format
 #Try avoiding creating this text file because they are large.
 
@@ -987,12 +987,13 @@ tsne_df(w2v)
 # test_tsne_df=pd.read_pickle('tsne_100d_w5_df.pkl')
 # test_tsne_df
 # In[12]: Addition logic word2vec
-w2v.most_similar(positive=['king','woman'], negative= ['man'])
-w2v.most_similar(positive=['king','food'], negative= ['man'])
+# w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') # To load text file
+# w2v.most_similar(positive=['king','woman'], negative= ['man'])
+print(w2v.most_similar(positive=['oil','essential','carrier']))
 
-
-w2v.most_similar(positive=['king','food'], negative= ['man'])
-w2v.most_similar(positive=['king','food'])
+# w2v2 = KeyedVectors.load_word2vec_format('organic_glove_300d_w5.txt') # To load text file
+# w2v2.most_similar(positive=['king','food'], negative= ['man'])
+print("\n", w2v2.most_similar(positive=['oil','essential','carrier']))
  
 
 
@@ -1154,7 +1155,7 @@ tsne_300d_w5_df = pd.read_pickle('tsne_300d_w5_df.pkl')
 try:
     w2v
 except:
-    w2v = KeyedVectors.load_word2vec_format('organic_glove_300d.txt') #initialise only once per app run
+    w2v = KeyedVectors.load_word2vec_format('organic_glove_300d_w5.txt') #initialise only once per app run
 
 #Dashtables
 # df_updated=pd.read_pickle('App_dataframe_5.pkl') #duplicates removed
@@ -1832,9 +1833,9 @@ def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
     values = np.array(values)[indSort]
     indexes = np.arange(len(labels))
     
-    word_count_df = pd.DataFrame({'label': labels, 'values': values}, columns=['label', 'values'])  
+    word_count_df = pd.DataFrame({'word': labels, 'posts_count': values}, columns=['word', 'posts_count'])  
     
-    fig_br_1 = px.bar(word_count_df, x="values", y="label", title="Number of posts by unique word", orientation = 'h')
+    fig_br_1 = px.bar(word_count_df, x="posts_count", y="word", title="Number of posts by unique word", orientation = 'h')
     fig_br_1.update_layout(yaxis=dict(autorange="reversed"))
     return (fig_br_1) #note change in return object name
 
