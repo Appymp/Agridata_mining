@@ -1173,10 +1173,10 @@ clf_dashtable=clf_table[clf_view_6]
 clf_dashtable.rename(columns={"caption_processed_4": "description"},inplace=True)
 
 
-#------get vocab & initialise dataframe
+#------get vocab & initialise co-occurence dataframe
 co_occ_table = pd.read_pickle("App_dataframe_5.pkl") #list col rm_sw_lemt
 flat_list_co_occ = [item for row_list in co_occ_table['rm_sw_lemt'] for item in row_list] #list col
-vocab = sorted(set(flat_list))
+vocab = sorted(set(flat_list_co_occ))
 
 co_occ_arr = load('ad5_co_occ_arr_w5_bi.npy') #shape 41526
 co_occ_df = pd.DataFrame(data = co_occ_arr, 
@@ -1221,15 +1221,18 @@ consc = ['sustainably', 'ethically']
 rel_concs = ['fruits', 'certification','textile', 'cosmetics']
 vocab_plot_list = certs + fruits + rel_concs
 
-z_init = 5 #arbitrary init
-z_init2 = 5 #arbitrary init
+#other arbitrary initialisations
+z_init = 5 
+z_init2 = 5 
+wc_init = 0 
+
 #---------------------------------------------------------------
 
 app.layout = dbc.Container([    
 ################################### ROW1-Instagram Data, Sel-Desel button_1,Wordcloud ########################### 
     
     dbc.Row([
-        dbc.Col(html.H2("Instagram data"), width={'size':3}),
+        dbc.Col(html.H2("Instagram DataTable"), width={'size':3}),
         dbc.Col(
             # html.Button(id='sel-button', n_clicks=0, children="Sel_all"),
             dbc.Button(id='sel-button', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
@@ -1238,7 +1241,7 @@ app.layout = dbc.Container([
             dbc.Button(id='desel-button', n_clicks=0, children="Des_all", className="mt-5"),
             width={'size': 0.5}, style={'textAlign':"left"}),
         
-        dbc.Col(html.H2("Wordcloud"), width={'size':5, 'offset':2}, style={'textAlign' : "center"}),         
+        dbc.Col(html.H2("Wordcloud - Word frequency"), width={'size':5, 'offset':2}, style={'textAlign' : "center"}),         
         # dbc.Col([
         #     html.Button(id='my-button', n_clicks=0, children="Render wordcloud")],
         #     width={'size': 3}, style = {'textAlign' : "left"})
@@ -1515,7 +1518,7 @@ app.layout = dbc.Container([
 ############################ ROW8-"Classification Dashtable", Sel-Desel #######################
 
     dbc.Row([
-        dbc.Col(html.H2("Classification Dashtable"), width={'size':2}),
+        dbc.Col(html.H2("Z-Score adjustable DataTable"), width={'size':2}),
         
         dbc.Col(
             dbc.Button(id='sel-button_2', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
@@ -1525,7 +1528,7 @@ app.layout = dbc.Container([
             dbc.Button(id='desel-button_2', n_clicks=0, children="Des_all", className="mt-5"),
             width={'size': 0.5}, style={'textAlign':"left"}),
         
-       
+        dbc.Col(html.H2("Wordcloud - Post frequency"), width={'size':5, 'offset':3}, style={'textAlign' : "center"}),       
         
     
     
@@ -1746,7 +1749,10 @@ def barchart_2(co_occ_ip,slider):
 )
 
 def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
-    global z_init2, fig_br1 #
+    global z_init2, flat_list, fig_br1 
+    ctx = dash.callback_context
+    trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
+    
     z = np.abs(stats.zscore(clf_dashtable[['time_delta_hours','likes_pr_min']])) #assign z-score to bivariate   
     view_rm_lm= ['rm_sw_lemt']
     view_rm_lm = clf_view_6 + view_rm_lm
@@ -1767,16 +1773,32 @@ def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
         if len(chosen_rows)==0: #if no rows selected consider all rows of z score filtered table-defined again                   
             
             #-----fast render optimization
-            if z_init2 == zscore: #if no change in the score return same object. random init at app start.
+            if ((z_init2 == zscore) and (trigger not in ['my_slider_mc','my-dropdown_2'])): #if no change in the score return same object. random init at app start.
                 print("\nz_init2 is equal to zscore, z_init2 value is: ", z_init2)
                 return (fig_br1)
+            
+            if ((z_init2 == zscore) and (trigger in ['my_slider_mc'])): #uses flat_list global for most common change. 
+                counts = dict(Counter(flat_list).most_common(mostcomm))
+                labels, values = zip(*counts.items())
+                indSort = np.argsort(values)[::-1] # sort your values in descending order
+                labels = np.array(labels)[indSort]
+                values = np.array(values)[indSort]
+                indexes = np.arange(len(labels))
+                
+                word_count_df = pd.DataFrame({'word': labels, 'posts_count': values}, columns=['word', 'posts_count'])  
+                
+                fig_br_12 = px.bar(word_count_df, x="posts_count", y="word", title="Lemmatised words by post count", orientation = 'h')
+                fig_br_12.update_layout(yaxis=dict(autorange="reversed"))
+                
+                return (fig_br_12)
                 
             else: #initialise object and set z_init value
                 print("\nElse block reached, z_init2 value is; ", z_init2)
                 z_init2 = zscore
                 print("z_init2 value updated to: ", z_init2) 
             #-----
-
+                
+                mc= mostcomm #set state to track change
                 df_filtered = clf_dashtable_z[chosen_cols]
     
                 #Combine multiple columns into a single series for wordcloud generation
@@ -1799,7 +1821,7 @@ def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
                 
                 word_count_df = pd.DataFrame({'word': labels, 'posts_count': values}, columns=['word', 'posts_count'])  
                 
-                fig_br1 = px.bar(word_count_df, x="posts_count", y="word", title="Number of posts by unique word", orientation = 'h')
+                fig_br1 = px.bar(word_count_df, x="posts_count", y="word", title="Lemmatised words by post count", orientation = 'h')
                 fig_br1.update_layout(yaxis=dict(autorange="reversed"))
                 
                 return (fig_br1)
@@ -1835,7 +1857,7 @@ def barchart_1(chosen_rows, chosen_cols, zscore, mostcomm):
     
     word_count_df = pd.DataFrame({'word': labels, 'posts_count': values}, columns=['word', 'posts_count'])  
     
-    fig_br_1 = px.bar(word_count_df, x="posts_count", y="word", title="Number of posts by unique word", orientation = 'h')
+    fig_br_1 = px.bar(word_count_df, x="posts_count", y="word", title="Lemmatised words by post count", orientation = 'h')
     fig_br_1.update_layout(yaxis=dict(autorange="reversed"))
     return (fig_br_1) #note change in return object name
 
@@ -1926,6 +1948,8 @@ def select_deselect(selbtn, deselbtn, z_score_trigger,selected_rows,filtered_tab
 # chosen_cols = 'description'
 def ren_wordcloud(chosen_rows, chosen_cols, zscore):
     global z_init, fig_wordcloud2 #for try and except. otherwise destroyed at end of callback.
+    ctx = dash.callback_context
+    trigger = (ctx.triggered[0]['prop_id'].split('.')[0])
     
     z = np.abs(stats.zscore(clf_dashtable[['time_delta_hours','likes_pr_min']])) #assign z-score to bivariate 
     clf_dashtable_z=clf_dashtable.iloc[np.unique(np.where(z > zscore)[0])] #create outlier table    
@@ -1945,7 +1969,7 @@ def ren_wordcloud(chosen_rows, chosen_cols, zscore):
             #if zscore changed then initilaise the wordcloud to updated df
             
             #-----fast render optimization
-            if z_init == zscore: #if no change in the score return same object. random init at app start.
+            if ((z_init == zscore) and (trigger != 'my-dropdown_2')): #if no change in the score return same object. random init at app start.
                 print("\nz_init is equal to zscore, z_init value is: ", z_init)
                 return fig_wordcloud2
                 
@@ -1977,18 +2001,19 @@ def ren_wordcloud(chosen_rows, chosen_cols, zscore):
                 
                 print("\nNo of rows in WC are: ",len(df_filtered))
                 wordcloud = WordCloud(max_words=100,    
-                                      stopwords= combined_stopwords,
-                                      collocations=False,
-                                      color_func=lambda *args, **kwargs: "orange",
+                                      # stopwords= combined_stopwords,
+                                       # collocations=False,
+                                      # color_func=lambda *args, **kwargs: "orange",
+                                      colormap='tab20b',
                                       background_color='white',
                                       width=1200, #1200,1700    
                                       height=1000, #1000
-                                      random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
+                                      random_state=1).generate_from_text(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
             
                 # print(' '.join(df_filtered['comb_cols']))
             
                 fig_wordcloud2 = px.imshow(wordcloud, template='ggplot2',
-                                          ) #title="test wordcloud of eng and fr stopwords"
+                                          ) #title="Post frequency"
             
                 fig_wordcloud2.update_layout(margin=dict(l=0, r=0,b=0,t=0))
                 fig_wordcloud2.update_xaxes(visible=False)
@@ -2017,7 +2042,7 @@ def ren_wordcloud(chosen_rows, chosen_cols, zscore):
     
     #Use only unique words per post in wordcloud
     df_filtered['comb_cols'] = df_filtered['comb_cols'].apply(
-        lambda x: ' '.join(set(x.split())))
+        lambda x: ' '.join(set(x.split()))) #because changes up the order, bigrams become irrelevant
 
     en_stopwords = stopwords.words('english')
     fr_stopwords = stopwords.words('french')
@@ -2027,18 +2052,19 @@ def ren_wordcloud(chosen_rows, chosen_cols, zscore):
     
     print("\nNo of rows in WC are: ",len(df_filtered))
     wordcloud = WordCloud(max_words=100,    
-                          stopwords= combined_stopwords,
-                          collocations=False,
-                          color_func=lambda *args, **kwargs: "orange",
+                          # stopwords= combined_stopwords,
+                          # collocations=False,
+                          # color_func=lambda *args, **kwargs: "orange",
+                          colormap='tab20b',
                           background_color='white',
                           width=1200, #1200,1700    
                           height=1000, #1000
-                          random_state=1).generate(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
+                          random_state=1).generate_from_text(' '.join(df_filtered['comb_cols'])) #df_filtered has to be a series
 
     # print(' '.join(df_filtered['comb_cols']))
 
     fig_wordcloud_2 = px.imshow(wordcloud, template='ggplot2',
-                              ) #title="test wordcloud of eng and fr stopwords"
+                              ) #title="Post frequency" 
 
     fig_wordcloud_2.update_layout(margin=dict(l=0, r=0,b=0,t=0))
     fig_wordcloud_2.update_xaxes(visible=False)
@@ -2529,15 +2555,17 @@ def select_deselect(selbtn, deselbtn, selected_rows,filtered_table):
 
 # chosen_cols = 'description'
 def ren_wordcloud(chosen_rows, chosen_cols):
-    global fig_wordcloud1 #global for pre-app saving of the object
+    global wc_init, fig_wordcloud1 #global for pre-app saving of the object
     if len(chosen_cols) > 0: #atleast 1 col to be selected
         if len(chosen_rows)==0:                    
             df_filtered = df_disp_1[chosen_cols] #if no rows selected consider all rows
-            try: #Try and except so that it loads only once.
-                fig_wordcloud1
+            if wc_init == 1: #load once.
+                return fig_wordcloud1
                 
                 
-            except NameError:
+            else:
+                wc_init = 1 #object initialised flag set
+                
                 print("Full Word cloud not initialised")
                 print("Initialising full word cloud..")
                 df_filtered['comb_cols'] = df_filtered[df_filtered.columns[0:]].apply( #Combine multiple columns into a single series for wordcloud generation
@@ -2552,9 +2580,10 @@ def ren_wordcloud(chosen_rows, chosen_cols):
                 
                 print("\nNo of rows in WC are: ",len(df_filtered))
                 wordcloud = WordCloud(max_words=100,    
-                                      stopwords= combined_stopwords,
-                                      collocations=False,
-                                      color_func=lambda *args, **kwargs: "orange",
+                                      # stopwords= combined_stopwords,
+                                      # collocations=False,
+                                      # color_func=lambda *args, **kwargs: "orange",
+                                      colormap='tab20c',
                                       background_color='white',
                                       width=1700, #1200,1700    
                                       height=1000, #1000
@@ -2563,16 +2592,11 @@ def ren_wordcloud(chosen_rows, chosen_cols):
                 # print(' '.join(df_filtered['comb_cols']))
             
                 fig_wordcloud1 = px.imshow(wordcloud, template='ggplot2',
-                                          ) #title="test wordcloud of eng and fr stopwords"
+                                          )#title="Word frequency" 
             
                 fig_wordcloud1.update_layout(margin=dict(l=0, r=0,b=0,t=0))
                 fig_wordcloud1.update_xaxes(visible=False)
                 fig_wordcloud1.update_yaxes(visible=False)
-                return fig_wordcloud1
-                
-
-            else:
-                print("Full wordcloud already rendered. Display from cache")
                 return fig_wordcloud1
             
 
@@ -2600,9 +2624,10 @@ def ren_wordcloud(chosen_rows, chosen_cols):
     
     print("\nNo of rows in WC are: ",len(df_filtered))
     wordcloud = WordCloud(max_words=100,    
-                          stopwords= combined_stopwords,
-                          collocations=False,
-                          color_func=lambda *args, **kwargs: "orange",
+                          # stopwords= combined_stopwords,
+                          # collocations=False,
+                          # color_func=lambda *args, **kwargs: "orange",
+                          colormap='tab20c',
                           background_color='white',
                           width=1700, #1200,1700    
                           height=1000, #1000
@@ -2611,7 +2636,7 @@ def ren_wordcloud(chosen_rows, chosen_cols):
     # print(' '.join(df_filtered['comb_cols']))
 
     fig_wordcloud = px.imshow(wordcloud, template='ggplot2',
-                              ) #title="test wordcloud of eng and fr stopwords"
+                              )#title="Word frequency" 
 
     fig_wordcloud.update_layout(margin=dict(l=0, r=0,b=0,t=0))
     fig_wordcloud.update_xaxes(visible=False)
