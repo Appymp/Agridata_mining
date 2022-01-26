@@ -1075,7 +1075,152 @@ app.layout = dbc.Container([
                 )
             ],no_gutters=False),
     
-################################### ROW4-Headers 2  ###########################
+
+    
+############################ ROW4-"Classification Dashtable", Sel-Desel #######################
+    dbc.Row([
+        dbc.Col(html.H2("Z-Score adjustable DataTable"), width={'size':2}),
+        dbc.Col(
+            dbc.Button(id='sel-button_2', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
+                    width={'size': 0.5}, style={'textAlign': "left"}),         
+        dbc.Col(
+            dbc.Button(id='desel-button_2', n_clicks=0, children="Des_all", className="mt-5"),
+            width={'size': 0.5}, style={'textAlign':"left"}),        
+        dbc.Col(html.H2("Wordcloud - Post frequency"), width={'size':5, 'offset':3}, style={'textAlign' : "center"}),       
+            ],no_gutters=False),
+
+############################ ROW5-Dropdown_2 ##############################
+    dbc.Row([
+        dbc.Col(
+            dcc.Dropdown(id='my-dropdown_2', multi=True,
+                      options=[{'label': x, 'value': x} for x in col_sels_2],
+                      value=["description"], #initial values to pass
+                      style={'width':'490px'}
+                        ), width={ 'offset':0}),
+        dbc.Col(
+            dcc.Slider( 
+                id='my_slider_zscore',
+                min=0,
+                max=4,
+                step=0.25,
+                value=0,
+                marks={
+                    0: {'label': '0', 'style': {'color': '#77b0b1'}},
+                    1: {'label': '1'},
+                    2: {'label': '2'},
+                    3: {'label': '3', 'style': {'color': '#f50'}},
+                    4: {'label': '4'}
+                    }),                 
+            width={'size': 2}),
+            ], no_gutters = False),    
+    
+############################ ROW6-Clasification dashtable, WordCloud_2 ##############################
+    dbc.Row([    
+            dbc.Col(
+                dash_table.DataTable(
+                    id='datatable_2',
+                    data=clf_dashtable.to_dict('records'),
+                    columns=[
+                        {"name": i, "id": i, "deletable": False, "selectable": True} for i in clf_dashtable.columns
+                    ],
+                    editable=True,
+                    filter_action="native",
+                    sort_action="native",
+                    sort_mode="multi",
+                    row_selectable="multi",
+                    row_deletable=False,
+                    selected_rows=[], #this parameter gets updated by interactive selection
+                    page_action="native",
+                    page_current= 0,
+                    page_size= 10,    
+                    fixed_rows={ 'headers': True, 'data': 0 }, #if the header style is not defined and this is True, then the widths are not properly aligned    
+                    style_cell={ #creates a wrapping of the data to constrain column widths. applies to header and data cells
+                        'whiteSpace': 'normal',
+                        'height': 'auto',
+                        'minWidth': '50px', 'width' : '50px','maxwidth': '50px',  # minwidth of col.             
+                        },
+                    style_table={ #For parameters of the table container
+                        'height': '600px', #was 300px
+                        'width': '690px',
+                        'overflowY': 'auto'
+                    },                    
+                    style_cell_conditional=[    
+                        {'if': {'column_id': 'description'},
+                         'width': '200px', 'textAlign': 'left'},
+                    ],
+                    export_format='xlsx',                    
+                ),            
+                width={'size': 6}),               
+             dbc.Col(
+                dcc.Graph(id='wordcloud_2', figure={}, config={'displayModeBar': True},
+                           style={'width':'600px' ,'height':'600px'}), #ht was 350px
+                    )
+                ],no_gutters=False),
+
+############################ ROW7-Header "Posts count of unique words"  ##############################    
+    dbc.Row([
+        dbc.Col(html.H2("Posts count of distinct words"), width={'size':2}),
+        dbc.Col(html.H2("Co-occurrence counts"), width={'size':2, 'offset':4}),
+            ],no_gutters=False),
+    
+############################ ROW8-Slider for most common ##############################    
+    dbc.Row([
+        dbc.Col(
+            dcc.Slider( 
+                id='my_slider_mc',
+                min=10,
+                max=30,
+                step=1,
+                value=10,
+                marks={
+                    10: {'label': '10', 'style': {'color': '#77b0b1'}},
+                    20: {'label': '20'},
+                    30: {'label': '30'},
+                    40: {'label': '40', 'style': {'color': '#f50'}},
+                    }),                 
+            width={'size': 2}),
+        dbc.Col(
+            dcc.Input(
+                id='co_occ_ip',
+                type='text',
+                placeholder='',  # A hint to the user of what can be entered in the control
+                debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
+                minLength=0, maxLength=50,          # Ranges for character length inside input box
+                autoComplete='on',
+                disabled=False,                     # Disable input box
+                readOnly=False,                     # Make input box read only
+                required=False,                     # Require user to insert something into input box
+                size="7",                          # Sets width of box. If exceeds col width then overrides it
+                ), width={'size': 2, 'offset' : 4}, style={'textAlign': "center"}),  #text size 5 corresponds to width size 0.75
+        dbc.Col(
+            dcc.Slider( 
+                id='slider_co_occ',
+                min=10,
+                max=40,
+                step=1,
+                value=10,
+                marks={
+                    10: {'label': '10', 'style': {'color': '#77b0b1'}},
+                    20: {'label': '20'},
+                    30: {'label': '30'},
+                    40: {'label': '40', 'style': {'color': '#f50'}},
+                    }),                 
+            width={'size': 2})
+            ], no_gutters=False),  
+
+############################ ROW9-Bar_chart for distinct word count ##############################    
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(id='bar_chart_1'), 
+            width={'size': 6}
+                ),
+        dbc.Col(
+            dcc.Graph(id='bar_chart_2'), 
+            width={'size': 6}
+                ),
+            ],no_gutters=False),
+    
+################################### ROW10-Headers 2  ###########################
     dbc.Row([
             dbc.Col(html.H2("Vector exploration"), width={'size':2}),
             dbc.Col(
@@ -1096,7 +1241,7 @@ app.layout = dbc.Container([
             dbc.Col(html.H2("Vector math"), width={'size':5}, style={'textAlign': "center"}), #If the width of col breaks, then width parameter is ignored             
             ], no_gutters=False),
 
-################################### ROW5-Input_boxs ###########################
+################################### ROW11-Input_boxs ###########################
     dbc.Row([
         dbc.Col(
             dcc.Input(
@@ -1183,7 +1328,7 @@ app.layout = dbc.Container([
             ),
         ],no_gutters=False),
 
-################################### ROW6-word2vec_1  ###########################
+################################### ROW12-word2vec_1  ###########################
     dbc.Row([
         dbc.Col(
             dcc.Graph(id='word2vec_1'), 
@@ -1195,7 +1340,7 @@ app.layout = dbc.Container([
                 )
             ],no_gutters=False),
     
-################################### ROW7-range slider  ###########################    
+################################### ROW13-range slider  ###########################    
     dbc.Row([
         dbc.Col(
             dcc.Slider( 
@@ -1227,150 +1372,7 @@ app.layout = dbc.Container([
                     20: {'label': '20'}
                     }),                 
             width={'size': 6})
-            ],no_gutters=False),
-    
-############################ ROW8-"Classification Dashtable", Sel-Desel #######################
-    dbc.Row([
-        dbc.Col(html.H2("Z-Score adjustable DataTable"), width={'size':2}),
-        dbc.Col(
-            dbc.Button(id='sel-button_2', n_clicks=0, children="Sel_all", className="mt-5 mr-2"),            
-                    width={'size': 0.5}, style={'textAlign': "left"}),         
-        dbc.Col(
-            dbc.Button(id='desel-button_2', n_clicks=0, children="Des_all", className="mt-5"),
-            width={'size': 0.5}, style={'textAlign':"left"}),        
-        dbc.Col(html.H2("Wordcloud - Post frequency"), width={'size':5, 'offset':3}, style={'textAlign' : "center"}),       
-            ],no_gutters=False),
-
-############################ ROW9-Dropdown_2 ##############################
-    dbc.Row([
-        dbc.Col(
-            dcc.Dropdown(id='my-dropdown_2', multi=True,
-                      options=[{'label': x, 'value': x} for x in col_sels_2],
-                      value=["description"], #initial values to pass
-                      style={'width':'490px'}
-                        ), width={ 'offset':0}),
-        dbc.Col(
-            dcc.Slider( 
-                id='my_slider_zscore',
-                min=0,
-                max=4,
-                step=0.25,
-                value=0,
-                marks={
-                    0: {'label': '0', 'style': {'color': '#77b0b1'}},
-                    1: {'label': '1'},
-                    2: {'label': '2'},
-                    3: {'label': '3', 'style': {'color': '#f50'}},
-                    4: {'label': '4'}
-                    }),                 
-            width={'size': 2}),
-            ], no_gutters = False),    
-    
-############################ ROW10-Clasification dashtable, WordCloud_2 ##############################
-    dbc.Row([    
-            dbc.Col(
-                dash_table.DataTable(
-                    id='datatable_2',
-                    data=clf_dashtable.to_dict('records'),
-                    columns=[
-                        {"name": i, "id": i, "deletable": False, "selectable": True} for i in clf_dashtable.columns
-                    ],
-                    editable=True,
-                    filter_action="native",
-                    sort_action="native",
-                    sort_mode="multi",
-                    row_selectable="multi",
-                    row_deletable=False,
-                    selected_rows=[], #this parameter gets updated by interactive selection
-                    page_action="native",
-                    page_current= 0,
-                    page_size= 10,    
-                    fixed_rows={ 'headers': True, 'data': 0 }, #if the header style is not defined and this is True, then the widths are not properly aligned    
-                    style_cell={ #creates a wrapping of the data to constrain column widths. applies to header and data cells
-                        'whiteSpace': 'normal',
-                        'height': 'auto',
-                        'minWidth': '50px', 'width' : '50px','maxwidth': '50px',  # minwidth of col.             
-                        },
-                    style_table={ #For parameters of the table container
-                        'height': '600px', #was 300px
-                        'width': '690px',
-                        'overflowY': 'auto'
-                    },                    
-                    style_cell_conditional=[    
-                        {'if': {'column_id': 'description'},
-                         'width': '200px', 'textAlign': 'left'},
-                    ],
-                    export_format='xlsx',                    
-                ),            
-                width={'size': 6}),               
-             dbc.Col(
-                dcc.Graph(id='wordcloud_2', figure={}, config={'displayModeBar': True},
-                           style={'width':'600px' ,'height':'600px'}), #ht was 350px
-                    )
-                ],no_gutters=False),
-
-############################ ROW11-Header "Posts count of unique words"  ##############################    
-    dbc.Row([
-        dbc.Col(html.H2("Posts count of distinct words"), width={'size':2}),
-        dbc.Col(html.H2("Co-occurrence counts"), width={'size':2, 'offset':4}),
-            ],no_gutters=False),
-    
-############################ ROW12-Slider for most common ##############################    
-    dbc.Row([
-        dbc.Col(
-            dcc.Slider( 
-                id='my_slider_mc',
-                min=10,
-                max=30,
-                step=1,
-                value=10,
-                marks={
-                    10: {'label': '10', 'style': {'color': '#77b0b1'}},
-                    20: {'label': '20'},
-                    30: {'label': '30'},
-                    40: {'label': '40', 'style': {'color': '#f50'}},
-                    }),                 
-            width={'size': 2}),
-        dbc.Col(
-            dcc.Input(
-                id='co_occ_ip',
-                type='text',
-                placeholder='',  # A hint to the user of what can be entered in the control
-                debounce=True,                      # Changes to input are sent to Dash server only on enter or losing focus
-                minLength=0, maxLength=50,          # Ranges for character length inside input box
-                autoComplete='on',
-                disabled=False,                     # Disable input box
-                readOnly=False,                     # Make input box read only
-                required=False,                     # Require user to insert something into input box
-                size="7",                          # Sets width of box. If exceeds col width then overrides it
-                ), width={'size': 2, 'offset' : 4}, style={'textAlign': "center"}),  #text size 5 corresponds to width size 0.75
-        dbc.Col(
-            dcc.Slider( 
-                id='slider_co_occ',
-                min=10,
-                max=40,
-                step=1,
-                value=10,
-                marks={
-                    10: {'label': '10', 'style': {'color': '#77b0b1'}},
-                    20: {'label': '20'},
-                    30: {'label': '30'},
-                    40: {'label': '40', 'style': {'color': '#f50'}},
-                    }),                 
-            width={'size': 2})
-            ], no_gutters=False),  
-
-############################ ROW13-Bar_chart for distinct word count ##############################    
-    dbc.Row([
-        dbc.Col(
-            dcc.Graph(id='bar_chart_1'), 
-            width={'size': 6}
-                ),
-        dbc.Col(
-            dcc.Graph(id='bar_chart_2'), 
-            width={'size': 6}
-                ),
-            ],no_gutters=False),
+            ],no_gutters=False),    
         ],fluid=True) #closes initial dbc container
 
 ################################ App Callbacks #########################################################
