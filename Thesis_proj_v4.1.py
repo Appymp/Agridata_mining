@@ -1017,13 +1017,28 @@ app.layout = dbc.Container([
     
 ################################### ROW2-Dropdown ########################### 
     dbc.Row([
-        dbc.Col([
+        dbc.Col(
             dcc.Dropdown(id='my-dropdown', multi=True,
                       options=[{'label': x, 'value': x} for x in col_sels],
                       value=["description"], #initial values to pass
-                      style={'width':'690px'}
-                        )])
-            ]),
+                      style={'width':'490px'} #690px full
+                        ), width={ 'offset':0}), #so that slider is not pushed to far right
+        dbc.Col(
+            dcc.Slider( 
+                id='my_slider_zscore2',
+                min=0,
+                max=4,
+                step=0.25,
+                value=0,
+                marks={
+                    0: {'label': '0', 'style': {'color': '#77b0b1'}},
+                    1: {'label': '1'},
+                    2: {'label': '2'},
+                    3: {'label': '3', 'style': {'color': '#f50'}},
+                    4: {'label': '4'}
+                    }),                 
+            width={'size': 2}),
+            ], no_gutters = False), 
     
 ################################### ROW3-Dashtable & Wordcloud ###########################    
     dbc.Row([        
@@ -1938,6 +1953,25 @@ def svd_user_inputs(ad,rem,clr,plot_butt,slider_val,word_tog,ip_tog):
     fig_1.update_traces(textposition='top center')    
     fig_1.update_layout(margin=dict(l=0, r=0), uirevision = True)        
     return (fig_1)
+
+################################ Dashtable_1 Zscore virtual table################################
+@app.callback(
+    Output('datatable_id', 'data'), #virtual_data is displayed table. Even after filtering. #references ordered 0 to n index of larger table irrespective of actual index value.
+    Input('my_slider_zscore2','value'),
+    prevent_initial_call=False
+)
+
+def zscore_outliers(zscore):
+    z = np.abs(stats.zscore(clf_dashtable[['time_delta_hours','likes_pr_min']])) #assign z-score to bivariate 
+    clf_dashtable_z=clf_dashtable.iloc[np.unique(np.where(z > zscore)[0])] #create outlier table
+    #clean up index for "select_all" functionality
+    clf_dashtable_z.drop(['ix'], axis=1, inplace = True) #drop any older 'ix' columns
+    clf_dashtable_z.reset_index(inplace= True,drop=True) #reset and drop old index
+    clf_dashtable_z.reset_index(inplace= True) #create new ix column
+    clf_dashtable_z.rename(columns={"index": "ix"},inplace=True) 
+    print("\nZscore slider value is: ", zscore)
+    print("No of rows are: ", len(clf_dashtable_z))    
+    return clf_dashtable_z.to_dict('records')
 
 ################################ Select all button ################################
 @app.callback(
